@@ -8,7 +8,7 @@ function Model({ url }) {
     scene.traverse((child) => console.log(child.name, child.isMesh));
     scene.traverse((child) => {
         if (child.isMesh) {
-            const color = 0xc88d94; // default gray
+            const color = 0xc88d94; // greyish-pink
             child.material = new THREE.MeshStandardMaterial({ color });
         }
     });
