@@ -1,17 +1,9 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
 
 function Model({ url }) {
     const { scene } = useGLTF(url); // Load GLTF/GLB model
-    scene.traverse((child) => console.log(child.name, child.isMesh));
-    scene.traverse((child) => {
-        if (child.isMesh) {
-            const color = 0xc88d94; // default gray
-            child.material = new THREE.MeshStandardMaterial({ color });
-        }
-    });
     return <primitive object={scene} scale={1} />;
 }
 function Landing() {
@@ -24,7 +16,7 @@ function Landing() {
             </p>
             <div style={{width: "100%", height: "80vh"}}>
                 <Canvas>
-                    <ambientLight intensity={1.5}/>
+                    <ambientLight intensity={0.5}/>
                     <directionalLight position={[5, 5, 5]} intensity={1}/>
                     <Model url="/models/human_brain.glb"/>
                     <OrbitControls enableZoom={true}/>
