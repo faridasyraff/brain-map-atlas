@@ -1,10 +1,27 @@
+
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
+
+function Model({ url }) {
+    const { scene } = useGLTF(url); // Load GLTF/GLB model
+    return <primitive object={scene} scale={1} />;
+}
 function Landing() {
+
     return (
         <div>
             <h1>Welcome to the Brain Atlas</h1>
             <p>
                 Explore brain regions using the Allen Brain Atlas API.
             </p>
+            <div style={{width: "100%", height: "80vh"}}>
+                <Canvas>
+                    <ambientLight intensity={0.5}/>
+                    <directionalLight position={[5, 5, 5]} intensity={1}/>
+                    <Model url="/models/human_brain.glb"/>
+                    <OrbitControls enableZoom={true}/>
+                </Canvas>
+            </div>
         </div>
     );
 }
