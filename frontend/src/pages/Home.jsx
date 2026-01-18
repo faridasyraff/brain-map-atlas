@@ -27,7 +27,11 @@ function Landing() {
                     <ambientLight intensity={1.5}/>
                     <directionalLight position={[5, 5, 5]} intensity={1}/>
                     <Model url="/models/human_brain.glb"/>
-                    <OrbitControls enableZoom={true}/>
+                    <OrbitControls
+                        enableZoom={true}
+                        minDistance={2}
+                        maxDistance={300}
+                    />
                 </Canvas>
             </div>
         </div>
