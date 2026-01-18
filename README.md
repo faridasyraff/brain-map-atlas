@@ -1,71 +1,99 @@
-# Getting Started with Create React App
+# Brain Map Atlas
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive 3D brain visualization tool using React, Three.js, and the Allen Brain Atlas API.
 
-## Available Scripts
+## Project Structure
 
-In the project directory, you can run:
+```
+brain-map-atlas/
+├── frontend/          # Vite + React frontend
+│   ├── src/           # React components, pages
+│   ├── public/        # Static assets & 3D models
+│   ├── package.json   # Frontend dependencies
+│   └── vite.config.js # Vite configuration
+├── backend/           # Python backend API
+└── README.md          # This file
+```
 
-### `npm start`
+## Frontend Setup
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Prerequisites
+- Node.js 16+ 
+- npm or yarn
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Installation
 
-### `npm test`
+```bash
+cd frontend
+npm install
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Development
 
-### `npm run build`
+```bash
+npm run dev
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Runs the Vite dev server at `http://localhost:5174` with hot module reload (HMR).
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Production Build
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm run build
+```
 
-### `npm run eject`
+Builds the app for production to the `dist/` folder.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Preview Production Build
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+npm run preview
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Serves the production build locally for testing.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Dependencies
 
-## Learn More
+### Frontend Dependencies
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### Core React
+- **react** (^19.2.3) - UI library
+- **react-dom** (^19.2.3) - React DOM rendering
+- **react-router-dom** (^7.12.0) - Client-side routing
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### 3D Graphics
+- **three** (^0.182.0) - 3D graphics library
+- **@react-three/fiber** (^9.5.0) - React renderer for Three.js
+- **@react-three/drei** (^10.7.7) - Utilities for Three.js (OrbitControls, useGLTF, etc.)
 
-### Code Splitting
+#### Utilities
+- **web-vitals** (^2.1.4) - Performance metrics
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Development Dependencies
+- **vite** (^5.0.0) - Build tool & dev server
+- **@vitejs/plugin-react** (^4.0.0) - React fast refresh plugin
 
-### Analyzing the Bundle Size
+## Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- 🧠 **Interactive 3D Brain Model** - Explore a 3D human brain mesh with orbit controls
+- 🗺️ **Brain Atlas API Integration** - Query brain regions via Allen Brain Atlas API
+- 🎨 **Responsive Design** - Works on desktop and tablet devices
+- ⚡ **Fast Development** - Vite HMR for instant feedback
 
-### Making a Progressive Web App
+## Pages
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- **Home** (`/`) - 3D brain visualization with interactive controls
+- **API Test** (`/ApiTest`) - Test Allen Brain Atlas API queries
 
-### Advanced Configuration
+## Technologies
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- **Frontend Build**: Vite (instead of Create React App)
+- **UI Framework**: React 19
+- **3D Rendering**: Three.js
+- **Navigation**: React Router v7
+- **API**: Allen Brain Atlas REST API
 
-### Deployment
+## Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The Python backend is located in the `/backend` directory. See `/backend` for setup instructions.
 # brain-map-atlas
