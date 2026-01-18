@@ -20,7 +20,11 @@ export function BrainViewer({ modelUrl = "/models/human_brain.glb" }) {
         <ambientLight intensity={1.5} />
         <directionalLight position={[5, 5, 5]} intensity={1} />
         <BrainModel url={modelUrl} />
-        <OrbitControls enableZoom={true} />
+        <OrbitControls
+            enableZoom={true}
+            minDistance={150}
+            maxDistance={300}
+        />
       </Canvas>
     </div>
   );
