@@ -10,6 +10,7 @@ function Navbar() {
         <li><Link to="/">Home</Link></li>
         <li><Link to="/atlas">Atlas</Link></li>
         <li><Link to="/data">Query Data</Link></li>
+        <li><Link to="/ai-prompt">AI Prompt</Link></li>
       </ul>
     </nav>
   );
