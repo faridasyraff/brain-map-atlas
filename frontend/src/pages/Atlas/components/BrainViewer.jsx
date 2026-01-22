@@ -72,7 +72,7 @@ function BrainModel({ url }) {
   return <primitive ref={groupRef} object={scene} scale={1} />;//render the loaded brain model
 }
 
-export function BrainViewer({ modelUrl = "/models/brain.glb" }) {
+export function BrainViewer({ modelUrl = "./models/brain human.glb" }) {
   return (
     <div style={{ width: "100%", height: "80vh" }}>
       <Canvas camera={{ position: [0, 0, 200], fov: 50 }}>
