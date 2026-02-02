@@ -1,0 +1,1632 @@
+label,acronym,name,color_hex_triplet,graph_order,identifier,red,green,blue,parent_identifier
+AllenCCF-Ontology-2017-997,brain,brain,#FFFFFF,0.0,MBA:997,255,255,255,
+AllenCCF-Ontology-2017-8,grey,Basic cell groups and regions,#BFDAE3,1.0,MBA:8,191,218,227,MBA:997
+AllenCCF-Ontology-2017-567,CH,Cerebrum,#B0F0FF,2.0,MBA:567,176,240,255,MBA:8
+AllenCCF-Ontology-2017-688,CTX,Cerebral cortex,#B0FFB8,3.0,MBA:688,176,255,184,MBA:567
+AllenCCF-Ontology-2017-695,CTXpl,Cortical plate,#70FF70,4.0,MBA:695,112,255,112,MBA:688
+AllenCCF-Ontology-2017-315,Isocortex,Isocortex,#70FF71,5.0,MBA:315,112,255,113,MBA:695
+AllenCCF-Ontology-2017-184,FRP,"Frontal pole, cerebral cortex",#268F45,6.0,MBA:184,38,143,69,MBA:315
+AllenCCF-Ontology-2017-68,FRP1,"Frontal pole, layer 1",#268F45,7.0,MBA:68,38,143,69,MBA:184
+AllenCCF-Ontology-2017-667,FRP2/3,"Frontal pole, layer 2/3",#268F45,8.0,MBA:667,38,143,69,MBA:184
+AllenCCF-Ontology-2017-526157192,FRP5,"Frontal pole, layer 5",#268F45,9.0,MBA:526157192,38,143,69,MBA:184
+AllenCCF-Ontology-2017-526157196,FRP6a,"Frontal pole, layer 6a",#268F45,10.0,MBA:526157196,38,143,69,MBA:184
+AllenCCF-Ontology-2017-526322264,FRP6b,"Frontal pole, layer 6b",#268F45,11.0,MBA:526322264,38,143,69,MBA:184
+AllenCCF-Ontology-2017-500,MO,Somatomotor areas,#1F9D5A,12.0,MBA:500,31,157,90,MBA:315
+AllenCCF-Ontology-2017-107,MO1,"Somatomotor areas, Layer 1",#1F9D5A,13.0,MBA:107,31,157,90,MBA:500
+AllenCCF-Ontology-2017-219,MO2/3,"Somatomotor areas, Layer 2/3",#1F9D5A,14.0,MBA:219,31,157,90,MBA:500
+AllenCCF-Ontology-2017-299,MO5,"Somatomotor areas, Layer 5",#1F9D5A,15.0,MBA:299,31,157,90,MBA:500
+AllenCCF-Ontology-2017-644,MO6a,"Somatomotor areas, Layer 6a",#1F9D5A,16.0,MBA:644,31,157,90,MBA:500
+AllenCCF-Ontology-2017-947,MO6b,"Somatomotor areas, Layer 6b",#1F9D5A,17.0,MBA:947,31,157,90,MBA:500
+AllenCCF-Ontology-2017-985,MOp,Primary motor area,#1F9D5A,18.0,MBA:985,31,157,90,MBA:500
+AllenCCF-Ontology-2017-320,MOp1,"Primary motor area, Layer 1",#1F9D5A,19.0,MBA:320,31,157,90,MBA:985
+AllenCCF-Ontology-2017-943,MOp2/3,"Primary motor area, Layer 2/3",#1F9D5A,20.0,MBA:943,31,157,90,MBA:985
+AllenCCF-Ontology-2017-648,MOp5,"Primary motor area, Layer 5",#1F9D5A,21.0,MBA:648,31,157,90,MBA:985
+AllenCCF-Ontology-2017-844,MOp6a,"Primary motor area, Layer 6a",#1F9D5A,22.0,MBA:844,31,157,90,MBA:985
+AllenCCF-Ontology-2017-882,MOp6b,"Primary motor area, Layer 6b",#1F9D5A,23.0,MBA:882,31,157,90,MBA:985
+AllenCCF-Ontology-2017-993,MOs,Secondary motor area,#1F9D5A,24.0,MBA:993,31,157,90,MBA:500
+AllenCCF-Ontology-2017-656,MOs1,"Secondary motor area, layer 1",#1F9D5A,25.0,MBA:656,31,157,90,MBA:993
+AllenCCF-Ontology-2017-962,MOs2/3,"Secondary motor area, layer 2/3",#1F9D5A,26.0,MBA:962,31,157,90,MBA:993
+AllenCCF-Ontology-2017-767,MOs5,"Secondary motor area, layer 5",#1F9D5A,27.0,MBA:767,31,157,90,MBA:993
+AllenCCF-Ontology-2017-1021,MOs6a,"Secondary motor area, layer 6a",#1F9D5A,28.0,MBA:1021,31,157,90,MBA:993
+AllenCCF-Ontology-2017-1085,MOs6b,"Secondary motor area, layer 6b",#1F9D5A,29.0,MBA:1085,31,157,90,MBA:993
+AllenCCF-Ontology-2017-453,SS,Somatosensory areas,#188064,30.0,MBA:453,24,128,100,MBA:315
+AllenCCF-Ontology-2017-12993,SS1,"Somatosensory areas, layer 1",#188064,31.0,MBA:12993,24,128,100,MBA:453
+AllenCCF-Ontology-2017-12994,SS2/3,"Somatosensory areas, layer 2/3",#188064,32.0,MBA:12994,24,128,100,MBA:453
+AllenCCF-Ontology-2017-12995,SS4,"Somatosensory areas, layer 4",#188064,33.0,MBA:12995,24,128,100,MBA:453
+AllenCCF-Ontology-2017-12996,SS5,"Somatosensory areas, layer 5",#188064,34.0,MBA:12996,24,128,100,MBA:453
+AllenCCF-Ontology-2017-12997,SS6a,"Somatosensory areas, layer 6a",#188064,35.0,MBA:12997,24,128,100,MBA:453
+AllenCCF-Ontology-2017-12998,SS6b,"Somatosensory areas, layer 6b",#188064,36.0,MBA:12998,24,128,100,MBA:453
+AllenCCF-Ontology-2017-322,SSp,Primary somatosensory area,#188064,37.0,MBA:322,24,128,100,MBA:453
+AllenCCF-Ontology-2017-793,SSp1,"Primary somatosensory area, layer 1",#188064,38.0,MBA:793,24,128,100,MBA:322
+AllenCCF-Ontology-2017-346,SSp2/3,"Primary somatosensory area, layer 2/3",#188064,39.0,MBA:346,24,128,100,MBA:322
+AllenCCF-Ontology-2017-865,SSp4,"Primary somatosensory area, layer 4",#188064,40.0,MBA:865,24,128,100,MBA:322
+AllenCCF-Ontology-2017-921,SSp5,"Primary somatosensory area, layer 5",#188064,41.0,MBA:921,24,128,100,MBA:322
+AllenCCF-Ontology-2017-686,SSp6a,"Primary somatosensory area, layer 6a",#188064,42.0,MBA:686,24,128,100,MBA:322
+AllenCCF-Ontology-2017-719,SSp6b,"Primary somatosensory area, layer 6b",#188064,43.0,MBA:719,24,128,100,MBA:322
+AllenCCF-Ontology-2017-353,SSp-n,"Primary somatosensory area, nose",#188064,44.0,MBA:353,24,128,100,MBA:322
+AllenCCF-Ontology-2017-558,SSp-n1,"Primary somatosensory area, nose, layer 1",#188064,45.0,MBA:558,24,128,100,MBA:353
+AllenCCF-Ontology-2017-838,SSp-n2/3,"Primary somatosensory area, nose, layer 2/3",#188064,46.0,MBA:838,24,128,100,MBA:353
+AllenCCF-Ontology-2017-654,SSp-n4,"Primary somatosensory area, nose, layer 4",#188064,47.0,MBA:654,24,128,100,MBA:353
+AllenCCF-Ontology-2017-702,SSp-n5,"Primary somatosensory area, nose, layer 5",#188064,48.0,MBA:702,24,128,100,MBA:353
+AllenCCF-Ontology-2017-889,SSp-n6a,"Primary somatosensory area, nose, layer 6a",#188064,49.0,MBA:889,24,128,100,MBA:353
+AllenCCF-Ontology-2017-929,SSp-n6b,"Primary somatosensory area, nose, layer 6b",#188064,50.0,MBA:929,24,128,100,MBA:353
+AllenCCF-Ontology-2017-329,SSp-bfd,"Primary somatosensory area, barrel field",#188064,51.0,MBA:329,24,128,100,MBA:322
+AllenCCF-Ontology-2017-981,SSp-bfd1,"Primary somatosensory area, barrel field, layer 1",#188064,52.0,MBA:981,24,128,100,MBA:329
+AllenCCF-Ontology-2017-201,SSp-bfd2/3,"Primary somatosensory area, barrel field, layer 2/3",#188064,53.0,MBA:201,24,128,100,MBA:329
+AllenCCF-Ontology-2017-1047,SSp-bfd4,"Primary somatosensory area, barrel field, layer 4",#188064,54.0,MBA:1047,24,128,100,MBA:329
+AllenCCF-Ontology-2017-1070,SSp-bfd5,"Primary somatosensory area, barrel field, layer 5",#188064,55.0,MBA:1070,24,128,100,MBA:329
+AllenCCF-Ontology-2017-1038,SSp-bfd6a,"Primary somatosensory area, barrel field, layer 6a",#188064,56.0,MBA:1038,24,128,100,MBA:329
+AllenCCF-Ontology-2017-1062,SSp-bfd6b,"Primary somatosensory area, barrel field, layer 6b",#188064,57.0,MBA:1062,24,128,100,MBA:329
+AllenCCF-Ontology-2017-480149202,VISrll,Rostrolateral lateral visual area,#188064,58.0,MBA:480149202,24,128,100,MBA:329
+AllenCCF-Ontology-2017-480149206,VISrll1,"Rostrolateral lateral visual area, layer 1",#188064,59.0,MBA:480149206,24,128,100,MBA:480149202
+AllenCCF-Ontology-2017-480149210,VISrll2/3,"Rostrolateral lateral visual area, layer 2/3",#188064,60.0,MBA:480149210,24,128,100,MBA:480149202
+AllenCCF-Ontology-2017-480149214,VISrll4,"Rostrolateral lateral visual area, layer 4",#188064,61.0,MBA:480149214,24,128,100,MBA:480149202
+AllenCCF-Ontology-2017-480149218,VISrll5,"Rostrolateral lateral visual area,layer 5",#188064,62.0,MBA:480149218,24,128,100,MBA:480149202
+AllenCCF-Ontology-2017-480149222,VISrll6a,"Rostrolateral lateral visual area, layer 6a",#188064,63.0,MBA:480149222,24,128,100,MBA:480149202
+AllenCCF-Ontology-2017-480149226,VISrll6b,"Rostrolateral lateral visual area, layer 6b",#188064,64.0,MBA:480149226,24,128,100,MBA:480149202
+AllenCCF-Ontology-2017-337,SSp-ll,"Primary somatosensory area, lower limb",#188064,65.0,MBA:337,24,128,100,MBA:322
+AllenCCF-Ontology-2017-1030,SSp-ll1,"Primary somatosensory area, lower limb, layer 1",#188064,66.0,MBA:1030,24,128,100,MBA:337
+AllenCCF-Ontology-2017-113,SSp-ll2/3,"Primary somatosensory area, lower limb, layer 2/3",#188064,67.0,MBA:113,24,128,100,MBA:337
+AllenCCF-Ontology-2017-1094,SSp-ll4,"Primary somatosensory area, lower limb, layer 4",#188064,68.0,MBA:1094,24,128,100,MBA:337
+AllenCCF-Ontology-2017-1128,SSp-ll5,"Primary somatosensory area, lower limb, layer 5",#188064,69.0,MBA:1128,24,128,100,MBA:337
+AllenCCF-Ontology-2017-478,SSp-ll6a,"Primary somatosensory area, lower limb, layer 6a",#188064,70.0,MBA:478,24,128,100,MBA:337
+AllenCCF-Ontology-2017-510,SSp-ll6b,"Primary somatosensory area, lower limb, layer 6b",#188064,71.0,MBA:510,24,128,100,MBA:337
+AllenCCF-Ontology-2017-345,SSp-m,"Primary somatosensory area, mouth",#188064,72.0,MBA:345,24,128,100,MBA:322
+AllenCCF-Ontology-2017-878,SSp-m1,"Primary somatosensory area, mouth, layer 1",#188064,73.0,MBA:878,24,128,100,MBA:345
+AllenCCF-Ontology-2017-657,SSp-m2/3,"Primary somatosensory area, mouth, layer 2/3",#188064,74.0,MBA:657,24,128,100,MBA:345
+AllenCCF-Ontology-2017-950,SSp-m4,"Primary somatosensory area, mouth, layer 4",#188064,75.0,MBA:950,24,128,100,MBA:345
+AllenCCF-Ontology-2017-974,SSp-m5,"Primary somatosensory area, mouth, layer 5",#188064,76.0,MBA:974,24,128,100,MBA:345
+AllenCCF-Ontology-2017-1102,SSp-m6a,"Primary somatosensory area, mouth, layer 6a",#188064,77.0,MBA:1102,24,128,100,MBA:345
+AllenCCF-Ontology-2017-2,SSp-m6b,"Primary somatosensory area, mouth, layer 6b",#188064,78.0,MBA:2,24,128,100,MBA:345
+AllenCCF-Ontology-2017-369,SSp-ul,"Primary somatosensory area, upper limb",#188064,79.0,MBA:369,24,128,100,MBA:322
+AllenCCF-Ontology-2017-450,SSp-ul1,"Primary somatosensory area, upper limb, layer 1",#188064,80.0,MBA:450,24,128,100,MBA:369
+AllenCCF-Ontology-2017-854,SSp-ul2/3,"Primary somatosensory area, upper limb, layer 2/3",#188064,81.0,MBA:854,24,128,100,MBA:369
+AllenCCF-Ontology-2017-577,SSp-ul4,"Primary somatosensory area, upper limb, layer 4",#188064,82.0,MBA:577,24,128,100,MBA:369
+AllenCCF-Ontology-2017-625,SSp-ul5,"Primary somatosensory area, upper limb, layer 5",#188064,83.0,MBA:625,24,128,100,MBA:369
+AllenCCF-Ontology-2017-945,SSp-ul6a,"Primary somatosensory area, upper limb, layer 6a",#188064,84.0,MBA:945,24,128,100,MBA:369
+AllenCCF-Ontology-2017-1026,SSp-ul6b,"Primary somatosensory area, upper limb, layer 6b",#188064,85.0,MBA:1026,24,128,100,MBA:369
+AllenCCF-Ontology-2017-361,SSp-tr,"Primary somatosensory area, trunk",#188064,86.0,MBA:361,24,128,100,MBA:322
+AllenCCF-Ontology-2017-1006,SSp-tr1,"Primary somatosensory area, trunk, layer 1",#188064,87.0,MBA:1006,24,128,100,MBA:361
+AllenCCF-Ontology-2017-670,SSp-tr2/3,"Primary somatosensory area, trunk, layer 2/3",#188064,88.0,MBA:670,24,128,100,MBA:361
+AllenCCF-Ontology-2017-1086,SSp-tr4,"Primary somatosensory area, trunk, layer 4",#188064,89.0,MBA:1086,24,128,100,MBA:361
+AllenCCF-Ontology-2017-1111,SSp-tr5,"Primary somatosensory area, trunk, layer 5",#188064,90.0,MBA:1111,24,128,100,MBA:361
+AllenCCF-Ontology-2017-9,SSp-tr6a,"Primary somatosensory area, trunk, layer 6a",#188064,91.0,MBA:9,24,128,100,MBA:361
+AllenCCF-Ontology-2017-461,SSp-tr6b,"Primary somatosensory area, trunk, layer 6b",#188064,92.0,MBA:461,24,128,100,MBA:361
+AllenCCF-Ontology-2017-182305689,SSp-un,"Primary somatosensory area, unassigned",#188064,93.0,MBA:182305689,24,128,100,MBA:322
+AllenCCF-Ontology-2017-182305693,SSp-un1,"Primary somatosensory area, unassigned, layer 1",#188064,94.0,MBA:182305693,24,128,100,MBA:182305689
+AllenCCF-Ontology-2017-182305697,SSp-un2/3,"Primary somatosensory area, unassigned, layer 2/3",#188064,95.0,MBA:182305697,24,128,100,MBA:182305689
+AllenCCF-Ontology-2017-182305701,SSp-un4,"Primary somatosensory area, unassigned, layer 4",#188064,96.0,MBA:182305701,24,128,100,MBA:182305689
+AllenCCF-Ontology-2017-182305705,SSp-un5,"Primary somatosensory area, unassigned, layer 5",#188064,97.0,MBA:182305705,24,128,100,MBA:182305689
+AllenCCF-Ontology-2017-182305709,SSp-un6a,"Primary somatosensory area, unassigned, layer 6a",#188064,98.0,MBA:182305709,24,128,100,MBA:182305689
+AllenCCF-Ontology-2017-182305713,SSp-un6b,"Primary somatosensory area, unassigned, layer 6b",#188064,99.0,MBA:182305713,24,128,100,MBA:182305689
+AllenCCF-Ontology-2017-378,SSs,Supplemental somatosensory area,#188064,100.0,MBA:378,24,128,100,MBA:453
+AllenCCF-Ontology-2017-873,SSs1,"Supplemental somatosensory area, layer 1",#188064,101.0,MBA:873,24,128,100,MBA:378
+AllenCCF-Ontology-2017-806,SSs2/3,"Supplemental somatosensory area, layer 2/3",#188064,102.0,MBA:806,24,128,100,MBA:378
+AllenCCF-Ontology-2017-1035,SSs4,"Supplemental somatosensory area, layer 4",#188064,103.0,MBA:1035,24,128,100,MBA:378
+AllenCCF-Ontology-2017-1090,SSs5,"Supplemental somatosensory area, layer 5",#188064,104.0,MBA:1090,24,128,100,MBA:378
+AllenCCF-Ontology-2017-862,SSs6a,"Supplemental somatosensory area, layer 6a",#188064,105.0,MBA:862,24,128,100,MBA:378
+AllenCCF-Ontology-2017-893,SSs6b,"Supplemental somatosensory area, layer 6b",#188064,106.0,MBA:893,24,128,100,MBA:378
+AllenCCF-Ontology-2017-1057,GU,Gustatory areas,#009C75,107.0,MBA:1057,0,156,117,MBA:315
+AllenCCF-Ontology-2017-36,GU1,"Gustatory areas, layer 1",#009C75,108.0,MBA:36,0,156,117,MBA:1057
+AllenCCF-Ontology-2017-180,GU2/3,"Gustatory areas, layer 2/3",#009C75,109.0,MBA:180,0,156,117,MBA:1057
+AllenCCF-Ontology-2017-148,GU4,"Gustatory areas, layer 4",#009C75,110.0,MBA:148,0,156,117,MBA:1057
+AllenCCF-Ontology-2017-187,GU5,"Gustatory areas, layer 5",#009C75,111.0,MBA:187,0,156,117,MBA:1057
+AllenCCF-Ontology-2017-638,GU6a,"Gustatory areas, layer 6a",#009C75,112.0,MBA:638,0,156,117,MBA:1057
+AllenCCF-Ontology-2017-662,GU6b,"Gustatory areas, layer 6b",#009C75,113.0,MBA:662,0,156,117,MBA:1057
+AllenCCF-Ontology-2017-677,VISC,Visceral area,#11AD83,114.0,MBA:677,17,173,131,MBA:315
+AllenCCF-Ontology-2017-897,VISC1,"Visceral area, layer 1",#11AD83,115.0,MBA:897,17,173,131,MBA:677
+AllenCCF-Ontology-2017-1106,VISC2/3,"Visceral area, layer 2/3",#11AD83,116.0,MBA:1106,17,173,131,MBA:677
+AllenCCF-Ontology-2017-1010,VISC4,"Visceral area, layer 4",#11AD83,117.0,MBA:1010,17,173,131,MBA:677
+AllenCCF-Ontology-2017-1058,VISC5,"Visceral area, layer 5",#11AD83,118.0,MBA:1058,17,173,131,MBA:677
+AllenCCF-Ontology-2017-857,VISC6a,"Visceral area, layer 6a",#11AD83,119.0,MBA:857,17,173,131,MBA:677
+AllenCCF-Ontology-2017-849,VISC6b,"Visceral area, layer 6b",#11AD83,120.0,MBA:849,17,173,131,MBA:677
+AllenCCF-Ontology-2017-247,AUD,Auditory areas,#019399,121.0,MBA:247,1,147,153,MBA:315
+AllenCCF-Ontology-2017-1011,AUDd,Dorsal auditory area,#019399,122.0,MBA:1011,1,147,153,MBA:247
+AllenCCF-Ontology-2017-527,AUDd1,"Dorsal auditory area, layer 1",#019399,123.0,MBA:527,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-600,AUDd2/3,"Dorsal auditory area, layer 2/3",#019399,124.0,MBA:600,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-678,AUDd4,"Dorsal auditory area, layer 4",#019399,125.0,MBA:678,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-252,AUDd5,"Dorsal auditory area, layer 5",#019399,126.0,MBA:252,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-156,AUDd6a,"Dorsal auditory area, layer 6a",#019399,127.0,MBA:156,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-243,AUDd6b,"Dorsal auditory area, layer 6b",#019399,128.0,MBA:243,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-480149230,VISlla,Laterolateral anterior visual area,#019399,129.0,MBA:480149230,1,147,153,MBA:1011
+AllenCCF-Ontology-2017-480149234,VISlla1,"Laterolateral anterior visual area, layer 1",#019399,130.0,MBA:480149234,1,147,153,MBA:480149230
+AllenCCF-Ontology-2017-480149238,VISlla2/3,"Laterolateral anterior visual area, layer 2/3",#019399,131.0,MBA:480149238,1,147,153,MBA:480149230
+AllenCCF-Ontology-2017-480149242,VISlla4,"Laterolateral anterior visual area, layer 4",#019399,132.0,MBA:480149242,1,147,153,MBA:480149230
+AllenCCF-Ontology-2017-480149246,VISlla5,"Laterolateral anterior visual area,layer 5",#019399,133.0,MBA:480149246,1,147,153,MBA:480149230
+AllenCCF-Ontology-2017-480149250,VISlla6a,"Laterolateral anterior visual area, layer 6a",#019399,134.0,MBA:480149250,1,147,153,MBA:480149230
+AllenCCF-Ontology-2017-480149254,VISlla6b,"Laterolateral anterior visual area, layer 6b",#019399,135.0,MBA:480149254,1,147,153,MBA:480149230
+AllenCCF-Ontology-2017-1002,AUDp,Primary auditory area,#019399,136.0,MBA:1002,1,147,153,MBA:247
+AllenCCF-Ontology-2017-735,AUDp1,"Primary auditory area, layer 1",#019399,137.0,MBA:735,1,147,153,MBA:1002
+AllenCCF-Ontology-2017-251,AUDp2/3,"Primary auditory area, layer 2/3",#019399,138.0,MBA:251,1,147,153,MBA:1002
+AllenCCF-Ontology-2017-816,AUDp4,"Primary auditory area, layer 4",#019399,139.0,MBA:816,1,147,153,MBA:1002
+AllenCCF-Ontology-2017-847,AUDp5,"Primary auditory area, layer 5",#019399,140.0,MBA:847,1,147,153,MBA:1002
+AllenCCF-Ontology-2017-954,AUDp6a,"Primary auditory area, layer 6a",#019399,141.0,MBA:954,1,147,153,MBA:1002
+AllenCCF-Ontology-2017-1005,AUDp6b,"Primary auditory area, layer 6b",#019399,142.0,MBA:1005,1,147,153,MBA:1002
+AllenCCF-Ontology-2017-1027,AUDpo,Posterior auditory area,#019399,143.0,MBA:1027,1,147,153,MBA:247
+AllenCCF-Ontology-2017-696,AUDpo1,"Posterior auditory area, layer 1",#019399,144.0,MBA:696,1,147,153,MBA:1027
+AllenCCF-Ontology-2017-643,AUDpo2/3,"Posterior auditory area, layer 2/3",#019399,145.0,MBA:643,1,147,153,MBA:1027
+AllenCCF-Ontology-2017-759,AUDpo4,"Posterior auditory area, layer 4",#019399,146.0,MBA:759,1,147,153,MBA:1027
+AllenCCF-Ontology-2017-791,AUDpo5,"Posterior auditory area, layer 5",#019399,147.0,MBA:791,1,147,153,MBA:1027
+AllenCCF-Ontology-2017-249,AUDpo6a,"Posterior auditory area, layer 6a",#019399,148.0,MBA:249,1,147,153,MBA:1027
+AllenCCF-Ontology-2017-456,AUDpo6b,"Posterior auditory area, layer 6b",#019399,149.0,MBA:456,1,147,153,MBA:1027
+AllenCCF-Ontology-2017-1018,AUDv,Ventral auditory area,#019399,150.0,MBA:1018,1,147,153,MBA:247
+AllenCCF-Ontology-2017-959,AUDv1,"Ventral auditory area, layer 1",#019399,151.0,MBA:959,1,147,153,MBA:1018
+AllenCCF-Ontology-2017-755,AUDv2/3,"Ventral auditory area, layer 2/3",#019399,152.0,MBA:755,1,147,153,MBA:1018
+AllenCCF-Ontology-2017-990,AUDv4,"Ventral auditory area, layer 4",#019399,153.0,MBA:990,1,147,153,MBA:1018
+AllenCCF-Ontology-2017-1023,AUDv5,"Ventral auditory area, layer 5",#019399,154.0,MBA:1023,1,147,153,MBA:1018
+AllenCCF-Ontology-2017-520,AUDv6a,"Ventral auditory area, layer 6a",#019399,155.0,MBA:520,1,147,153,MBA:1018
+AllenCCF-Ontology-2017-598,AUDv6b,"Ventral auditory area, layer 6b",#019399,156.0,MBA:598,1,147,153,MBA:1018
+AllenCCF-Ontology-2017-669,VIS,Visual areas,#08858C,157.0,MBA:669,8,133,140,MBA:315
+AllenCCF-Ontology-2017-801,VIS1,"Visual areas, layer 1",#08858C,158.0,MBA:801,8,133,140,MBA:669
+AllenCCF-Ontology-2017-561,VIS2/3,"Visual areas, layer 2/3",#08858C,159.0,MBA:561,8,133,140,MBA:669
+AllenCCF-Ontology-2017-913,VIS4,"Visual areas, layer 4",#08858C,160.0,MBA:913,8,133,140,MBA:669
+AllenCCF-Ontology-2017-937,VIS5,"Visual areas, layer 5",#08858C,161.0,MBA:937,8,133,140,MBA:669
+AllenCCF-Ontology-2017-457,VIS6a,"Visual areas, layer 6a",#08858C,162.0,MBA:457,8,133,140,MBA:669
+AllenCCF-Ontology-2017-497,VIS6b,"Visual areas, layer 6b",#08858C,163.0,MBA:497,8,133,140,MBA:669
+AllenCCF-Ontology-2017-402,VISal,Anterolateral visual area,#08858C,164.0,MBA:402,8,133,140,MBA:669
+AllenCCF-Ontology-2017-1074,VISal1,"Anterolateral visual area, layer 1",#08858C,165.0,MBA:1074,8,133,140,MBA:402
+AllenCCF-Ontology-2017-905,VISal2/3,"Anterolateral visual area, layer 2/3",#08858C,166.0,MBA:905,8,133,140,MBA:402
+AllenCCF-Ontology-2017-1114,VISal4,"Anterolateral visual area, layer 4",#08858C,167.0,MBA:1114,8,133,140,MBA:402
+AllenCCF-Ontology-2017-233,VISal5,"Anterolateral visual area, layer 5",#08858C,168.0,MBA:233,8,133,140,MBA:402
+AllenCCF-Ontology-2017-601,VISal6a,"Anterolateral visual area, layer 6a",#08858C,169.0,MBA:601,8,133,140,MBA:402
+AllenCCF-Ontology-2017-649,VISal6b,"Anterolateral visual area, layer 6b",#08858C,170.0,MBA:649,8,133,140,MBA:402
+AllenCCF-Ontology-2017-394,VISam,Anteromedial visual area,#08858C,171.0,MBA:394,8,133,140,MBA:669
+AllenCCF-Ontology-2017-281,VISam1,"Anteromedial visual area, layer 1",#08858C,172.0,MBA:281,8,133,140,MBA:394
+AllenCCF-Ontology-2017-1066,VISam2/3,"Anteromedial visual area, layer 2/3",#08858C,173.0,MBA:1066,8,133,140,MBA:394
+AllenCCF-Ontology-2017-401,VISam4,"Anteromedial visual area, layer 4",#08858C,174.0,MBA:401,8,133,140,MBA:394
+AllenCCF-Ontology-2017-433,VISam5,"Anteromedial visual area, layer 5",#08858C,175.0,MBA:433,8,133,140,MBA:394
+AllenCCF-Ontology-2017-1046,VISam6a,"Anteromedial visual area, layer 6a",#08858C,176.0,MBA:1046,8,133,140,MBA:394
+AllenCCF-Ontology-2017-441,VISam6b,"Anteromedial visual area, layer 6b",#08858C,177.0,MBA:441,8,133,140,MBA:394
+AllenCCF-Ontology-2017-409,VISl,Lateral visual area,#08858C,178.0,MBA:409,8,133,140,MBA:669
+AllenCCF-Ontology-2017-421,VISl1,"Lateral visual area, layer 1",#08858C,179.0,MBA:421,8,133,140,MBA:409
+AllenCCF-Ontology-2017-973,VISl2/3,"Lateral visual area, layer 2/3",#08858C,180.0,MBA:973,8,133,140,MBA:409
+AllenCCF-Ontology-2017-573,VISl4,"Lateral visual area, layer 4",#08858C,181.0,MBA:573,8,133,140,MBA:409
+AllenCCF-Ontology-2017-613,VISl5,"Lateral visual area, layer 5",#08858C,182.0,MBA:613,8,133,140,MBA:409
+AllenCCF-Ontology-2017-74,VISl6a,"Lateral visual area, layer 6a",#08858C,183.0,MBA:74,8,133,140,MBA:409
+AllenCCF-Ontology-2017-121,VISl6b,"Lateral visual area, layer 6b",#08858C,184.0,MBA:121,8,133,140,MBA:409
+AllenCCF-Ontology-2017-385,VISp,Primary visual area,#08858C,185.0,MBA:385,8,133,140,MBA:669
+AllenCCF-Ontology-2017-593,VISp1,"Primary visual area, layer 1",#08858C,186.0,MBA:593,8,133,140,MBA:385
+AllenCCF-Ontology-2017-821,VISp2/3,"Primary visual area, layer 2/3",#08858C,187.0,MBA:821,8,133,140,MBA:385
+AllenCCF-Ontology-2017-721,VISp4,"Primary visual area, layer 4",#08858C,188.0,MBA:721,8,133,140,MBA:385
+AllenCCF-Ontology-2017-778,VISp5,"Primary visual area, layer 5",#08858C,189.0,MBA:778,8,133,140,MBA:385
+AllenCCF-Ontology-2017-33,VISp6a,"Primary visual area, layer 6a",#08858C,190.0,MBA:33,8,133,140,MBA:385
+AllenCCF-Ontology-2017-305,VISp6b,"Primary visual area, layer 6b",#08858C,191.0,MBA:305,8,133,140,MBA:385
+AllenCCF-Ontology-2017-425,VISpl,Posterolateral visual area,#08858C,192.0,MBA:425,8,133,140,MBA:669
+AllenCCF-Ontology-2017-750,VISpl1,"Posterolateral visual area, layer 1",#08858C,193.0,MBA:750,8,133,140,MBA:425
+AllenCCF-Ontology-2017-269,VISpl2/3,"Posterolateral visual area, layer 2/3",#08858C,194.0,MBA:269,8,133,140,MBA:425
+AllenCCF-Ontology-2017-869,VISpl4,"Posterolateral visual area, layer 4",#08858C,195.0,MBA:869,8,133,140,MBA:425
+AllenCCF-Ontology-2017-902,VISpl5,"Posterolateral visual area, layer 5",#08858C,196.0,MBA:902,8,133,140,MBA:425
+AllenCCF-Ontology-2017-377,VISpl6a,"Posterolateral visual area, layer 6a",#08858C,197.0,MBA:377,8,133,140,MBA:425
+AllenCCF-Ontology-2017-393,VISpl6b,"Posterolateral visual area, layer 6b",#08858C,198.0,MBA:393,8,133,140,MBA:425
+AllenCCF-Ontology-2017-533,VISpm,posteromedial visual area,#08858C,199.0,MBA:533,8,133,140,MBA:669
+AllenCCF-Ontology-2017-805,VISpm1,"posteromedial visual area, layer 1",#08858C,200.0,MBA:805,8,133,140,MBA:533
+AllenCCF-Ontology-2017-41,VISpm2/3,"posteromedial visual area, layer 2/3",#08858C,201.0,MBA:41,8,133,140,MBA:533
+AllenCCF-Ontology-2017-501,VISpm4,"posteromedial visual area, layer 4",#08858C,202.0,MBA:501,8,133,140,MBA:533
+AllenCCF-Ontology-2017-565,VISpm5,"posteromedial visual area, layer 5",#08858C,203.0,MBA:565,8,133,140,MBA:533
+AllenCCF-Ontology-2017-257,VISpm6a,"posteromedial visual area, layer 6a",#08858C,204.0,MBA:257,8,133,140,MBA:533
+AllenCCF-Ontology-2017-469,VISpm6b,"posteromedial visual area, layer 6b",#08858C,205.0,MBA:469,8,133,140,MBA:533
+AllenCCF-Ontology-2017-312782574,VISli,Laterointermediate area,#08858C,206.0,MBA:312782574,8,133,140,MBA:669
+AllenCCF-Ontology-2017-312782578,VISli1,"Laterointermediate area, layer 1",#08858C,207.0,MBA:312782578,8,133,140,MBA:312782574
+AllenCCF-Ontology-2017-312782582,VISli2/3,"Laterointermediate area, layer 2/3",#08858C,208.0,MBA:312782582,8,133,140,MBA:312782574
+AllenCCF-Ontology-2017-312782586,VISli4,"Laterointermediate area, layer 4",#08858C,209.0,MBA:312782586,8,133,140,MBA:312782574
+AllenCCF-Ontology-2017-312782590,VISli5,"Laterointermediate area, layer 5",#08858C,210.0,MBA:312782590,8,133,140,MBA:312782574
+AllenCCF-Ontology-2017-312782594,VISli6a,"Laterointermediate area, layer 6a",#08858C,211.0,MBA:312782594,8,133,140,MBA:312782574
+AllenCCF-Ontology-2017-312782598,VISli6b,"Laterointermediate area, layer 6b",#08858C,212.0,MBA:312782598,8,133,140,MBA:312782574
+AllenCCF-Ontology-2017-312782628,VISpor,Postrhinal area,#08858C,213.0,MBA:312782628,8,133,140,MBA:669
+AllenCCF-Ontology-2017-312782632,VISpor1,"Postrhinal area, layer 1",#08858C,214.0,MBA:312782632,8,133,140,MBA:312782628
+AllenCCF-Ontology-2017-312782636,VISpor2/3,"Postrhinal area, layer 2/3",#08858C,215.0,MBA:312782636,8,133,140,MBA:312782628
+AllenCCF-Ontology-2017-312782640,VISpor4,"Postrhinal area, layer 4",#08858C,216.0,MBA:312782640,8,133,140,MBA:312782628
+AllenCCF-Ontology-2017-312782644,VISpor5,"Postrhinal area, layer 5",#08858C,217.0,MBA:312782644,8,133,140,MBA:312782628
+AllenCCF-Ontology-2017-312782648,VISpor6a,"Postrhinal area, layer 6a",#08858C,218.0,MBA:312782648,8,133,140,MBA:312782628
+AllenCCF-Ontology-2017-312782652,VISpor6b,"Postrhinal area, layer 6b",#08858C,219.0,MBA:312782652,8,133,140,MBA:312782628
+AllenCCF-Ontology-2017-31,ACA,Anterior cingulate area,#40A666,220.0,MBA:31,64,166,102,MBA:315
+AllenCCF-Ontology-2017-572,ACA1,"Anterior cingulate area, layer 1",#40A666,221.0,MBA:572,64,166,102,MBA:31
+AllenCCF-Ontology-2017-1053,ACA2/3,"Anterior cingulate area, layer 2/3",#40A666,222.0,MBA:1053,64,166,102,MBA:31
+AllenCCF-Ontology-2017-739,ACA5,"Anterior cingulate area, layer 5",#40A666,223.0,MBA:739,64,166,102,MBA:31
+AllenCCF-Ontology-2017-179,ACA6a,"Anterior cingulate area, layer 6a",#40A666,224.0,MBA:179,64,166,102,MBA:31
+AllenCCF-Ontology-2017-227,ACA6b,"Anterior cingulate area, layer 6b",#40A666,225.0,MBA:227,64,166,102,MBA:31
+AllenCCF-Ontology-2017-39,ACAd,"Anterior cingulate area, dorsal part",#40A666,226.0,MBA:39,64,166,102,MBA:31
+AllenCCF-Ontology-2017-935,ACAd1,"Anterior cingulate area, dorsal part, layer 1",#40A666,227.0,MBA:935,64,166,102,MBA:39
+AllenCCF-Ontology-2017-211,ACAd2/3,"Anterior cingulate area, dorsal part, layer 2/3",#40A666,228.0,MBA:211,64,166,102,MBA:39
+AllenCCF-Ontology-2017-1015,ACAd5,"Anterior cingulate area, dorsal part, layer 5",#40A666,229.0,MBA:1015,64,166,102,MBA:39
+AllenCCF-Ontology-2017-919,ACAd6a,"Anterior cingulate area, dorsal part, layer 6a",#40A666,230.0,MBA:919,64,166,102,MBA:39
+AllenCCF-Ontology-2017-927,ACAd6b,"Anterior cingulate area, dorsal part, layer 6b",#40A666,231.0,MBA:927,64,166,102,MBA:39
+AllenCCF-Ontology-2017-48,ACAv,"Anterior cingulate area, ventral part",#40A666,232.0,MBA:48,64,166,102,MBA:31
+AllenCCF-Ontology-2017-588,ACAv1,"Anterior cingulate area, ventral part, layer 1",#40A666,233.0,MBA:588,64,166,102,MBA:48
+AllenCCF-Ontology-2017-296,ACAv2/3,"Anterior cingulate area, ventral part, layer 2/3",#40A666,234.0,MBA:296,64,166,102,MBA:48
+AllenCCF-Ontology-2017-772,ACAv5,"Anterior cingulate area, ventral part, layer 5",#40A666,235.0,MBA:772,64,166,102,MBA:48
+AllenCCF-Ontology-2017-810,ACAv6a,"Anterior cingulate area, ventral part, 6a",#40A666,236.0,MBA:810,64,166,102,MBA:48
+AllenCCF-Ontology-2017-819,ACAv6b,"Anterior cingulate area, ventral part, 6b",#40A666,237.0,MBA:819,64,166,102,MBA:48
+AllenCCF-Ontology-2017-972,PL,Prelimbic area,#2FA850,238.0,MBA:972,47,168,80,MBA:315
+AllenCCF-Ontology-2017-171,PL1,"Prelimbic area, layer 1",#2FA850,239.0,MBA:171,47,168,80,MBA:972
+AllenCCF-Ontology-2017-195,PL2,"Prelimbic area, layer 2",#2FA850,240.0,MBA:195,47,168,80,MBA:972
+AllenCCF-Ontology-2017-304,PL2/3,"Prelimbic area, layer 2/3",#2FA850,241.0,MBA:304,47,168,80,MBA:972
+AllenCCF-Ontology-2017-363,PL5,"Prelimbic area, layer 5",#2FA850,242.0,MBA:363,47,168,80,MBA:972
+AllenCCF-Ontology-2017-84,PL6a,"Prelimbic area, layer 6a",#2FA850,243.0,MBA:84,47,168,80,MBA:972
+AllenCCF-Ontology-2017-132,PL6b,"Prelimbic area, layer 6b",#2FA850,244.0,MBA:132,47,168,80,MBA:972
+AllenCCF-Ontology-2017-44,ILA,Infralimbic area,#59B363,245.0,MBA:44,89,179,99,MBA:315
+AllenCCF-Ontology-2017-707,ILA1,"Infralimbic area, layer 1",#59B363,246.0,MBA:707,89,179,99,MBA:44
+AllenCCF-Ontology-2017-747,ILA2,"Infralimbic area, layer 2",#59B363,247.0,MBA:747,89,179,99,MBA:44
+AllenCCF-Ontology-2017-556,ILA2/3,"Infralimbic area, layer 2/3",#59B363,248.0,MBA:556,89,179,99,MBA:44
+AllenCCF-Ontology-2017-827,ILA5,"Infralimbic area, layer 5",#59B363,249.0,MBA:827,89,179,99,MBA:44
+AllenCCF-Ontology-2017-1054,ILA6a,"Infralimbic area, layer 6a",#59B363,250.0,MBA:1054,89,179,99,MBA:44
+AllenCCF-Ontology-2017-1081,ILA6b,"Infralimbic area, layer 6b",#59B363,251.0,MBA:1081,89,179,99,MBA:44
+AllenCCF-Ontology-2017-714,ORB,Orbital area,#248A5E,252.0,MBA:714,36,138,94,MBA:315
+AllenCCF-Ontology-2017-264,ORB1,"Orbital area, layer 1",#248A5E,253.0,MBA:264,36,138,94,MBA:714
+AllenCCF-Ontology-2017-492,ORB2/3,"Orbital area, layer 2/3",#248A5E,254.0,MBA:492,36,138,94,MBA:714
+AllenCCF-Ontology-2017-352,ORB5,"Orbital area, layer 5",#248A5E,255.0,MBA:352,36,138,94,MBA:714
+AllenCCF-Ontology-2017-476,ORB6a,"Orbital area, layer 6a",#248A5E,256.0,MBA:476,36,138,94,MBA:714
+AllenCCF-Ontology-2017-516,ORB6b,"Orbital area, layer 6b",#248A5E,257.0,MBA:516,36,138,94,MBA:714
+AllenCCF-Ontology-2017-723,ORBl,"Orbital area, lateral part",#248A5E,258.0,MBA:723,36,138,94,MBA:714
+AllenCCF-Ontology-2017-448,ORBl1,"Orbital area, lateral part, layer 1",#248A5E,259.0,MBA:448,36,138,94,MBA:723
+AllenCCF-Ontology-2017-412,ORBl2/3,"Orbital area, lateral part, layer 2/3",#248A5E,260.0,MBA:412,36,138,94,MBA:723
+AllenCCF-Ontology-2017-630,ORBl5,"Orbital area, lateral part, layer 5",#248A5E,261.0,MBA:630,36,138,94,MBA:723
+AllenCCF-Ontology-2017-440,ORBl6a,"Orbital area, lateral part, layer 6a",#248A5E,262.0,MBA:440,36,138,94,MBA:723
+AllenCCF-Ontology-2017-488,ORBl6b,"Orbital area, lateral part, layer 6b",#248A5E,263.0,MBA:488,36,138,94,MBA:723
+AllenCCF-Ontology-2017-731,ORBm,"Orbital area, medial part",#248A5E,264.0,MBA:731,36,138,94,MBA:714
+AllenCCF-Ontology-2017-484,ORBm1,"Orbital area, medial part, layer 1",#248A5E,265.0,MBA:484,36,138,94,MBA:731
+AllenCCF-Ontology-2017-524,ORBm2,"Orbital area, medial part, layer 2",#248A5E,266.0,MBA:524,36,138,94,MBA:731
+AllenCCF-Ontology-2017-582,ORBm2/3,"Orbital area, medial part, layer 2/3",#248A5E,267.0,MBA:582,36,138,94,MBA:731
+AllenCCF-Ontology-2017-620,ORBm5,"Orbital area, medial part, layer 5",#248A5E,268.0,MBA:620,36,138,94,MBA:731
+AllenCCF-Ontology-2017-910,ORBm6a,"Orbital area, medial part, layer 6a",#248A5E,269.0,MBA:910,36,138,94,MBA:731
+AllenCCF-Ontology-2017-527696977,ORBm6b,"Orbital area, medial part, layer 6b",#248A5E,270.0,MBA:527696977,36,138,94,MBA:731
+AllenCCF-Ontology-2017-738,ORBv,"Orbital area, ventral part",#248A5E,271.0,MBA:738,36,138,94,MBA:714
+AllenCCF-Ontology-2017-746,ORBvl,"Orbital area, ventrolateral part",#248A5E,272.0,MBA:746,36,138,94,MBA:714
+AllenCCF-Ontology-2017-969,ORBvl1,"Orbital area, ventrolateral part, layer 1",#248A5E,273.0,MBA:969,36,138,94,MBA:746
+AllenCCF-Ontology-2017-288,ORBvl2/3,"Orbital area, ventrolateral part, layer 2/3",#248A5E,274.0,MBA:288,36,138,94,MBA:746
+AllenCCF-Ontology-2017-1125,ORBvl5,"Orbital area, ventrolateral part, layer 5",#248A5E,275.0,MBA:1125,36,138,94,MBA:746
+AllenCCF-Ontology-2017-608,ORBvl6a,"Orbital area, ventrolateral part, layer 6a",#248A5E,276.0,MBA:608,36,138,94,MBA:746
+AllenCCF-Ontology-2017-680,ORBvl6b,"Orbital area, ventrolateral part, layer 6b",#248A5E,277.0,MBA:680,36,138,94,MBA:746
+AllenCCF-Ontology-2017-95,AI,Agranular insular area,#219866,278.0,MBA:95,33,152,102,MBA:315
+AllenCCF-Ontology-2017-104,AId,"Agranular insular area, dorsal part",#219866,279.0,MBA:104,33,152,102,MBA:95
+AllenCCF-Ontology-2017-996,AId1,"Agranular insular area, dorsal part, layer 1",#219866,280.0,MBA:996,33,152,102,MBA:104
+AllenCCF-Ontology-2017-328,AId2/3,"Agranular insular area, dorsal part, layer 2/3",#219866,281.0,MBA:328,33,152,102,MBA:104
+AllenCCF-Ontology-2017-1101,AId5,"Agranular insular area, dorsal part, layer 5",#219866,282.0,MBA:1101,33,152,102,MBA:104
+AllenCCF-Ontology-2017-783,AId6a,"Agranular insular area, dorsal part, layer 6a",#219866,283.0,MBA:783,33,152,102,MBA:104
+AllenCCF-Ontology-2017-831,AId6b,"Agranular insular area, dorsal part, layer 6b",#219866,284.0,MBA:831,33,152,102,MBA:104
+AllenCCF-Ontology-2017-111,AIp,"Agranular insular area, posterior part",#219866,285.0,MBA:111,33,152,102,MBA:95
+AllenCCF-Ontology-2017-120,AIp1,"Agranular insular area, posterior part, layer 1",#219866,286.0,MBA:120,33,152,102,MBA:111
+AllenCCF-Ontology-2017-163,AIp2/3,"Agranular insular area, posterior part, layer 2/3",#219866,287.0,MBA:163,33,152,102,MBA:111
+AllenCCF-Ontology-2017-344,AIp5,"Agranular insular area, posterior part, layer 5",#219866,288.0,MBA:344,33,152,102,MBA:111
+AllenCCF-Ontology-2017-314,AIp6a,"Agranular insular area, posterior part, layer 6a",#219866,289.0,MBA:314,33,152,102,MBA:111
+AllenCCF-Ontology-2017-355,AIp6b,"Agranular insular area, posterior part, layer 6b",#219866,290.0,MBA:355,33,152,102,MBA:111
+AllenCCF-Ontology-2017-119,AIv,"Agranular insular area, ventral part",#219866,291.0,MBA:119,33,152,102,MBA:95
+AllenCCF-Ontology-2017-704,AIv1,"Agranular insular area, ventral part, layer 1",#219866,292.0,MBA:704,33,152,102,MBA:119
+AllenCCF-Ontology-2017-694,AIv2/3,"Agranular insular area, ventral part, layer 2/3",#219866,293.0,MBA:694,33,152,102,MBA:119
+AllenCCF-Ontology-2017-800,AIv5,"Agranular insular area, ventral part, layer 5",#219866,294.0,MBA:800,33,152,102,MBA:119
+AllenCCF-Ontology-2017-675,AIv6a,"Agranular insular area, ventral part, layer 6a",#219866,295.0,MBA:675,33,152,102,MBA:119
+AllenCCF-Ontology-2017-699,AIv6b,"Agranular insular area, ventral part, layer 6b",#219866,296.0,MBA:699,33,152,102,MBA:119
+AllenCCF-Ontology-2017-254,RSP,Retrosplenial area,#1AA698,297.0,MBA:254,26,166,152,MBA:315
+AllenCCF-Ontology-2017-894,RSPagl,"Retrosplenial area, lateral agranular part",#1AA698,298.0,MBA:894,26,166,152,MBA:254
+AllenCCF-Ontology-2017-671,RSPagl1,"Retrosplenial area, lateral agranular part, layer 1",#1AA698,299.0,MBA:671,26,166,152,MBA:894
+AllenCCF-Ontology-2017-965,RSPagl2/3,"Retrosplenial area, lateral agranular part, layer 2/3",#1AA698,300.0,MBA:965,26,166,152,MBA:894
+AllenCCF-Ontology-2017-774,RSPagl5,"Retrosplenial area, lateral agranular part, layer 5",#1AA698,301.0,MBA:774,26,166,152,MBA:894
+AllenCCF-Ontology-2017-906,RSPagl6a,"Retrosplenial area, lateral agranular part, layer 6a",#1AA698,302.0,MBA:906,26,166,152,MBA:894
+AllenCCF-Ontology-2017-279,RSPagl6b,"Retrosplenial area, lateral agranular part, layer 6b",#1AA698,303.0,MBA:279,26,166,152,MBA:894
+AllenCCF-Ontology-2017-480149258,VISmma,Mediomedial anterior visual area,#1AA698,304.0,MBA:480149258,26,166,152,MBA:894
+AllenCCF-Ontology-2017-480149262,VISmma1,"Mediomedial anterior visual area, layer 1",#1AA698,305.0,MBA:480149262,26,166,152,MBA:480149258
+AllenCCF-Ontology-2017-480149266,VISmma2/3,"Mediomedial anterior visual area, layer 2/3",#1AA698,306.0,MBA:480149266,26,166,152,MBA:480149258
+AllenCCF-Ontology-2017-480149270,VISmma4,"Mediomedial anterior visual area, layer 4",#1AA698,307.0,MBA:480149270,26,166,152,MBA:480149258
+AllenCCF-Ontology-2017-480149274,VISmma5,"Mediomedial anterior visual area,layer 5",#1AA698,308.0,MBA:480149274,26,166,152,MBA:480149258
+AllenCCF-Ontology-2017-480149278,VISmma6a,"Mediomedial anterior visual area, layer 6a",#1AA698,309.0,MBA:480149278,26,166,152,MBA:480149258
+AllenCCF-Ontology-2017-480149282,VISmma6b,"Mediomedial anterior visual area, layer 6b",#1AA698,310.0,MBA:480149282,26,166,152,MBA:480149258
+AllenCCF-Ontology-2017-480149286,VISmmp,Mediomedial posterior visual area,#1AA698,311.0,MBA:480149286,26,166,152,MBA:894
+AllenCCF-Ontology-2017-480149290,VISmmp1,"Mediomedial posterior visual area, layer 1",#1AA698,312.0,MBA:480149290,26,166,152,MBA:480149286
+AllenCCF-Ontology-2017-480149294,VISmmp2/3,"Mediomedial posterior visual area, layer 2/3",#1AA698,313.0,MBA:480149294,26,166,152,MBA:480149286
+AllenCCF-Ontology-2017-480149298,VISmmp4,"Mediomedial posterior visual area, layer 4",#1AA698,314.0,MBA:480149298,26,166,152,MBA:480149286
+AllenCCF-Ontology-2017-480149302,VISmmp5,"Mediomedial posterior visual area,layer 5",#1AA698,315.0,MBA:480149302,26,166,152,MBA:480149286
+AllenCCF-Ontology-2017-480149306,VISmmp6a,"Mediomedial posterior visual area, layer 6a",#1AA698,316.0,MBA:480149306,26,166,152,MBA:480149286
+AllenCCF-Ontology-2017-480149310,VISmmp6b,"Mediomedial posterior visual area, layer 6b",#1AA698,317.0,MBA:480149310,26,166,152,MBA:480149286
+AllenCCF-Ontology-2017-480149314,VISm,Medial visual area,#1AA698,318.0,MBA:480149314,26,166,152,MBA:894
+AllenCCF-Ontology-2017-480149318,VISm1,"Medial visual area, layer 1",#1AA698,319.0,MBA:480149318,26,166,152,MBA:480149314
+AllenCCF-Ontology-2017-480149322,VISm2/3,"Medial visual area, layer 2/3",#1AA698,320.0,MBA:480149322,26,166,152,MBA:480149314
+AllenCCF-Ontology-2017-480149326,VISm4,"Medial visual area, layer 4",#1AA698,321.0,MBA:480149326,26,166,152,MBA:480149314
+AllenCCF-Ontology-2017-480149330,VISm5,"Medial visual area,layer 5",#1AA698,322.0,MBA:480149330,26,166,152,MBA:480149314
+AllenCCF-Ontology-2017-480149334,VISm6a,"Medial visual area, layer 6a",#1AA698,323.0,MBA:480149334,26,166,152,MBA:480149314
+AllenCCF-Ontology-2017-480149338,VISm6b,"Medial visual area, layer 6b",#1AA698,324.0,MBA:480149338,26,166,152,MBA:480149314
+AllenCCF-Ontology-2017-879,RSPd,"Retrosplenial area, dorsal part",#1AA698,325.0,MBA:879,26,166,152,MBA:254
+AllenCCF-Ontology-2017-442,RSPd1,"Retrosplenial area, dorsal part, layer 1",#1AA698,326.0,MBA:442,26,166,152,MBA:879
+AllenCCF-Ontology-2017-434,RSPd2/3,"Retrosplenial area, dorsal part, layer 2/3",#1AA698,327.0,MBA:434,26,166,152,MBA:879
+AllenCCF-Ontology-2017-545,RSPd4,"Retrosplenial area, dorsal part, layer 4",#1AA698,328.0,MBA:545,26,166,152,MBA:879
+AllenCCF-Ontology-2017-610,RSPd5,"Retrosplenial area, dorsal part, layer 5",#1AA698,329.0,MBA:610,26,166,152,MBA:879
+AllenCCF-Ontology-2017-274,RSPd6a,"Retrosplenial area, dorsal part, layer 6a",#1AA698,330.0,MBA:274,26,166,152,MBA:879
+AllenCCF-Ontology-2017-330,RSPd6b,"Retrosplenial area, dorsal part, layer 6b",#1AA698,331.0,MBA:330,26,166,152,MBA:879
+AllenCCF-Ontology-2017-886,RSPv,"Retrosplenial area, ventral part",#1AA698,332.0,MBA:886,26,166,152,MBA:254
+AllenCCF-Ontology-2017-542,RSPv1,"Retrosplenial area, ventral part, layer 1",#1AA698,333.0,MBA:542,26,166,152,MBA:886
+AllenCCF-Ontology-2017-606,RSPv2,"Retrosplenial area, ventral part, layer 2",#1AA698,334.0,MBA:606,26,166,152,MBA:886
+AllenCCF-Ontology-2017-430,RSPv2/3,"Retrosplenial area, ventral part, layer 2/3",#1AA698,335.0,MBA:430,26,166,152,MBA:886
+AllenCCF-Ontology-2017-687,RSPv5,"Retrosplenial area, ventral part, layer 5",#1AA698,336.0,MBA:687,26,166,152,MBA:886
+AllenCCF-Ontology-2017-590,RSPv6a,"Retrosplenial area, ventral part, layer 6a",#1AA698,337.0,MBA:590,26,166,152,MBA:886
+AllenCCF-Ontology-2017-622,RSPv6b,"Retrosplenial area, ventral part, layer 6b",#1AA698,338.0,MBA:622,26,166,152,MBA:886
+AllenCCF-Ontology-2017-22,PTLp,Posterior parietal association areas,#009FAC,339.0,MBA:22,0,159,172,MBA:315
+AllenCCF-Ontology-2017-532,PTLp1,"Posterior parietal association areas, layer 1",#009FAC,340.0,MBA:532,0,159,172,MBA:22
+AllenCCF-Ontology-2017-241,PTLp2/3,"Posterior parietal association areas, layer 2/3",#009FAC,341.0,MBA:241,0,159,172,MBA:22
+AllenCCF-Ontology-2017-635,PTLp4,"Posterior parietal association areas, layer 4",#009FAC,342.0,MBA:635,0,159,172,MBA:22
+AllenCCF-Ontology-2017-683,PTLp5,"Posterior parietal association areas, layer 5",#009FAC,343.0,MBA:683,0,159,172,MBA:22
+AllenCCF-Ontology-2017-308,PTLp6a,"Posterior parietal association areas, layer 6a",#009FAC,344.0,MBA:308,0,159,172,MBA:22
+AllenCCF-Ontology-2017-340,PTLp6b,"Posterior parietal association areas, layer 6b",#009FAC,345.0,MBA:340,0,159,172,MBA:22
+AllenCCF-Ontology-2017-312782546,VISa,Anterior area,#009FAC,346.0,MBA:312782546,0,159,172,MBA:22
+AllenCCF-Ontology-2017-312782550,VISa1,"Anterior area, layer 1",#009FAC,347.0,MBA:312782550,0,159,172,MBA:312782546
+AllenCCF-Ontology-2017-312782554,VISa2/3,"Anterior area, layer 2/3",#009FAC,348.0,MBA:312782554,0,159,172,MBA:312782546
+AllenCCF-Ontology-2017-312782558,VISa4,"Anterior area, layer 4",#009FAC,349.0,MBA:312782558,0,159,172,MBA:312782546
+AllenCCF-Ontology-2017-312782562,VISa5,"Anterior area, layer 5",#009FAC,350.0,MBA:312782562,0,159,172,MBA:312782546
+AllenCCF-Ontology-2017-312782566,VISa6a,"Anterior area, layer 6a",#009FAC,351.0,MBA:312782566,0,159,172,MBA:312782546
+AllenCCF-Ontology-2017-312782570,VISa6b,"Anterior area, layer 6b",#009FAC,352.0,MBA:312782570,0,159,172,MBA:312782546
+AllenCCF-Ontology-2017-417,VISrl,Rostrolateral visual area,#009FAC,353.0,MBA:417,0,159,172,MBA:22
+AllenCCF-Ontology-2017-312782604,VISrl1,"Rostrolateral area, layer 1",#009FAC,354.0,MBA:312782604,0,159,172,MBA:417
+AllenCCF-Ontology-2017-312782608,VISrl2/3,"Rostrolateral area, layer 2/3",#009FAC,355.0,MBA:312782608,0,159,172,MBA:417
+AllenCCF-Ontology-2017-312782612,VISrl4,"Rostrolateral area, layer 4",#009FAC,356.0,MBA:312782612,0,159,172,MBA:417
+AllenCCF-Ontology-2017-312782616,VISrl5,"Rostrolateral area, layer 5",#009FAC,357.0,MBA:312782616,0,159,172,MBA:417
+AllenCCF-Ontology-2017-312782620,VISrl6a,"Rostrolateral area, layer 6a",#009FAC,358.0,MBA:312782620,0,159,172,MBA:417
+AllenCCF-Ontology-2017-312782624,VISrl6b,"Rostrolateral area, layer 6b",#009FAC,359.0,MBA:312782624,0,159,172,MBA:417
+AllenCCF-Ontology-2017-541,TEa,Temporal association areas,#15B0B3,360.0,MBA:541,21,176,179,MBA:315
+AllenCCF-Ontology-2017-97,TEa1,"Temporal association areas, layer 1",#15B0B3,361.0,MBA:97,21,176,179,MBA:541
+AllenCCF-Ontology-2017-1127,TEa2/3,"Temporal association areas, layer 2/3",#15B0B3,362.0,MBA:1127,21,176,179,MBA:541
+AllenCCF-Ontology-2017-234,TEa4,"Temporal association areas, layer 4",#15B0B3,363.0,MBA:234,21,176,179,MBA:541
+AllenCCF-Ontology-2017-289,TEa5,"Temporal association areas, layer 5",#15B0B3,364.0,MBA:289,21,176,179,MBA:541
+AllenCCF-Ontology-2017-729,TEa6a,"Temporal association areas, layer 6a",#15B0B3,365.0,MBA:729,21,176,179,MBA:541
+AllenCCF-Ontology-2017-786,TEa6b,"Temporal association areas, layer 6b",#15B0B3,366.0,MBA:786,21,176,179,MBA:541
+AllenCCF-Ontology-2017-922,PERI,Perirhinal area,#0E9684,367.0,MBA:922,14,150,132,MBA:315
+AllenCCF-Ontology-2017-540,PERI1,"Perirhinal area, layer 1",#0E9684,368.0,MBA:540,14,150,132,MBA:922
+AllenCCF-Ontology-2017-888,PERI2/3,"Perirhinal area, layer 2/3",#0E9684,369.0,MBA:888,14,150,132,MBA:922
+AllenCCF-Ontology-2017-692,PERI5,"Perirhinal area, layer 5",#0E9684,370.0,MBA:692,14,150,132,MBA:922
+AllenCCF-Ontology-2017-335,PERI6a,"Perirhinal area, layer 6a",#0E9684,371.0,MBA:335,14,150,132,MBA:922
+AllenCCF-Ontology-2017-368,PERI6b,"Perirhinal area, layer 6b",#0E9684,372.0,MBA:368,14,150,132,MBA:922
+AllenCCF-Ontology-2017-895,ECT,Ectorhinal area,#0D9F91,373.0,MBA:895,13,159,145,MBA:315
+AllenCCF-Ontology-2017-836,ECT1,Ectorhinal area/Layer 1,#0D9F91,374.0,MBA:836,13,159,145,MBA:895
+AllenCCF-Ontology-2017-427,ECT2/3,Ectorhinal area/Layer 2/3,#0D9F91,375.0,MBA:427,13,159,145,MBA:895
+AllenCCF-Ontology-2017-988,ECT5,Ectorhinal area/Layer 5,#0D9F91,376.0,MBA:988,13,159,145,MBA:895
+AllenCCF-Ontology-2017-977,ECT6a,Ectorhinal area/Layer 6a,#0D9F91,377.0,MBA:977,13,159,145,MBA:895
+AllenCCF-Ontology-2017-1045,ECT6b,Ectorhinal area/Layer 6b,#0D9F91,378.0,MBA:1045,13,159,145,MBA:895
+AllenCCF-Ontology-2017-698,OLF,Olfactory areas,#9AD2BD,379.0,MBA:698,154,210,189,MBA:695
+AllenCCF-Ontology-2017-507,MOB,Main olfactory bulb,#9AD2BD,380.0,MBA:507,154,210,189,MBA:698
+AllenCCF-Ontology-2017-212,MOBgl,"Main olfactory bulb, glomerular layer",#82C7AE,381.0,MBA:212,130,199,174,MBA:507
+AllenCCF-Ontology-2017-220,MOBgr,"Main olfactory bulb, granule layer",#82C7AE,382.0,MBA:220,130,199,174,MBA:507
+AllenCCF-Ontology-2017-228,MOBipl,"Main olfactory bulb, inner plexiform layer",#9AD2BD,383.0,MBA:228,154,210,189,MBA:507
+AllenCCF-Ontology-2017-236,MOBmi,"Main olfactory bulb, mitral layer",#82C7AE,384.0,MBA:236,130,199,174,MBA:507
+AllenCCF-Ontology-2017-244,MOBopl,"Main olfactory bulb, outer plexiform layer",#9AD2BD,385.0,MBA:244,154,210,189,MBA:507
+AllenCCF-Ontology-2017-151,AOB,Accessory olfactory bulb,#9DF0D2,386.0,MBA:151,157,240,210,MBA:698
+AllenCCF-Ontology-2017-188,AOBgl,"Accessory olfactory bulb, glomerular layer",#9DF0D2,387.0,MBA:188,157,240,210,MBA:151
+AllenCCF-Ontology-2017-196,AOBgr,"Accessory olfactory bulb, granular layer",#95E4C8,388.0,MBA:196,149,228,200,MBA:151
+AllenCCF-Ontology-2017-204,AOBmi,"Accessory olfactory bulb, mitral layer",#9DF0D2,389.0,MBA:204,157,240,210,MBA:151
+AllenCCF-Ontology-2017-159,AON,Anterior olfactory nucleus,#54BF94,390.0,MBA:159,84,191,148,MBA:698
+AllenCCF-Ontology-2017-167,AONd,"Anterior olfactory nucleus, dorsal part",#54BF94,391.0,MBA:167,84,191,148,MBA:159
+AllenCCF-Ontology-2017-175,AONe,"Anterior olfactory nucleus, external part",#54BF94,392.0,MBA:175,84,191,148,MBA:159
+AllenCCF-Ontology-2017-183,AONl,"Anterior olfactory nucleus, lateral part",#54BF94,393.0,MBA:183,84,191,148,MBA:159
+AllenCCF-Ontology-2017-191,AONm,"Anterior olfactory nucleus, medial part",#54BF94,394.0,MBA:191,84,191,148,MBA:159
+AllenCCF-Ontology-2017-199,AONpv,"Anterior olfactory nucleus, posteroventral part",#54BF94,395.0,MBA:199,84,191,148,MBA:159
+AllenCCF-Ontology-2017-160,AON1,"Anterior olfactory nucleus, layer 1",#54BF94,396.0,MBA:160,84,191,148,MBA:159
+AllenCCF-Ontology-2017-168,AON2,"Anterior olfactory nucleus, layer 2",#54BF94,397.0,MBA:168,84,191,148,MBA:159
+AllenCCF-Ontology-2017-589,TT,Taenia tecta,#62D09F,398.0,MBA:589,98,208,159,MBA:698
+AllenCCF-Ontology-2017-597,TTd,"Taenia tecta, dorsal part",#62D09F,399.0,MBA:597,98,208,159,MBA:589
+AllenCCF-Ontology-2017-297,TTd1-4,"Taenia tecta, dorsal part, layers 1-4",#62D09F,400.0,MBA:297,98,208,159,MBA:597
+AllenCCF-Ontology-2017-1034,TTd1,"Taenia tecta, dorsal part, layer 1",#62D09F,401.0,MBA:1034,98,208,159,MBA:597
+AllenCCF-Ontology-2017-1042,TTd2,"Taenia tecta, dorsal part, layer 2",#62D09F,402.0,MBA:1042,98,208,159,MBA:597
+AllenCCF-Ontology-2017-1050,TTd3,"Taenia tecta, dorsal part, layer 3",#62D09F,403.0,MBA:1050,98,208,159,MBA:597
+AllenCCF-Ontology-2017-1059,TTd4,"Taenia tecta, dorsal part, layer 4",#62D09F,404.0,MBA:1059,98,208,159,MBA:597
+AllenCCF-Ontology-2017-605,TTv,"Taenia tecta, ventral part",#62D09F,405.0,MBA:605,98,208,159,MBA:589
+AllenCCF-Ontology-2017-306,TTv1-3,"Taenia tecta, ventral part, layers 1-3",#62D09F,406.0,MBA:306,98,208,159,MBA:605
+AllenCCF-Ontology-2017-1067,TTv1,"Taenia tecta, ventral part, layer 1",#62D09F,407.0,MBA:1067,98,208,159,MBA:605
+AllenCCF-Ontology-2017-1075,TTv2,"Taenia tecta, ventral part, layer 2",#62D09F,408.0,MBA:1075,98,208,159,MBA:605
+AllenCCF-Ontology-2017-1082,TTv3,"Taenia tecta, ventral part, layer 3",#62D09F,409.0,MBA:1082,98,208,159,MBA:605
+AllenCCF-Ontology-2017-814,DP,Dorsal peduncular area,#A4DAA4,410.0,MBA:814,164,218,164,MBA:698
+AllenCCF-Ontology-2017-496,DP1,"Dorsal peduncular area, layer 1",#A4DAA4,411.0,MBA:496,164,218,164,MBA:814
+AllenCCF-Ontology-2017-535,DP2,"Dorsal peduncular area, layer 2",#A4DAA4,412.0,MBA:535,164,218,164,MBA:814
+AllenCCF-Ontology-2017-360,DP2/3,"Dorsal peduncular area, layer 2/3",#A4DAA4,413.0,MBA:360,164,218,164,MBA:814
+AllenCCF-Ontology-2017-646,DP5,"Dorsal peduncular area, layer 5",#A4DAA4,414.0,MBA:646,164,218,164,MBA:814
+AllenCCF-Ontology-2017-267,DP6a,"Dorsal peduncular area, layer 6a",#A4DAA4,415.0,MBA:267,164,218,164,MBA:814
+AllenCCF-Ontology-2017-961,PIR,Piriform area,#6ACBBA,416.0,MBA:961,106,203,186,MBA:698
+AllenCCF-Ontology-2017-152,PIR1-3,"Piriform area, layers 1-3",#6ACBBA,417.0,MBA:152,106,203,186,MBA:961
+AllenCCF-Ontology-2017-276,PIR1,"Piriform area, molecular layer",#6ACBBA,418.0,MBA:276,106,203,186,MBA:961
+AllenCCF-Ontology-2017-284,PIR2,"Piriform area, pyramidal layer",#6ACBBA,419.0,MBA:284,106,203,186,MBA:961
+AllenCCF-Ontology-2017-291,PIR3,"Piriform area, polymorph layer",#6ACBBA,420.0,MBA:291,106,203,186,MBA:961
+AllenCCF-Ontology-2017-619,NLOT,Nucleus of the lateral olfactory tract,#95E4C8,421.0,MBA:619,149,228,200,MBA:698
+AllenCCF-Ontology-2017-392,NLOT1-3,"Nucleus of the lateral olfactory tract, layers 1-3",#95E4C8,422.0,MBA:392,149,228,200,MBA:619
+AllenCCF-Ontology-2017-260,NLOT1,"Nucleus of the lateral olfactory tract, molecular layer",#95E4C8,423.0,MBA:260,149,228,200,MBA:619
+AllenCCF-Ontology-2017-268,NLOT2,"Nucleus of the lateral olfactory tract, pyramidal layer",#95E4C8,424.0,MBA:268,149,228,200,MBA:619
+AllenCCF-Ontology-2017-1139,NLOT3,"Nucleus of the lateral olfactory tract, layer 3",#95E4C8,425.0,MBA:1139,149,228,200,MBA:619
+AllenCCF-Ontology-2017-631,COA,Cortical amygdalar area,#61E7B7,426.0,MBA:631,97,231,183,MBA:698
+AllenCCF-Ontology-2017-639,COAa,"Cortical amygdalar area, anterior part",#61E7B7,427.0,MBA:639,97,231,183,MBA:631
+AllenCCF-Ontology-2017-192,COAa1,"Cortical amygdalar area, anterior part, layer 1",#61E7B7,428.0,MBA:192,97,231,183,MBA:639
+AllenCCF-Ontology-2017-200,COAa2,"Cortical amygdalar area, anterior part, layer 2",#61E7B7,429.0,MBA:200,97,231,183,MBA:639
+AllenCCF-Ontology-2017-208,COAa3,"Cortical amygdalar area, anterior part, layer 3",#61E7B7,430.0,MBA:208,97,231,183,MBA:639
+AllenCCF-Ontology-2017-647,COAp,"Cortical amygdalar area, posterior part",#61E7B7,431.0,MBA:647,97,231,183,MBA:631
+AllenCCF-Ontology-2017-655,COApl,"Cortical amygdalar area, posterior part, lateral zone",#61E7B7,432.0,MBA:655,97,231,183,MBA:647
+AllenCCF-Ontology-2017-584,COApl1-2,"Cortical amygdalar area, posterior part, lateral zone, layers 1-2",#61E7B7,433.0,MBA:584,97,231,183,MBA:655
+AllenCCF-Ontology-2017-376,COApl1-3,"Cortical amygdalar area, posterior part, lateral zone, layers 1-3",#61E7B7,434.0,MBA:376,97,231,183,MBA:655
+AllenCCF-Ontology-2017-216,COApl1,"Cortical amygdalar area, posterior part, lateral zone, layer 1",#61E7B7,435.0,MBA:216,97,231,183,MBA:655
+AllenCCF-Ontology-2017-224,COApl2,"Cortical amygdalar area, posterior part, lateral zone, layer 2",#61E7B7,436.0,MBA:224,97,231,183,MBA:655
+AllenCCF-Ontology-2017-232,COApl3,"Cortical amygdalar area, posterior part, lateral zone, layer 3",#61E7B7,437.0,MBA:232,97,231,183,MBA:655
+AllenCCF-Ontology-2017-663,COApm,"Cortical amygdalar area, posterior part, medial zone",#61E7B7,438.0,MBA:663,97,231,183,MBA:647
+AllenCCF-Ontology-2017-592,COApm1-2,"Cortical amygdalar area, posterior part, medial zone, layers 1-2",#61E7B7,439.0,MBA:592,97,231,183,MBA:663
+AllenCCF-Ontology-2017-383,COApm1-3,"Cortical amygdalar area, posterior part, medial zone, layers 1-3",#61E7B7,440.0,MBA:383,97,231,183,MBA:663
+AllenCCF-Ontology-2017-240,COApm1,"Cortical amygdalar area, posterior part, medial zone, layer 1",#61E7B7,441.0,MBA:240,97,231,183,MBA:663
+AllenCCF-Ontology-2017-248,COApm2,"Cortical amygdalar area, posterior part, medial zone, layer 2",#61E7B7,442.0,MBA:248,97,231,183,MBA:663
+AllenCCF-Ontology-2017-256,COApm3,"Cortical amygdalar area, posterior part, medial zone, layer 3",#61E7B7,443.0,MBA:256,97,231,183,MBA:663
+AllenCCF-Ontology-2017-788,PAA,Piriform-amygdalar area,#59DAAB,444.0,MBA:788,89,218,171,MBA:698
+AllenCCF-Ontology-2017-400,PAA1-3,"Piriform-amygdalar area, layers 1-3",#59DAAB,445.0,MBA:400,89,218,171,MBA:788
+AllenCCF-Ontology-2017-408,PAA1,"Piriform-amygdalar area, molecular layer",#59DAAB,446.0,MBA:408,89,218,171,MBA:788
+AllenCCF-Ontology-2017-416,PAA2,"Piriform-amygdalar area, pyramidal layer",#59DAAB,447.0,MBA:416,89,218,171,MBA:788
+AllenCCF-Ontology-2017-424,PAA3,"Piriform-amygdalar area, polymorph layer",#59DAAB,448.0,MBA:424,89,218,171,MBA:788
+AllenCCF-Ontology-2017-566,TR,Postpiriform transition area,#A8ECD3,449.0,MBA:566,168,236,211,MBA:698
+AllenCCF-Ontology-2017-517,TR1-3,"Postpiriform transition area, layers 1-3",#A8ECD3,450.0,MBA:517,168,236,211,MBA:566
+AllenCCF-Ontology-2017-1140,TR1,"Postpiriform transition area, layers 1",#A8ECD3,451.0,MBA:1140,168,236,211,MBA:566
+AllenCCF-Ontology-2017-1141,TR2,"Postpiriform transition area, layers 2",#A8ECD3,452.0,MBA:1141,168,236,211,MBA:566
+AllenCCF-Ontology-2017-1142,TR3,"Postpiriform transition area, layers 3",#A8ECD3,453.0,MBA:1142,168,236,211,MBA:566
+AllenCCF-Ontology-2017-1089,HPF,Hippocampal formation,#7ED04B,454.0,MBA:1089,126,208,75,MBA:695
+AllenCCF-Ontology-2017-1080,HIP,Hippocampal region,#7ED04B,455.0,MBA:1080,126,208,75,MBA:1089
+AllenCCF-Ontology-2017-375,CA,Ammon's horn,#7ED04B,456.0,MBA:375,126,208,75,MBA:1080
+AllenCCF-Ontology-2017-382,CA1,Field CA1,#7ED04B,457.0,MBA:382,126,208,75,MBA:375
+AllenCCF-Ontology-2017-391,CA1slm,"Field CA1, stratum lacunosum-moleculare",#7ED04B,458.0,MBA:391,126,208,75,MBA:382
+AllenCCF-Ontology-2017-399,CA1so,"Field CA1, stratum oriens",#7ED04B,459.0,MBA:399,126,208,75,MBA:382
+AllenCCF-Ontology-2017-407,CA1sp,"Field CA1, pyramidal layer",#66A83D,460.0,MBA:407,102,168,61,MBA:382
+AllenCCF-Ontology-2017-415,CA1sr,"Field CA1, stratum radiatum",#7ED04B,461.0,MBA:415,126,208,75,MBA:382
+AllenCCF-Ontology-2017-423,CA2,Field CA2,#7ED04B,462.0,MBA:423,126,208,75,MBA:375
+AllenCCF-Ontology-2017-431,CA2slm,"Field CA2, stratum lacunosum-moleculare",#7ED04B,463.0,MBA:431,126,208,75,MBA:423
+AllenCCF-Ontology-2017-438,CA2so,"Field CA2, stratum oriens",#7ED04B,464.0,MBA:438,126,208,75,MBA:423
+AllenCCF-Ontology-2017-446,CA2sp,"Field CA2, pyramidal layer",#66A83D,465.0,MBA:446,102,168,61,MBA:423
+AllenCCF-Ontology-2017-454,CA2sr,"Field CA2, stratum radiatum",#7ED04B,466.0,MBA:454,126,208,75,MBA:423
+AllenCCF-Ontology-2017-463,CA3,Field CA3,#7ED04B,467.0,MBA:463,126,208,75,MBA:375
+AllenCCF-Ontology-2017-471,CA3slm,"Field CA3, stratum lacunosum-moleculare",#7ED04B,468.0,MBA:471,126,208,75,MBA:463
+AllenCCF-Ontology-2017-479,CA3slu,"Field CA3, stratum lucidum",#7ED04B,469.0,MBA:479,126,208,75,MBA:463
+AllenCCF-Ontology-2017-486,CA3so,"Field CA3, stratum oriens",#7ED04B,470.0,MBA:486,126,208,75,MBA:463
+AllenCCF-Ontology-2017-495,CA3sp,"Field CA3, pyramidal layer",#66A83D,471.0,MBA:495,102,168,61,MBA:463
+AllenCCF-Ontology-2017-504,CA3sr,"Field CA3, stratum radiatum",#7ED04B,472.0,MBA:504,126,208,75,MBA:463
+AllenCCF-Ontology-2017-726,DG,Dentate gyrus,#7ED04B,473.0,MBA:726,126,208,75,MBA:1080
+AllenCCF-Ontology-2017-10703,DG-mo,"Dentate gyrus, molecular layer",#7ED04B,474.0,MBA:10703,126,208,75,MBA:726
+AllenCCF-Ontology-2017-10704,DG-po,"Dentate gyrus, polymorph layer",#7ED04B,475.0,MBA:10704,126,208,75,MBA:726
+AllenCCF-Ontology-2017-632,DG-sg,"Dentate gyrus, granule cell layer",#66A83D,476.0,MBA:632,102,168,61,MBA:726
+AllenCCF-Ontology-2017-10702,DG-sgz,"Dentate gyrus, subgranular zone",#7ED04B,477.0,MBA:10702,126,208,75,MBA:726
+AllenCCF-Ontology-2017-734,DGcr,Dentate gyrus crest,#7ED04B,478.0,MBA:734,126,208,75,MBA:726
+AllenCCF-Ontology-2017-742,DGcr-mo,"Dentate gyrus crest, molecular layer",#7ED04B,479.0,MBA:742,126,208,75,MBA:734
+AllenCCF-Ontology-2017-751,DGcr-po,"Dentate gyrus crest, polymorph layer",#7ED04B,480.0,MBA:751,126,208,75,MBA:734
+AllenCCF-Ontology-2017-758,DGcr-sg,"Dentate gyrus crest, granule cell layer",#7ED04B,481.0,MBA:758,126,208,75,MBA:734
+AllenCCF-Ontology-2017-766,DGlb,Dentate gyrus lateral blade,#7ED04B,482.0,MBA:766,126,208,75,MBA:726
+AllenCCF-Ontology-2017-775,DGlb-mo,"Dentate gyrus lateral blade, molecular layer",#7ED04B,483.0,MBA:775,126,208,75,MBA:766
+AllenCCF-Ontology-2017-782,DGlb-po,"Dentate gyrus lateral blade, polymorph layer",#7ED04B,484.0,MBA:782,126,208,75,MBA:766
+AllenCCF-Ontology-2017-790,DGlb-sg,"Dentate gyrus lateral blade, granule cell layer",#7ED04B,485.0,MBA:790,126,208,75,MBA:766
+AllenCCF-Ontology-2017-799,DGmb,Dentate gyrus medial blade,#7ED04B,486.0,MBA:799,126,208,75,MBA:726
+AllenCCF-Ontology-2017-807,DGmb-mo,"Dentate gyrus medial blade, molecular layer",#7ED04B,487.0,MBA:807,126,208,75,MBA:799
+AllenCCF-Ontology-2017-815,DGmb-po,"Dentate gyrus medial blade, polymorph layer",#7ED04B,488.0,MBA:815,126,208,75,MBA:799
+AllenCCF-Ontology-2017-823,DGmb-sg,"Dentate gyrus medial blade, granule cell layer",#7ED04B,489.0,MBA:823,126,208,75,MBA:799
+AllenCCF-Ontology-2017-982,FC,Fasciola cinerea,#7ED04B,490.0,MBA:982,126,208,75,MBA:1080
+AllenCCF-Ontology-2017-19,IG,Induseum griseum,#7ED04B,491.0,MBA:19,126,208,75,MBA:1080
+AllenCCF-Ontology-2017-822,RHP,Retrohippocampal region,#32B825,492.0,MBA:822,50,184,37,MBA:1089
+AllenCCF-Ontology-2017-909,ENT,Entorhinal area,#32B825,493.0,MBA:909,50,184,37,MBA:822
+AllenCCF-Ontology-2017-918,ENTl,"Entorhinal area, lateral part",#32B825,494.0,MBA:918,50,184,37,MBA:909
+AllenCCF-Ontology-2017-1121,ENTl1,"Entorhinal area, lateral part, layer 1",#32B825,495.0,MBA:1121,50,184,37,MBA:918
+AllenCCF-Ontology-2017-20,ENTl2,"Entorhinal area, lateral part, layer 2",#32B825,496.0,MBA:20,50,184,37,MBA:918
+AllenCCF-Ontology-2017-999,ENTl2/3,"Entorhinal area, lateral part, layer 2/3",#32B825,497.0,MBA:999,50,184,37,MBA:918
+AllenCCF-Ontology-2017-715,ENTl2a,"Entorhinal area, lateral part, layer 2a",#32B825,498.0,MBA:715,50,184,37,MBA:918
+AllenCCF-Ontology-2017-764,ENTl2b,"Entorhinal area, lateral part, layer 2b",#32B825,499.0,MBA:764,50,184,37,MBA:918
+AllenCCF-Ontology-2017-52,ENTl3,"Entorhinal area, lateral part, layer 3",#32B825,500.0,MBA:52,50,184,37,MBA:918
+AllenCCF-Ontology-2017-92,ENTl4,"Entorhinal area, lateral part, layer 4",#32B825,501.0,MBA:92,50,184,37,MBA:918
+AllenCCF-Ontology-2017-312,ENTl4/5,"Entorhinal area, lateral part, layer 4/5",#32B825,502.0,MBA:312,50,184,37,MBA:918
+AllenCCF-Ontology-2017-139,ENTl5,"Entorhinal area, lateral part, layer 5",#32B825,503.0,MBA:139,50,184,37,MBA:918
+AllenCCF-Ontology-2017-387,ENTl5/6,"Entorhinal area, lateral part, layer 5/6",#32B825,504.0,MBA:387,50,184,37,MBA:918
+AllenCCF-Ontology-2017-28,ENTl6a,"Entorhinal area, lateral part, layer 6a",#32B825,505.0,MBA:28,50,184,37,MBA:918
+AllenCCF-Ontology-2017-60,ENTl6b,"Entorhinal area, lateral part, layer 6b",#32B825,506.0,MBA:60,50,184,37,MBA:918
+AllenCCF-Ontology-2017-926,ENTm,"Entorhinal area, medial part, dorsal zone",#32B825,507.0,MBA:926,50,184,37,MBA:909
+AllenCCF-Ontology-2017-526,ENTm1,"Entorhinal area, medial part, dorsal zone, layer 1",#32B825,508.0,MBA:526,50,184,37,MBA:926
+AllenCCF-Ontology-2017-543,ENTm2,"Entorhinal area, medial part, dorsal zone, layer 2",#32B825,509.0,MBA:543,50,184,37,MBA:926
+AllenCCF-Ontology-2017-468,ENTm2a,"Entorhinal area, medial part, dorsal zone, layer 2a",#32B825,510.0,MBA:468,50,184,37,MBA:926
+AllenCCF-Ontology-2017-508,ENTm2b,"Entorhinal area, medial part, dorsal zone, layer 2b",#32B825,511.0,MBA:508,50,184,37,MBA:926
+AllenCCF-Ontology-2017-664,ENTm3,"Entorhinal area, medial part, dorsal zone, layer 3",#32B825,512.0,MBA:664,50,184,37,MBA:926
+AllenCCF-Ontology-2017-712,ENTm4,"Entorhinal area, medial part, dorsal zone, layer 4",#32B825,513.0,MBA:712,50,184,37,MBA:926
+AllenCCF-Ontology-2017-727,ENTm5,"Entorhinal area, medial part, dorsal zone, layer 5",#32B825,514.0,MBA:727,50,184,37,MBA:926
+AllenCCF-Ontology-2017-550,ENTm5/6,"Entorhinal area, medial part, dorsal zone, layer 5/6",#32B825,515.0,MBA:550,50,184,37,MBA:926
+AllenCCF-Ontology-2017-743,ENTm6,"Entorhinal area, medial part, dorsal zone, layer 6",#32B825,516.0,MBA:743,50,184,37,MBA:926
+AllenCCF-Ontology-2017-934,ENTmv,"Entorhinal area, medial part, ventral zone",#32B825,517.0,MBA:934,50,184,37,MBA:909
+AllenCCF-Ontology-2017-259,ENTmv1,"Entorhinal area, medial part, ventral zone, layer 1",#32B825,518.0,MBA:259,50,184,37,MBA:934
+AllenCCF-Ontology-2017-324,ENTmv2,"Entorhinal area, medial part, ventral zone, layer 2",#32B825,519.0,MBA:324,50,184,37,MBA:934
+AllenCCF-Ontology-2017-371,ENTmv3,"Entorhinal area, medial part, ventral zone, layer 3",#32B825,520.0,MBA:371,50,184,37,MBA:934
+AllenCCF-Ontology-2017-419,ENTmv4,"Entorhinal area, medial part, ventral zone, layer 4",#32B825,521.0,MBA:419,50,184,37,MBA:934
+AllenCCF-Ontology-2017-1133,ENTmv5/6,"Entorhinal area, medial part, ventral zone, layer 5/6",#32B825,522.0,MBA:1133,50,184,37,MBA:934
+AllenCCF-Ontology-2017-843,PAR,Parasubiculum,#72D569,523.0,MBA:843,114,213,105,MBA:822
+AllenCCF-Ontology-2017-10693,PAR1,"Parasubiculum, layer 1",#72D569,524.0,MBA:10693,114,213,105,MBA:843
+AllenCCF-Ontology-2017-10694,PAR2,"Parasubiculum, layer 2",#72D569,525.0,MBA:10694,114,213,105,MBA:843
+AllenCCF-Ontology-2017-10695,PAR3,"Parasubiculum, layer 3",#72D569,526.0,MBA:10695,114,213,105,MBA:843
+AllenCCF-Ontology-2017-1037,POST,Postsubiculum,#48C83C,527.0,MBA:1037,72,200,60,MBA:822
+AllenCCF-Ontology-2017-10696,POST1,"Postsubiculum, layer 1",#48C83C,528.0,MBA:10696,72,200,60,MBA:1037
+AllenCCF-Ontology-2017-10697,POST2,"Postsubiculum, layer 2",#48C83C,529.0,MBA:10697,72,200,60,MBA:1037
+AllenCCF-Ontology-2017-10698,POST3,"Postsubiculum, layer 3",#48C83C,530.0,MBA:10698,72,200,60,MBA:1037
+AllenCCF-Ontology-2017-1084,PRE,Presubiculum,#59B947,531.0,MBA:1084,89,185,71,MBA:822
+AllenCCF-Ontology-2017-10699,PRE1,"Presubiculum, layer 1",#59B947,532.0,MBA:10699,89,185,71,MBA:1084
+AllenCCF-Ontology-2017-10700,PRE2,"Presubiculum, layer 2",#59B947,533.0,MBA:10700,89,185,71,MBA:1084
+AllenCCF-Ontology-2017-10701,PRE3,"Presubiculum, layer 3",#59B947,534.0,MBA:10701,89,185,71,MBA:1084
+AllenCCF-Ontology-2017-502,SUB,Subiculum,#4FC244,535.0,MBA:502,79,194,68,MBA:822
+AllenCCF-Ontology-2017-509,SUBd,"Subiculum, dorsal part",#4FC244,536.0,MBA:509,79,194,68,MBA:502
+AllenCCF-Ontology-2017-829,SUBd-m,"Subiculum, dorsal part, molecular layer",#4FC244,537.0,MBA:829,79,194,68,MBA:509
+AllenCCF-Ontology-2017-845,SUBd-sp,"Subiculum, dorsal part, pyramidal layer",#4BB547,538.0,MBA:845,75,181,71,MBA:509
+AllenCCF-Ontology-2017-837,SUBd-sr,"Subiculum, dorsal part, stratum radiatum",#4FC244,539.0,MBA:837,79,194,68,MBA:509
+AllenCCF-Ontology-2017-518,SUBv,"Subiculum, ventral part",#4FC244,540.0,MBA:518,79,194,68,MBA:502
+AllenCCF-Ontology-2017-853,SUBv-m,"Subiculum, ventral part, molecular layer",#4FC244,541.0,MBA:853,79,194,68,MBA:518
+AllenCCF-Ontology-2017-870,SUBv-sp,"Subiculum, ventral part, pyramidal layer",#4BB547,542.0,MBA:870,75,181,71,MBA:518
+AllenCCF-Ontology-2017-861,SUBv-sr,"Subiculum, ventral part, stratum radiatum",#4FC244,543.0,MBA:861,79,194,68,MBA:518
+AllenCCF-Ontology-2017-484682470,ProS,Prosubiculum,#58BA48,544.0,MBA:484682470,88,186,72,MBA:822
+AllenCCF-Ontology-2017-484682475,ProSd,"Prosubiculum, dorsal part",#58BA48,545.0,MBA:484682475,88,186,72,MBA:484682470
+AllenCCF-Ontology-2017-484682479,ProSd-m,"Prosubiculum, dorsal part, molecular layer",#58BA48,546.0,MBA:484682479,88,186,72,MBA:484682475
+AllenCCF-Ontology-2017-484682483,ProSd-sp,"Prosubiculum, dorsal part, pyramidal layer",#56B84B,547.0,MBA:484682483,86,184,75,MBA:484682475
+AllenCCF-Ontology-2017-484682487,ProSd-sr,"Prosubiculum, dorsal part, stratum radiatum",#58BA48,548.0,MBA:484682487,88,186,72,MBA:484682475
+AllenCCF-Ontology-2017-484682492,ProSv,"Prosubiculum, ventral part",#58BA48,549.0,MBA:484682492,88,186,72,MBA:484682470
+AllenCCF-Ontology-2017-484682496,ProSv-m,"Prosubiculum, ventral part, molecular layer",#58BA48,550.0,MBA:484682496,88,186,72,MBA:484682492
+AllenCCF-Ontology-2017-484682500,ProSv-sp,"Prosubiculum, ventral part, pyramidal layer",#56B84B,551.0,MBA:484682500,86,184,75,MBA:484682492
+AllenCCF-Ontology-2017-484682504,Prosv-sr,"Prosubiculum, ventral part, stratum radiatum",#58BA48,552.0,MBA:484682504,88,186,72,MBA:484682492
+AllenCCF-Ontology-2017-589508447,HATA,Hippocampo-amygdalar transition area,#33B932,553.0,MBA:589508447,51,185,50,MBA:822
+AllenCCF-Ontology-2017-484682508,APr,Area prostriata,#33B932,554.0,MBA:484682508,51,185,50,MBA:822
+AllenCCF-Ontology-2017-703,CTXsp,Cortical subplate,#8ADA87,555.0,MBA:703,138,218,135,MBA:688
+AllenCCF-Ontology-2017-16,6b,"Layer 6b, isocortex",#8ADA87,556.0,MBA:16,138,218,135,MBA:703
+AllenCCF-Ontology-2017-583,CLA,Claustrum,#8ADA87,557.0,MBA:583,138,218,135,MBA:703
+AllenCCF-Ontology-2017-942,EP,Endopiriform nucleus,#A0EE9D,558.0,MBA:942,160,238,157,MBA:703
+AllenCCF-Ontology-2017-952,EPd,"Endopiriform nucleus, dorsal part",#A0EE9D,559.0,MBA:952,160,238,157,MBA:942
+AllenCCF-Ontology-2017-966,EPv,"Endopiriform nucleus, ventral part",#A0EE9D,560.0,MBA:966,160,238,157,MBA:942
+AllenCCF-Ontology-2017-131,LA,Lateral amygdalar nucleus,#90EB8D,561.0,MBA:131,144,235,141,MBA:703
+AllenCCF-Ontology-2017-295,BLA,Basolateral amygdalar nucleus,#9DE79C,562.0,MBA:295,157,231,156,MBA:703
+AllenCCF-Ontology-2017-303,BLAa,"Basolateral amygdalar nucleus, anterior part",#9DE79C,563.0,MBA:303,157,231,156,MBA:295
+AllenCCF-Ontology-2017-311,BLAp,"Basolateral amygdalar nucleus, posterior part",#9DE79C,564.0,MBA:311,157,231,156,MBA:295
+AllenCCF-Ontology-2017-451,BLAv,"Basolateral amygdalar nucleus, ventral part",#9DE79C,565.0,MBA:451,157,231,156,MBA:295
+AllenCCF-Ontology-2017-319,BMA,Basomedial amygdalar nucleus,#84EA81,566.0,MBA:319,132,234,129,MBA:703
+AllenCCF-Ontology-2017-327,BMAa,"Basomedial amygdalar nucleus, anterior part",#84EA81,567.0,MBA:327,132,234,129,MBA:319
+AllenCCF-Ontology-2017-334,BMAp,"Basomedial amygdalar nucleus, posterior part",#84EA81,568.0,MBA:334,132,234,129,MBA:319
+AllenCCF-Ontology-2017-780,PA,Posterior amygdalar nucleus,#97EC93,569.0,MBA:780,151,236,147,MBA:703
+AllenCCF-Ontology-2017-623,CNU,Cerebral nuclei,#98D6F9,570.0,MBA:623,152,214,249,MBA:567
+AllenCCF-Ontology-2017-477,STR,Striatum,#98D6F9,571.0,MBA:477,152,214,249,MBA:623
+AllenCCF-Ontology-2017-485,STRd,Striatum dorsal region,#98D6F9,572.0,MBA:485,152,214,249,MBA:477
+AllenCCF-Ontology-2017-672,CP,Caudoputamen,#98D6F9,573.0,MBA:672,152,214,249,MBA:485
+AllenCCF-Ontology-2017-493,STRv,Striatum ventral region,#80CDF8,574.0,MBA:493,128,205,248,MBA:477
+AllenCCF-Ontology-2017-56,ACB,Nucleus accumbens,#80CDF8,575.0,MBA:56,128,205,248,MBA:493
+AllenCCF-Ontology-2017-998,FS,Fundus of striatum,#80CDF8,576.0,MBA:998,128,205,248,MBA:493
+AllenCCF-Ontology-2017-754,OT,Olfactory tubercle,#80CDF8,577.0,MBA:754,128,205,248,MBA:493
+AllenCCF-Ontology-2017-481,isl,Islands of Calleja,#80CDF8,578.0,MBA:481,128,205,248,MBA:754
+AllenCCF-Ontology-2017-489,islm,Major island of Calleja,#80CDF8,579.0,MBA:489,128,205,248,MBA:754
+AllenCCF-Ontology-2017-144,OT1-3,"Olfactory tubercle, layers 1-3",#80CDF8,580.0,MBA:144,128,205,248,MBA:754
+AllenCCF-Ontology-2017-458,OT1,"Olfactory tubercle, molecular layer",#80CDF8,581.0,MBA:458,128,205,248,MBA:754
+AllenCCF-Ontology-2017-465,OT2,"Olfactory tubercle, pyramidal layer",#80CDF8,582.0,MBA:465,128,205,248,MBA:754
+AllenCCF-Ontology-2017-473,OT3,"Olfactory tubercle, polymorph layer",#80CDF8,583.0,MBA:473,128,205,248,MBA:754
+AllenCCF-Ontology-2017-549009199,LSS,Lateral strip of striatum,#80CDF8,584.0,MBA:549009199,128,205,248,MBA:493
+AllenCCF-Ontology-2017-275,LSX,Lateral septal complex,#90CBED,585.0,MBA:275,144,203,237,MBA:477
+AllenCCF-Ontology-2017-242,LS,Lateral septal nucleus,#90CBED,586.0,MBA:242,144,203,237,MBA:275
+AllenCCF-Ontology-2017-250,LSc,"Lateral septal nucleus, caudal (caudodorsal) part",#90CBED,587.0,MBA:250,144,203,237,MBA:242
+AllenCCF-Ontology-2017-258,LSr,"Lateral septal nucleus, rostral (rostroventral) part",#90CBED,588.0,MBA:258,144,203,237,MBA:242
+AllenCCF-Ontology-2017-266,LSv,"Lateral septal nucleus, ventral part",#90CBED,589.0,MBA:266,144,203,237,MBA:242
+AllenCCF-Ontology-2017-310,SF,Septofimbrial nucleus,#90CBED,590.0,MBA:310,144,203,237,MBA:275
+AllenCCF-Ontology-2017-333,SH,Septohippocampal nucleus,#90CBED,591.0,MBA:333,144,203,237,MBA:275
+AllenCCF-Ontology-2017-278,sAMY,Striatum-like amygdalar nuclei,#80C0E2,592.0,MBA:278,128,192,226,MBA:477
+AllenCCF-Ontology-2017-23,AAA,Anterior amygdalar area,#80C0E2,593.0,MBA:23,128,192,226,MBA:278
+AllenCCF-Ontology-2017-292,BA,Bed nucleus of the accessory olfactory tract,#80C0E2,594.0,MBA:292,128,192,226,MBA:278
+AllenCCF-Ontology-2017-536,CEA,Central amygdalar nucleus,#80C0E2,595.0,MBA:536,128,192,226,MBA:278
+AllenCCF-Ontology-2017-544,CEAc,"Central amygdalar nucleus, capsular part",#80C0E2,596.0,MBA:544,128,192,226,MBA:536
+AllenCCF-Ontology-2017-551,CEAl,"Central amygdalar nucleus, lateral part",#80C0E2,597.0,MBA:551,128,192,226,MBA:536
+AllenCCF-Ontology-2017-559,CEAm,"Central amygdalar nucleus, medial part",#80C0E2,598.0,MBA:559,128,192,226,MBA:536
+AllenCCF-Ontology-2017-1105,IA,Intercalated amygdalar nucleus,#80C0E2,599.0,MBA:1105,128,192,226,MBA:278
+AllenCCF-Ontology-2017-403,MEA,Medial amygdalar nucleus,#80C0E2,600.0,MBA:403,128,192,226,MBA:278
+AllenCCF-Ontology-2017-411,MEAad,"Medial amygdalar nucleus, anterodorsal part",#80C0E2,601.0,MBA:411,128,192,226,MBA:403
+AllenCCF-Ontology-2017-418,MEAav,"Medial amygdalar nucleus, anteroventral part",#80C0E2,602.0,MBA:418,128,192,226,MBA:403
+AllenCCF-Ontology-2017-426,MEApd,"Medial amygdalar nucleus, posterodorsal part",#80C0E2,603.0,MBA:426,128,192,226,MBA:403
+AllenCCF-Ontology-2017-472,MEApd-a,"Medial amygdalar nucleus, posterodorsal part, sublayer a",#80C0E2,604.0,MBA:472,128,192,226,MBA:426
+AllenCCF-Ontology-2017-480,MEApd-b,"Medial amygdalar nucleus, posterodorsal part, sublayer b",#80C0E2,605.0,MBA:480,128,192,226,MBA:426
+AllenCCF-Ontology-2017-487,MEApd-c,"Medial amygdalar nucleus, posterodorsal part, sublayer c",#80C0E2,606.0,MBA:487,128,192,226,MBA:426
+AllenCCF-Ontology-2017-435,MEApv,"Medial amygdalar nucleus, posteroventral part",#80C0E2,607.0,MBA:435,128,192,226,MBA:403
+AllenCCF-Ontology-2017-803,PAL,Pallidum,#8599CC,608.0,MBA:803,133,153,204,MBA:623
+AllenCCF-Ontology-2017-818,PALd,"Pallidum, dorsal region",#8599CC,609.0,MBA:818,133,153,204,MBA:803
+AllenCCF-Ontology-2017-1022,GPe,"Globus pallidus, external segment",#8599CC,610.0,MBA:1022,133,153,204,MBA:818
+AllenCCF-Ontology-2017-1031,GPi,"Globus pallidus, internal segment",#8599CC,611.0,MBA:1031,133,153,204,MBA:818
+AllenCCF-Ontology-2017-835,PALv,"Pallidum, ventral region",#A2B1D8,612.0,MBA:835,162,177,216,MBA:803
+AllenCCF-Ontology-2017-342,SI,Substantia innominata,#A2B1D8,613.0,MBA:342,162,177,216,MBA:835
+AllenCCF-Ontology-2017-298,MA,Magnocellular nucleus,#A2B1D8,614.0,MBA:298,162,177,216,MBA:835
+AllenCCF-Ontology-2017-826,PALm,"Pallidum, medial region",#96A7D3,615.0,MBA:826,150,167,211,MBA:803
+AllenCCF-Ontology-2017-904,MSC,Medial septal complex,#96A7D3,616.0,MBA:904,150,167,211,MBA:826
+AllenCCF-Ontology-2017-564,MS,Medial septal nucleus,#96A7D3,617.0,MBA:564,150,167,211,MBA:904
+AllenCCF-Ontology-2017-596,NDB,Diagonal band nucleus,#96A7D3,618.0,MBA:596,150,167,211,MBA:904
+AllenCCF-Ontology-2017-581,TRS,Triangular nucleus of septum,#96A7D3,619.0,MBA:581,150,167,211,MBA:826
+AllenCCF-Ontology-2017-809,PALc,"Pallidum, caudal region",#B3C0DF,620.0,MBA:809,179,192,223,MBA:803
+AllenCCF-Ontology-2017-351,BST,Bed nuclei of the stria terminalis,#B3C0DF,621.0,MBA:351,179,192,223,MBA:809
+AllenCCF-Ontology-2017-359,BSTa,"Bed nuclei of the stria terminalis, anterior division",#B3C0DF,622.0,MBA:359,179,192,223,MBA:351
+AllenCCF-Ontology-2017-537,BSTal,"Bed nuclei of the stria terminalis, anterior division, anterolateral area",#B3C0DF,623.0,MBA:537,179,192,223,MBA:359
+AllenCCF-Ontology-2017-498,BSTam,"Bed nuclei of the stria terminalis, anterior division, anteromedial area",#B3C0DF,624.0,MBA:498,179,192,223,MBA:359
+AllenCCF-Ontology-2017-505,BSTdm,"Bed nuclei of the stria terminalis, anterior division, dorsomedial nucleus",#B3C0DF,625.0,MBA:505,179,192,223,MBA:359
+AllenCCF-Ontology-2017-513,BSTfu,"Bed nuclei of the stria terminalis, anterior division, fusiform nucleus",#B3C0DF,626.0,MBA:513,179,192,223,MBA:359
+AllenCCF-Ontology-2017-546,BSTju,"Bed nuclei of the stria terminalis, anterior division, juxtacapsular nucleus",#B3C0DF,627.0,MBA:546,179,192,223,MBA:359
+AllenCCF-Ontology-2017-521,BSTmg,"Bed nuclei of the stria terminalis, anterior division, magnocellular nucleus",#B3C0DF,628.0,MBA:521,179,192,223,MBA:359
+AllenCCF-Ontology-2017-554,BSTov,"Bed nuclei of the stria terminalis, anterior division, oval nucleus",#B3C0DF,629.0,MBA:554,179,192,223,MBA:359
+AllenCCF-Ontology-2017-562,BSTrh,"Bed nuclei of the stria terminalis, anterior division, rhomboid nucleus",#B3C0DF,630.0,MBA:562,179,192,223,MBA:359
+AllenCCF-Ontology-2017-529,BSTv,"Bed nuclei of the stria terminalis, anterior division, ventral nucleus",#B3C0DF,631.0,MBA:529,179,192,223,MBA:359
+AllenCCF-Ontology-2017-367,BSTp,"Bed nuclei of the stria terminalis, posterior division",#B3C0DF,632.0,MBA:367,179,192,223,MBA:351
+AllenCCF-Ontology-2017-569,BSTd,"Bed nuclei of the stria terminalis, posterior division, dorsal nucleus",#B3C0DF,633.0,MBA:569,179,192,223,MBA:367
+AllenCCF-Ontology-2017-578,BSTpr,"Bed nuclei of the stria terminalis, posterior division, principal nucleus",#B3C0DF,634.0,MBA:578,179,192,223,MBA:367
+AllenCCF-Ontology-2017-585,BSTif,"Bed nuclei of the stria terminalis, posterior division, interfascicular nucleus",#B3C0DF,635.0,MBA:585,179,192,223,MBA:367
+AllenCCF-Ontology-2017-594,BSTtr,"Bed nuclei of the stria terminalis, posterior division, transverse nucleus",#B3C0DF,636.0,MBA:594,179,192,223,MBA:367
+AllenCCF-Ontology-2017-602,BSTse,"Bed nuclei of the stria terminalis, posterior division, strial extension",#B3C0DF,637.0,MBA:602,179,192,223,MBA:367
+AllenCCF-Ontology-2017-287,BAC,Bed nucleus of the anterior commissure,#B3C0DF,638.0,MBA:287,179,192,223,MBA:809
+AllenCCF-Ontology-2017-343,BS,Brain stem,#FF7080,639.0,MBA:343,255,112,128,MBA:8
+AllenCCF-Ontology-2017-1129,IB,Interbrain,#FF7080,640.0,MBA:1129,255,112,128,MBA:343
+AllenCCF-Ontology-2017-549,TH,Thalamus,#FF7080,641.0,MBA:549,255,112,128,MBA:1129
+AllenCCF-Ontology-2017-864,DORsm,"Thalamus, sensory-motor cortex related",#FF8084,642.0,MBA:864,255,128,132,MBA:549
+AllenCCF-Ontology-2017-637,VENT,Ventral group of the dorsal thalamus,#FF8084,643.0,MBA:637,255,128,132,MBA:864
+AllenCCF-Ontology-2017-629,VAL,Ventral anterior-lateral complex of the thalamus,#FF8084,644.0,MBA:629,255,128,132,MBA:637
+AllenCCF-Ontology-2017-685,VM,Ventral medial nucleus of the thalamus,#FF8084,645.0,MBA:685,255,128,132,MBA:637
+AllenCCF-Ontology-2017-709,VP,Ventral posterior complex of the thalamus,#FF8084,646.0,MBA:709,255,128,132,MBA:637
+AllenCCF-Ontology-2017-718,VPL,Ventral posterolateral nucleus of the thalamus,#FF8084,647.0,MBA:718,255,128,132,MBA:709
+AllenCCF-Ontology-2017-725,VPLpc,"Ventral posterolateral nucleus of the thalamus, parvicellular part",#FF8084,648.0,MBA:725,255,128,132,MBA:709
+AllenCCF-Ontology-2017-733,VPM,Ventral posteromedial nucleus of the thalamus,#FF8084,649.0,MBA:733,255,128,132,MBA:709
+AllenCCF-Ontology-2017-741,VPMpc,"Ventral posteromedial nucleus of the thalamus, parvicellular part",#FF8084,650.0,MBA:741,255,128,132,MBA:709
+AllenCCF-Ontology-2017-563807435,PoT,Posterior triangular thalamic nucleus,#FF8084,651.0,MBA:563807435,255,128,132,MBA:637
+AllenCCF-Ontology-2017-406,SPF,Subparafascicular nucleus,#FF8084,652.0,MBA:406,255,128,132,MBA:864
+AllenCCF-Ontology-2017-414,SPFm,"Subparafascicular nucleus, magnocellular part",#FF8084,653.0,MBA:414,255,128,132,MBA:406
+AllenCCF-Ontology-2017-422,SPFp,"Subparafascicular nucleus, parvicellular part",#FF8084,654.0,MBA:422,255,128,132,MBA:406
+AllenCCF-Ontology-2017-609,SPA,Subparafascicular area,#FF8084,655.0,MBA:609,255,128,132,MBA:864
+AllenCCF-Ontology-2017-1044,PP,Peripeduncular nucleus,#FF8084,656.0,MBA:1044,255,128,132,MBA:864
+AllenCCF-Ontology-2017-1008,GENd,"Geniculate group, dorsal thalamus",#FF8084,657.0,MBA:1008,255,128,132,MBA:864
+AllenCCF-Ontology-2017-475,MG,Medial geniculate complex,#FF8084,658.0,MBA:475,255,128,132,MBA:1008
+AllenCCF-Ontology-2017-1072,MGd,"Medial geniculate complex, dorsal part",#FF8084,659.0,MBA:1072,255,128,132,MBA:475
+AllenCCF-Ontology-2017-1079,MGv,"Medial geniculate complex, ventral part",#FF8084,660.0,MBA:1079,255,128,132,MBA:475
+AllenCCF-Ontology-2017-1088,MGm,"Medial geniculate complex, medial part",#FF8084,661.0,MBA:1088,255,128,132,MBA:475
+AllenCCF-Ontology-2017-170,LGd,Dorsal part of the lateral geniculate complex,#FF8084,662.0,MBA:170,255,128,132,MBA:1008
+AllenCCF-Ontology-2017-496345664,LGd-sh,"Dorsal part of the lateral geniculate complex, shell",#FF8084,663.0,MBA:496345664,255,128,132,MBA:170
+AllenCCF-Ontology-2017-496345668,LGd-co,"Dorsal part of the lateral geniculate complex, core",#FF8084,664.0,MBA:496345668,255,128,132,MBA:170
+AllenCCF-Ontology-2017-496345672,LGd-ip,"Dorsal part of the lateral geniculate complex, ipsilateral zone",#FF8084,665.0,MBA:496345672,255,128,132,MBA:170
+AllenCCF-Ontology-2017-856,DORpm,"Thalamus, polymodal association cortex related",#FF909F,666.0,MBA:856,255,144,159,MBA:549
+AllenCCF-Ontology-2017-138,LAT,Lateral group of the dorsal thalamus,#FF909F,667.0,MBA:138,255,144,159,MBA:856
+AllenCCF-Ontology-2017-218,LP,Lateral posterior nucleus of the thalamus,#FF909F,668.0,MBA:218,255,144,159,MBA:138
+AllenCCF-Ontology-2017-1020,PO,Posterior complex of the thalamus,#FF909F,669.0,MBA:1020,255,144,159,MBA:138
+AllenCCF-Ontology-2017-1029,POL,Posterior limiting nucleus of the thalamus,#FF909F,670.0,MBA:1029,255,144,159,MBA:138
+AllenCCF-Ontology-2017-325,SGN,Suprageniculate nucleus,#FF909F,671.0,MBA:325,255,144,159,MBA:138
+AllenCCF-Ontology-2017-560581551,Eth,Ethmoid nucleus of the thalamus,#FF909F,672.0,MBA:560581551,255,144,159,MBA:138
+AllenCCF-Ontology-2017-560581555,REth,Retroethmoid nucleus,#FF909F,673.0,MBA:560581555,255,144,159,MBA:138
+AllenCCF-Ontology-2017-239,ATN,Anterior group of the dorsal thalamus,#FF909F,674.0,MBA:239,255,144,159,MBA:856
+AllenCCF-Ontology-2017-255,AV,Anteroventral nucleus of thalamus,#FF909F,675.0,MBA:255,255,144,159,MBA:239
+AllenCCF-Ontology-2017-127,AM,Anteromedial nucleus,#FF909F,676.0,MBA:127,255,144,159,MBA:239
+AllenCCF-Ontology-2017-1096,AMd,"Anteromedial nucleus, dorsal part",#FF909F,677.0,MBA:1096,255,144,159,MBA:127
+AllenCCF-Ontology-2017-1104,AMv,"Anteromedial nucleus, ventral part",#FF909F,678.0,MBA:1104,255,144,159,MBA:127
+AllenCCF-Ontology-2017-64,AD,Anterodorsal nucleus,#FF909F,679.0,MBA:64,255,144,159,MBA:239
+AllenCCF-Ontology-2017-1120,IAM,Interanteromedial nucleus of the thalamus,#FF909F,680.0,MBA:1120,255,144,159,MBA:239
+AllenCCF-Ontology-2017-1113,IAD,Interanterodorsal nucleus of the thalamus,#FF909F,681.0,MBA:1113,255,144,159,MBA:239
+AllenCCF-Ontology-2017-155,LD,Lateral dorsal nucleus of thalamus,#FF909F,682.0,MBA:155,255,144,159,MBA:239
+AllenCCF-Ontology-2017-444,MED,Medial group of the dorsal thalamus,#FF909F,683.0,MBA:444,255,144,159,MBA:856
+AllenCCF-Ontology-2017-59,IMD,Intermediodorsal nucleus of the thalamus,#FF909F,684.0,MBA:59,255,144,159,MBA:444
+AllenCCF-Ontology-2017-362,MD,Mediodorsal nucleus of thalamus,#FF909F,685.0,MBA:362,255,144,159,MBA:444
+AllenCCF-Ontology-2017-617,MDc,"Mediodorsal nucleus of the thalamus, central part",#FF909F,686.0,MBA:617,255,144,159,MBA:362
+AllenCCF-Ontology-2017-626,MDl,"Mediodorsal nucleus of the thalamus, lateral part",#FF909F,687.0,MBA:626,255,144,159,MBA:362
+AllenCCF-Ontology-2017-636,MDm,"Mediodorsal nucleus of the thalamus, medial part",#FF909F,688.0,MBA:636,255,144,159,MBA:362
+AllenCCF-Ontology-2017-366,SMT,Submedial nucleus of the thalamus,#FF909F,689.0,MBA:366,255,144,159,MBA:444
+AllenCCF-Ontology-2017-1077,PR,Perireunensis nucleus,#FF909F,690.0,MBA:1077,255,144,159,MBA:444
+AllenCCF-Ontology-2017-571,MTN,Midline group of the dorsal thalamus,#FF909F,691.0,MBA:571,255,144,159,MBA:856
+AllenCCF-Ontology-2017-149,PVT,Paraventricular nucleus of the thalamus,#FF909F,692.0,MBA:149,255,144,159,MBA:571
+AllenCCF-Ontology-2017-15,PT,Parataenial nucleus,#FF909F,693.0,MBA:15,255,144,159,MBA:571
+AllenCCF-Ontology-2017-181,RE,Nucleus of reuniens,#FF909F,694.0,MBA:181,255,144,159,MBA:571
+AllenCCF-Ontology-2017-560581559,Xi,Xiphoid thalamic nucleus,#FF909F,695.0,MBA:560581559,255,144,159,MBA:571
+AllenCCF-Ontology-2017-51,ILM,Intralaminar nuclei of the dorsal thalamus,#FF909F,696.0,MBA:51,255,144,159,MBA:856
+AllenCCF-Ontology-2017-189,RH,Rhomboid nucleus,#FF909F,697.0,MBA:189,255,144,159,MBA:51
+AllenCCF-Ontology-2017-599,CM,Central medial nucleus of the thalamus,#FF909F,698.0,MBA:599,255,144,159,MBA:51
+AllenCCF-Ontology-2017-907,PCN,Paracentral nucleus,#FF909F,699.0,MBA:907,255,144,159,MBA:51
+AllenCCF-Ontology-2017-575,CL,Central lateral nucleus of the thalamus,#FF909F,700.0,MBA:575,255,144,159,MBA:51
+AllenCCF-Ontology-2017-930,PF,Parafascicular nucleus,#FF909F,701.0,MBA:930,255,144,159,MBA:51
+AllenCCF-Ontology-2017-560581563,PIL,Posterior intralaminar thalamic nucleus,#FF909F,702.0,MBA:560581563,255,144,159,MBA:51
+AllenCCF-Ontology-2017-262,RT,Reticular nucleus of the thalamus,#FF909F,703.0,MBA:262,255,144,159,MBA:856
+AllenCCF-Ontology-2017-1014,GENv,"Geniculate group, ventral thalamus",#FF909F,704.0,MBA:1014,255,144,159,MBA:856
+AllenCCF-Ontology-2017-27,IGL,Intergeniculate leaflet of the lateral geniculate complex,#FF909F,705.0,MBA:27,255,144,159,MBA:1014
+AllenCCF-Ontology-2017-563807439,IntG,Intermediate geniculate nucleus,#FF909F,706.0,MBA:563807439,255,144,159,MBA:1014
+AllenCCF-Ontology-2017-178,LGv,Ventral part of the lateral geniculate complex,#FF909F,707.0,MBA:178,255,144,159,MBA:1014
+AllenCCF-Ontology-2017-300,LGvl,"Ventral part of the lateral geniculate complex, lateral zone",#FF909F,708.0,MBA:300,255,144,159,MBA:178
+AllenCCF-Ontology-2017-316,LGvm,"Ventral part of the lateral geniculate complex, medial zone",#FF909F,709.0,MBA:316,255,144,159,MBA:178
+AllenCCF-Ontology-2017-321,SubG,Subgeniculate nucleus,#FF909F,710.0,MBA:321,255,144,159,MBA:1014
+AllenCCF-Ontology-2017-958,EPI,Epithalamus,#FF909F,711.0,MBA:958,255,144,159,MBA:856
+AllenCCF-Ontology-2017-483,MH,Medial habenula,#FF909F,712.0,MBA:483,255,144,159,MBA:958
+AllenCCF-Ontology-2017-186,LH,Lateral habenula,#FF909F,713.0,MBA:186,255,144,159,MBA:958
+AllenCCF-Ontology-2017-953,PIN,Pineal body,#FF909F,714.0,MBA:953,255,144,159,MBA:958
+AllenCCF-Ontology-2017-1097,HY,Hypothalamus,#E64438,715.0,MBA:1097,230,68,56,MBA:1129
+AllenCCF-Ontology-2017-157,PVZ,Periventricular zone,#FF5D50,716.0,MBA:157,255,93,80,MBA:1097
+AllenCCF-Ontology-2017-390,SO,Supraoptic nucleus,#FF5D50,717.0,MBA:390,255,93,80,MBA:157
+AllenCCF-Ontology-2017-332,ASO,Accessory supraoptic group,#FF5D50,718.0,MBA:332,255,93,80,MBA:157
+AllenCCF-Ontology-2017-432,NC,Nucleus circularis,#FF5D50,719.0,MBA:432,255,93,80,MBA:332
+AllenCCF-Ontology-2017-38,PVH,Paraventricular hypothalamic nucleus,#FF5D50,720.0,MBA:38,255,93,80,MBA:157
+AllenCCF-Ontology-2017-71,PVHm,"Paraventricular hypothalamic nucleus, magnocellular division",#FF5D50,721.0,MBA:71,255,93,80,MBA:38
+AllenCCF-Ontology-2017-47,PVHam,"Paraventricular hypothalamic nucleus, magnocellular division, anterior magnocellular part",#FF5D50,722.0,MBA:47,255,93,80,MBA:71
+AllenCCF-Ontology-2017-79,PVHmm,"Paraventricular hypothalamic nucleus, magnocellular division, medial magnocellular part",#FF5D50,723.0,MBA:79,255,93,80,MBA:71
+AllenCCF-Ontology-2017-103,PVHpm,"Paraventricular hypothalamic nucleus, magnocellular division, posterior magnocellular part",#FF5D50,724.0,MBA:103,255,93,80,MBA:71
+AllenCCF-Ontology-2017-652,PVHpml,"Paraventricular hypothalamic nucleus, magnocellular division, posterior magnocellular part, lateral zone",#FF5D50,725.0,MBA:652,255,93,80,MBA:103
+AllenCCF-Ontology-2017-660,PVHpmm,"Paraventricular hypothalamic nucleus, magnocellular division, posterior magnocellular part, medial zone",#FF5D50,726.0,MBA:660,255,93,80,MBA:103
+AllenCCF-Ontology-2017-94,PVHp,"Paraventricular hypothalamic nucleus, parvicellular division",#FF5D50,727.0,MBA:94,255,93,80,MBA:38
+AllenCCF-Ontology-2017-55,PVHap,"Paraventricular hypothalamic nucleus, parvicellular division, anterior parvicellular part",#FF5D50,728.0,MBA:55,255,93,80,MBA:94
+AllenCCF-Ontology-2017-87,PVHmpd,"Paraventricular hypothalamic nucleus, parvicellular division, medial parvicellular part, dorsal zone",#FF5D50,729.0,MBA:87,255,93,80,MBA:94
+AllenCCF-Ontology-2017-110,PVHpv,"Paraventricular hypothalamic nucleus, parvicellular division, periventricular part",#FF5D50,730.0,MBA:110,255,93,80,MBA:94
+AllenCCF-Ontology-2017-30,PVa,"Periventricular hypothalamic nucleus, anterior part",#FF5D50,731.0,MBA:30,255,93,80,MBA:157
+AllenCCF-Ontology-2017-118,PVi,"Periventricular hypothalamic nucleus, intermediate part",#FF5D50,732.0,MBA:118,255,93,80,MBA:157
+AllenCCF-Ontology-2017-223,ARH,Arcuate hypothalamic nucleus,#FF5D50,733.0,MBA:223,255,93,80,MBA:157
+AllenCCF-Ontology-2017-141,PVR,Periventricular region,#FF5547,734.0,MBA:141,255,85,71,MBA:1097
+AllenCCF-Ontology-2017-72,ADP,Anterodorsal preoptic nucleus,#FF5547,735.0,MBA:72,255,85,71,MBA:141
+AllenCCF-Ontology-2017-80,AHA,Anterior hypothalamic area,#FF5547,736.0,MBA:80,255,85,71,MBA:141
+AllenCCF-Ontology-2017-263,AVP,Anteroventral preoptic nucleus,#FF5547,737.0,MBA:263,255,85,71,MBA:141
+AllenCCF-Ontology-2017-272,AVPV,Anteroventral periventricular nucleus,#FF5547,738.0,MBA:272,255,85,71,MBA:141
+AllenCCF-Ontology-2017-830,DMH,Dorsomedial nucleus of the hypothalamus,#FF5547,739.0,MBA:830,255,85,71,MBA:141
+AllenCCF-Ontology-2017-668,DMHa,"Dorsomedial nucleus of the hypothalamus, anterior part",#FF5547,740.0,MBA:668,255,85,71,MBA:830
+AllenCCF-Ontology-2017-676,DMHp,"Dorsomedial nucleus of the hypothalamus, posterior part",#FF5547,741.0,MBA:676,255,85,71,MBA:830
+AllenCCF-Ontology-2017-684,DMHv,"Dorsomedial nucleus of the hypothalamus, ventral part",#FF5547,742.0,MBA:684,255,85,71,MBA:830
+AllenCCF-Ontology-2017-452,MEPO,Median preoptic nucleus,#FF5547,743.0,MBA:452,255,85,71,MBA:141
+AllenCCF-Ontology-2017-523,MPO,Medial preoptic area,#FF5547,744.0,MBA:523,255,85,71,MBA:141
+AllenCCF-Ontology-2017-763,OV,Vascular organ of the lamina terminalis,#FF5547,745.0,MBA:763,255,85,71,MBA:141
+AllenCCF-Ontology-2017-914,PD,Posterodorsal preoptic nucleus,#FF5547,746.0,MBA:914,255,85,71,MBA:141
+AllenCCF-Ontology-2017-1109,PS,Parastrial nucleus,#FF5547,747.0,MBA:1109,255,85,71,MBA:141
+AllenCCF-Ontology-2017-1124,PSCH,Suprachiasmatic preoptic nucleus,#FF5547,748.0,MBA:1124,255,85,71,MBA:141
+AllenCCF-Ontology-2017-126,PVp,"Periventricular hypothalamic nucleus, posterior part",#FF5547,749.0,MBA:126,255,85,71,MBA:141
+AllenCCF-Ontology-2017-133,PVpo,"Periventricular hypothalamic nucleus, preoptic part",#FF5547,750.0,MBA:133,255,85,71,MBA:141
+AllenCCF-Ontology-2017-347,SBPV,Subparaventricular zone,#FF5547,751.0,MBA:347,255,85,71,MBA:141
+AllenCCF-Ontology-2017-286,SCH,Suprachiasmatic nucleus,#FF5547,752.0,MBA:286,255,85,71,MBA:141
+AllenCCF-Ontology-2017-338,SFO,Subfornical organ,#FF5547,753.0,MBA:338,255,85,71,MBA:141
+AllenCCF-Ontology-2017-576073699,VMPO,Ventromedial preoptic nucleus,#FF5547,754.0,MBA:576073699,255,85,71,MBA:141
+AllenCCF-Ontology-2017-689,VLPO,Ventrolateral preoptic nucleus,#FF5547,755.0,MBA:689,255,85,71,MBA:141
+AllenCCF-Ontology-2017-467,MEZ,Hypothalamic medial zone,#FF4C3E,756.0,MBA:467,255,76,62,MBA:1097
+AllenCCF-Ontology-2017-88,AHN,Anterior hypothalamic nucleus,#FF4C3E,757.0,MBA:88,255,76,62,MBA:467
+AllenCCF-Ontology-2017-700,AHNa,"Anterior hypothalamic nucleus, anterior part",#FF4C3E,758.0,MBA:700,255,76,62,MBA:88
+AllenCCF-Ontology-2017-708,AHNc,"Anterior hypothalamic nucleus, central part",#FF4C3E,759.0,MBA:708,255,76,62,MBA:88
+AllenCCF-Ontology-2017-716,AHNd,"Anterior hypothalamic nucleus, dorsal part",#FF4C3E,760.0,MBA:716,255,76,62,MBA:88
+AllenCCF-Ontology-2017-724,AHNp,"Anterior hypothalamic nucleus, posterior part",#FF4C3E,761.0,MBA:724,255,76,62,MBA:88
+AllenCCF-Ontology-2017-331,MBO,Mammillary body,#FF4C3E,762.0,MBA:331,255,76,62,MBA:467
+AllenCCF-Ontology-2017-210,LM,Lateral mammillary nucleus,#FF4C3E,763.0,MBA:210,255,76,62,MBA:331
+AllenCCF-Ontology-2017-491,MM,Medial mammillary nucleus,#FF4C3E,764.0,MBA:491,255,76,62,MBA:331
+AllenCCF-Ontology-2017-732,MMme,"Medial mammillary nucleus, median part",#FF4C3E,765.0,MBA:732,255,76,62,MBA:491
+AllenCCF-Ontology-2017-606826647,MMl,"Medial mammillary nucleus, lateral part",#FF4C3E,766.0,MBA:606826647,255,76,62,MBA:491
+AllenCCF-Ontology-2017-606826651,MMm,"Medial mammillary nucleus, medial part",#FF4C3E,767.0,MBA:606826651,255,76,62,MBA:491
+AllenCCF-Ontology-2017-606826655,MMp,"Medial mammillary nucleus, posterior part",#FF4C3E,768.0,MBA:606826655,255,76,62,MBA:491
+AllenCCF-Ontology-2017-606826659,MMd,"Medial mammillary nucleus, dorsal part",#FF4C3E,769.0,MBA:606826659,255,76,62,MBA:491
+AllenCCF-Ontology-2017-525,SUM,Supramammillary nucleus,#FF4C3E,770.0,MBA:525,255,76,62,MBA:331
+AllenCCF-Ontology-2017-1110,SUMl,"Supramammillary nucleus, lateral part",#FF4C3E,771.0,MBA:1110,255,76,62,MBA:525
+AllenCCF-Ontology-2017-1118,SUMm,"Supramammillary nucleus, medial part",#FF4C3E,772.0,MBA:1118,255,76,62,MBA:525
+AllenCCF-Ontology-2017-557,TM,Tuberomammillary nucleus,#FF4C3E,773.0,MBA:557,255,76,62,MBA:331
+AllenCCF-Ontology-2017-1126,TMd,"Tuberomammillary nucleus, dorsal part",#FF4C3E,774.0,MBA:1126,255,76,62,MBA:557
+AllenCCF-Ontology-2017-1,TMv,"Tuberomammillary nucleus, ventral part",#FF4C3E,775.0,MBA:1,255,76,62,MBA:557
+AllenCCF-Ontology-2017-515,MPN,Medial preoptic nucleus,#FF4C3E,776.0,MBA:515,255,76,62,MBA:467
+AllenCCF-Ontology-2017-740,MPNc,"Medial preoptic nucleus, central part",#FF4C3E,777.0,MBA:740,255,76,62,MBA:515
+AllenCCF-Ontology-2017-748,MPNl,"Medial preoptic nucleus, lateral part",#FF4C3E,778.0,MBA:748,255,76,62,MBA:515
+AllenCCF-Ontology-2017-756,MPNm,"Medial preoptic nucleus, medial part",#FF4C3E,779.0,MBA:756,255,76,62,MBA:515
+AllenCCF-Ontology-2017-980,PMd,Dorsal premammillary nucleus,#FF4C3E,780.0,MBA:980,255,76,62,MBA:467
+AllenCCF-Ontology-2017-1004,PMv,Ventral premammillary nucleus,#FF4C3E,781.0,MBA:1004,255,76,62,MBA:467
+AllenCCF-Ontology-2017-63,PVHd,"Paraventricular hypothalamic nucleus, descending division",#FF4C3E,782.0,MBA:63,255,76,62,MBA:467
+AllenCCF-Ontology-2017-439,PVHdp,"Paraventricular hypothalamic nucleus, descending division, dorsal parvicellular part",#FF4C3E,783.0,MBA:439,255,76,62,MBA:63
+AllenCCF-Ontology-2017-447,PVHf,"Paraventricular hypothalamic nucleus, descending division, forniceal part",#FF4C3E,784.0,MBA:447,255,76,62,MBA:63
+AllenCCF-Ontology-2017-455,PVHlp,"Paraventricular hypothalamic nucleus, descending division, lateral parvicellular part",#FF4C3E,785.0,MBA:455,255,76,62,MBA:63
+AllenCCF-Ontology-2017-464,PVHmpv,"Paraventricular hypothalamic nucleus, descending division, medial parvicellular part, ventral zone",#FF4C3E,786.0,MBA:464,255,76,62,MBA:63
+AllenCCF-Ontology-2017-693,VMH,Ventromedial hypothalamic nucleus,#FF4C3E,787.0,MBA:693,255,76,62,MBA:467
+AllenCCF-Ontology-2017-761,VMHa,"Ventromedial hypothalamic nucleus, anterior part",#FF4C3E,788.0,MBA:761,255,76,62,MBA:693
+AllenCCF-Ontology-2017-769,VMHc,"Ventromedial hypothalamic nucleus, central part",#FF4C3E,789.0,MBA:769,255,76,62,MBA:693
+AllenCCF-Ontology-2017-777,VMHdm,"Ventromedial hypothalamic nucleus, dorsomedial part",#FF4C3E,790.0,MBA:777,255,76,62,MBA:693
+AllenCCF-Ontology-2017-785,VMHvl,"Ventromedial hypothalamic nucleus, ventrolateral part",#FF4C3E,791.0,MBA:785,255,76,62,MBA:693
+AllenCCF-Ontology-2017-946,PH,Posterior hypothalamic nucleus,#FF4C3E,792.0,MBA:946,255,76,62,MBA:467
+AllenCCF-Ontology-2017-290,LZ,Hypothalamic lateral zone,#F2483B,793.0,MBA:290,242,72,59,MBA:1097
+AllenCCF-Ontology-2017-194,LHA,Lateral hypothalamic area,#F2483B,794.0,MBA:194,242,72,59,MBA:290
+AllenCCF-Ontology-2017-226,LPO,Lateral preoptic area,#F2483B,795.0,MBA:226,242,72,59,MBA:290
+AllenCCF-Ontology-2017-356,PST,Preparasubthalamic nucleus,#F2483B,796.0,MBA:356,242,72,59,MBA:290
+AllenCCF-Ontology-2017-364,PSTN,Parasubthalamic nucleus,#F2483B,797.0,MBA:364,242,72,59,MBA:290
+AllenCCF-Ontology-2017-576073704,PeF,Perifornical nucleus,#F2483B,798.0,MBA:576073704,242,72,59,MBA:290
+AllenCCF-Ontology-2017-173,RCH,Retrochiasmatic area,#F2483B,799.0,MBA:173,242,72,59,MBA:290
+AllenCCF-Ontology-2017-470,STN,Subthalamic nucleus,#F2483B,800.0,MBA:470,242,72,59,MBA:290
+AllenCCF-Ontology-2017-614,TU,Tuberal nucleus,#F2483B,801.0,MBA:614,242,72,59,MBA:290
+AllenCCF-Ontology-2017-797,ZI,Zona incerta,#F2483B,802.0,MBA:797,242,72,59,MBA:290
+AllenCCF-Ontology-2017-796,A13,Dopaminergic A13 group,#F2483B,803.0,MBA:796,242,72,59,MBA:797
+AllenCCF-Ontology-2017-804,FF,Fields of Forel,#F2483B,804.0,MBA:804,242,72,59,MBA:797
+AllenCCF-Ontology-2017-10671,ME,Median eminence,#F2483B,805.0,MBA:10671,242,72,59,MBA:1097
+AllenCCF-Ontology-2017-313,MB,Midbrain,#FF64FF,806.0,MBA:313,255,100,255,MBA:343
+AllenCCF-Ontology-2017-339,MBsen,"Midbrain, sensory related",#FF7AFF,807.0,MBA:339,255,122,255,MBA:313
+AllenCCF-Ontology-2017-302,SCs,"Superior colliculus, sensory related",#FF7AFF,808.0,MBA:302,255,122,255,MBA:339
+AllenCCF-Ontology-2017-851,SCop,"Superior colliculus, optic layer",#FF7AFF,809.0,MBA:851,255,122,255,MBA:302
+AllenCCF-Ontology-2017-842,SCsg,"Superior colliculus, superficial gray layer",#FF7AFF,810.0,MBA:842,255,122,255,MBA:302
+AllenCCF-Ontology-2017-834,SCzo,"Superior colliculus, zonal layer",#FF7AFF,811.0,MBA:834,255,122,255,MBA:302
+AllenCCF-Ontology-2017-4,IC,Inferior colliculus,#FF7AFF,812.0,MBA:4,255,122,255,MBA:339
+AllenCCF-Ontology-2017-811,ICc,"Inferior colliculus, central nucleus",#FF7AFF,813.0,MBA:811,255,122,255,MBA:4
+AllenCCF-Ontology-2017-820,ICd,"Inferior colliculus, dorsal nucleus",#FF7AFF,814.0,MBA:820,255,122,255,MBA:4
+AllenCCF-Ontology-2017-828,ICe,"Inferior colliculus, external nucleus",#FF7AFF,815.0,MBA:828,255,122,255,MBA:4
+AllenCCF-Ontology-2017-580,NB,Nucleus of the brachium of the inferior colliculus,#FF7AFF,816.0,MBA:580,255,122,255,MBA:339
+AllenCCF-Ontology-2017-271,SAG,Nucleus sagulum,#FF7AFF,817.0,MBA:271,255,122,255,MBA:339
+AllenCCF-Ontology-2017-874,PBG,Parabigeminal nucleus,#FF7AFF,818.0,MBA:874,255,122,255,MBA:339
+AllenCCF-Ontology-2017-460,MEV,Midbrain trigeminal nucleus,#FF7AFF,819.0,MBA:460,255,122,255,MBA:339
+AllenCCF-Ontology-2017-599626923,SCO,Subcommissural organ,#FF7AFF,820.0,MBA:599626923,255,122,255,MBA:339
+AllenCCF-Ontology-2017-323,MBmot,"Midbrain, motor related",#FF90FF,821.0,MBA:323,255,144,255,MBA:313
+AllenCCF-Ontology-2017-381,SNr,"Substantia nigra, reticular part",#FF90FF,822.0,MBA:381,255,144,255,MBA:323
+AllenCCF-Ontology-2017-749,VTA,Ventral tegmental area,#FF90FF,823.0,MBA:749,255,144,255,MBA:323
+AllenCCF-Ontology-2017-607344830,PN,Paranigral nucleus,#FF90FF,824.0,MBA:607344830,255,144,255,MBA:323
+AllenCCF-Ontology-2017-246,RR,"Midbrain reticular nucleus, retrorubral area",#FF90FF,825.0,MBA:246,255,144,255,MBA:323
+AllenCCF-Ontology-2017-128,MRN,Midbrain reticular nucleus,#FF90FF,826.0,MBA:128,255,144,255,MBA:323
+AllenCCF-Ontology-2017-539,MRNm,"Midbrain reticular nucleus, magnocellular part",#FF90FF,827.0,MBA:539,255,144,255,MBA:128
+AllenCCF-Ontology-2017-548,MRNmg,"Midbrain reticular nucleus, magnocellular part, general",#FF90FF,828.0,MBA:548,255,144,255,MBA:128
+AllenCCF-Ontology-2017-555,MRNp,"Midbrain reticular nucleus, parvicellular part",#FF90FF,829.0,MBA:555,255,144,255,MBA:128
+AllenCCF-Ontology-2017-294,SCm,"Superior colliculus, motor related",#FF90FF,830.0,MBA:294,255,144,255,MBA:323
+AllenCCF-Ontology-2017-26,SCdg,"Superior colliculus, motor related, deep gray layer",#FF90FF,831.0,MBA:26,255,144,255,MBA:294
+AllenCCF-Ontology-2017-42,SCdw,"Superior colliculus, motor related, deep white layer",#FF90FF,832.0,MBA:42,255,144,255,MBA:294
+AllenCCF-Ontology-2017-17,SCiw,"Superior colliculus, motor related, intermediate white layer",#FF90FF,833.0,MBA:17,255,144,255,MBA:294
+AllenCCF-Ontology-2017-10,SCig,"Superior colliculus, motor related, intermediate gray layer",#FF90FF,834.0,MBA:10,255,144,255,MBA:294
+AllenCCF-Ontology-2017-494,SCig-a,"Superior colliculus, motor related, intermediate gray layer, sublayer a",#FF90FF,835.0,MBA:494,255,144,255,MBA:10
+AllenCCF-Ontology-2017-503,SCig-b,"Superior colliculus, motor related, intermediate gray layer, sublayer b",#FF90FF,836.0,MBA:503,255,144,255,MBA:10
+AllenCCF-Ontology-2017-511,SCig-c,"Superior colliculus, motor related, intermediate gray layer, sublayer c",#FF90FF,837.0,MBA:511,255,144,255,MBA:10
+AllenCCF-Ontology-2017-795,PAG,Periaqueductal gray,#FF90FF,838.0,MBA:795,255,144,255,MBA:323
+AllenCCF-Ontology-2017-50,PRC,Precommissural nucleus,#FF90FF,839.0,MBA:50,255,144,255,MBA:795
+AllenCCF-Ontology-2017-67,INC,Interstitial nucleus of Cajal,#FF90FF,840.0,MBA:67,255,144,255,MBA:795
+AllenCCF-Ontology-2017-587,ND,Nucleus of Darkschewitsch,#FF90FF,841.0,MBA:587,255,144,255,MBA:795
+AllenCCF-Ontology-2017-614454277,Su3,Supraoculomotor periaqueductal gray,#FF90FF,842.0,MBA:614454277,255,144,255,MBA:795
+AllenCCF-Ontology-2017-1100,PRT,Pretectal region,#FF90FF,843.0,MBA:1100,255,144,255,MBA:323
+AllenCCF-Ontology-2017-215,APN,Anterior pretectal nucleus,#FF90FF,844.0,MBA:215,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-531,MPT,Medial pretectal area,#FF90FF,845.0,MBA:531,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-628,NOT,Nucleus of the optic tract,#FF90FF,846.0,MBA:628,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-634,NPC,Nucleus of the posterior commissure,#FF90FF,847.0,MBA:634,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-706,OP,Olivary pretectal nucleus,#FF90FF,848.0,MBA:706,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-1061,PPT,Posterior pretectal nucleus,#FF90FF,849.0,MBA:1061,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-549009203,RPF,Retroparafascicular nucleus,#FF90FF,850.0,MBA:549009203,255,144,255,MBA:1100
+AllenCCF-Ontology-2017-549009207,InCo,Intercollicular nucleus,#FF90FF,851.0,MBA:549009207,255,144,255,MBA:323
+AllenCCF-Ontology-2017-616,CUN,Cuneiform nucleus,#FF90FF,852.0,MBA:616,255,144,255,MBA:323
+AllenCCF-Ontology-2017-214,RN,Red nucleus,#FF90FF,853.0,MBA:214,255,144,255,MBA:323
+AllenCCF-Ontology-2017-35,III,Oculomotor nucleus,#FF90FF,854.0,MBA:35,255,144,255,MBA:323
+AllenCCF-Ontology-2017-549009211,MA3,Medial accesory oculomotor nucleus,#FF90FF,855.0,MBA:549009211,255,144,255,MBA:323
+AllenCCF-Ontology-2017-975,EW,Edinger-Westphal nucleus,#FF90FF,856.0,MBA:975,255,144,255,MBA:323
+AllenCCF-Ontology-2017-115,IV,Trochlear nucleus,#FF90FF,857.0,MBA:115,255,144,255,MBA:323
+AllenCCF-Ontology-2017-606826663,Pa4,Paratrochlear nucleus,#FF90FF,858.0,MBA:606826663,255,144,255,MBA:323
+AllenCCF-Ontology-2017-757,VTN,Ventral tegmental nucleus,#FF90FF,859.0,MBA:757,255,144,255,MBA:323
+AllenCCF-Ontology-2017-231,AT,Anterior tegmental nucleus,#FF90FF,860.0,MBA:231,255,144,255,MBA:323
+AllenCCF-Ontology-2017-66,LT,Lateral terminal nucleus of the accessory optic tract,#FF90FF,861.0,MBA:66,255,144,255,MBA:323
+AllenCCF-Ontology-2017-75,DT,Dorsal terminal nucleus of the accessory optic tract,#FF90FF,862.0,MBA:75,255,144,255,MBA:323
+AllenCCF-Ontology-2017-58,MT,Medial terminal nucleus of the accessory optic tract,#FF90FF,863.0,MBA:58,255,144,255,MBA:323
+AllenCCF-Ontology-2017-615,SNl,"Substantia nigra, lateral part",#FF90FF,864.0,MBA:615,255,144,255,MBA:323
+AllenCCF-Ontology-2017-348,MBsta,"Midbrain, behavioral state related",#FF90FF,865.0,MBA:348,255,144,255,MBA:313
+AllenCCF-Ontology-2017-374,SNc,"Substantia nigra, compact part",#FFA6FF,866.0,MBA:374,255,166,255,MBA:348
+AllenCCF-Ontology-2017-1052,PPN,Pedunculopontine nucleus,#FFA6FF,867.0,MBA:1052,255,166,255,MBA:348
+AllenCCF-Ontology-2017-165,RAmb,Midbrain raphe nuclei,#FFA6FF,868.0,MBA:165,255,166,255,MBA:348
+AllenCCF-Ontology-2017-12,IF,Interfascicular nucleus raphe,#FFA6FF,869.0,MBA:12,255,166,255,MBA:165
+AllenCCF-Ontology-2017-100,IPN,Interpeduncular nucleus,#FFA6FF,870.0,MBA:100,255,166,255,MBA:165
+AllenCCF-Ontology-2017-607344834,IPR,"Interpeduncular nucleus, rostral",#FFA6FF,871.0,MBA:607344834,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344838,IPC,"Interpeduncular nucleus, caudal",#FFA6FF,872.0,MBA:607344838,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344842,IPA,"Interpeduncular nucleus, apical",#FFA6FF,873.0,MBA:607344842,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344846,IPL,"Interpeduncular nucleus, lateral",#FFA6FF,874.0,MBA:607344846,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344850,IPI,"Interpeduncular nucleus, intermediate",#FFA6FF,875.0,MBA:607344850,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344854,IPDM,"Interpeduncular nucleus, dorsomedial",#FFA6FF,876.0,MBA:607344854,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344858,IPDL,"Interpeduncular nucleus, dorsolateral",#FFA6FF,877.0,MBA:607344858,255,166,255,MBA:100
+AllenCCF-Ontology-2017-607344862,IPRL,"Interpeduncular nucleus, rostrolateral",#FFA6FF,878.0,MBA:607344862,255,166,255,MBA:100
+AllenCCF-Ontology-2017-197,RL,Rostral linear nucleus raphe,#FFA6FF,879.0,MBA:197,255,166,255,MBA:165
+AllenCCF-Ontology-2017-591,CLI,Central linear nucleus raphe,#FFA6FF,880.0,MBA:591,255,166,255,MBA:165
+AllenCCF-Ontology-2017-872,DR,Dorsal nucleus raphe,#FFA6FF,881.0,MBA:872,255,166,255,MBA:165
+AllenCCF-Ontology-2017-1065,HB,Hindbrain,#FF9B88,882.0,MBA:1065,255,155,136,MBA:343
+AllenCCF-Ontology-2017-771,P,Pons,#FF9B88,883.0,MBA:771,255,155,136,MBA:1065
+AllenCCF-Ontology-2017-1132,P-sen,"Pons, sensory related",#FFAE6F,884.0,MBA:1132,255,174,111,MBA:771
+AllenCCF-Ontology-2017-612,NLL,Nucleus of the lateral lemniscus,#FFAE6F,885.0,MBA:612,255,174,111,MBA:1132
+AllenCCF-Ontology-2017-82,NLLd,"Nucleus of the lateral lemniscus, dorsal part",#FFAE6F,886.0,MBA:82,255,174,111,MBA:612
+AllenCCF-Ontology-2017-90,NLLh,"Nucleus of the lateral lemniscus, horizontal part",#FFAE6F,887.0,MBA:90,255,174,111,MBA:612
+AllenCCF-Ontology-2017-99,NLLv,"Nucleus of the lateral lemniscus, ventral part",#FFAE6F,888.0,MBA:99,255,174,111,MBA:612
+AllenCCF-Ontology-2017-7,PSV,Principal sensory nucleus of the trigeminal,#FFAE6F,889.0,MBA:7,255,174,111,MBA:1132
+AllenCCF-Ontology-2017-867,PB,Parabrachial nucleus,#FFAE6F,890.0,MBA:867,255,174,111,MBA:1132
+AllenCCF-Ontology-2017-123,KF,Koelliker-Fuse subnucleus,#FFAE6F,891.0,MBA:123,255,174,111,MBA:867
+AllenCCF-Ontology-2017-881,PBl,"Parabrachial nucleus, lateral division",#FFAE6F,892.0,MBA:881,255,174,111,MBA:867
+AllenCCF-Ontology-2017-860,PBlc,"Parabrachial nucleus, lateral division, central lateral part",#FFAE6F,893.0,MBA:860,255,174,111,MBA:881
+AllenCCF-Ontology-2017-868,PBld,"Parabrachial nucleus, lateral division, dorsal lateral part",#FFAE6F,894.0,MBA:868,255,174,111,MBA:881
+AllenCCF-Ontology-2017-875,PBle,"Parabrachial nucleus, lateral division, external lateral part",#FFAE6F,895.0,MBA:875,255,174,111,MBA:881
+AllenCCF-Ontology-2017-883,PBls,"Parabrachial nucleus, lateral division, superior lateral part",#FFAE6F,896.0,MBA:883,255,174,111,MBA:881
+AllenCCF-Ontology-2017-891,PBlv,"Parabrachial nucleus, lateral division, ventral lateral part",#FFAE6F,897.0,MBA:891,255,174,111,MBA:881
+AllenCCF-Ontology-2017-890,PBm,"Parabrachial nucleus, medial division",#FFAE6F,898.0,MBA:890,255,174,111,MBA:867
+AllenCCF-Ontology-2017-899,PBme,"Parabrachial nucleus, medial division, external medial part",#FFAE6F,899.0,MBA:899,255,174,111,MBA:890
+AllenCCF-Ontology-2017-915,PBmm,"Parabrachial nucleus, medial division, medial medial part",#FFAE6F,900.0,MBA:915,255,174,111,MBA:890
+AllenCCF-Ontology-2017-923,PBmv,"Parabrachial nucleus, medial division, ventral medial part",#FFAE6F,901.0,MBA:923,255,174,111,MBA:890
+AllenCCF-Ontology-2017-398,SOC,Superior olivary complex,#FFAE6F,902.0,MBA:398,255,174,111,MBA:1132
+AllenCCF-Ontology-2017-122,POR,"Superior olivary complex, periolivary region",#FFAE6F,903.0,MBA:122,255,174,111,MBA:398
+AllenCCF-Ontology-2017-105,SOCm,"Superior olivary complex, medial part",#FFAE6F,904.0,MBA:105,255,174,111,MBA:398
+AllenCCF-Ontology-2017-114,SOCl,"Superior olivary complex, lateral part",#FFAE6F,905.0,MBA:114,255,174,111,MBA:398
+AllenCCF-Ontology-2017-987,P-mot,"Pons, motor related",#FFBA86,906.0,MBA:987,255,186,134,MBA:771
+AllenCCF-Ontology-2017-280,B,Barrington's nucleus,#FFBA86,907.0,MBA:280,255,186,134,MBA:987
+AllenCCF-Ontology-2017-880,DTN,Dorsal tegmental nucleus,#FFBA86,908.0,MBA:880,255,186,134,MBA:987
+AllenCCF-Ontology-2017-283,LTN,Lateral tegmental nucleus,#FFBA86,909.0,MBA:283,255,186,134,MBA:987
+AllenCCF-Ontology-2017-599626927,PDTg,Posterodorsal tegmental nucleus,#FFBA86,910.0,MBA:599626927,255,186,134,MBA:987
+AllenCCF-Ontology-2017-898,PCG,Pontine central gray,#FFBA86,911.0,MBA:898,255,186,134,MBA:987
+AllenCCF-Ontology-2017-931,PG,Pontine gray,#FFBA86,912.0,MBA:931,255,186,134,MBA:987
+AllenCCF-Ontology-2017-1093,PRNc,"Pontine reticular nucleus, caudal part",#FFBA86,913.0,MBA:1093,255,186,134,MBA:987
+AllenCCF-Ontology-2017-552,PRNv,"Pontine reticular nucleus, ventral part",#FFBA86,914.0,MBA:552,255,186,134,MBA:987
+AllenCCF-Ontology-2017-318,SG,Supragenual nucleus,#FFBA86,915.0,MBA:318,255,186,134,MBA:987
+AllenCCF-Ontology-2017-462,SSN,Superior salivatory nucleus,#FFBA86,916.0,MBA:462,255,186,134,MBA:987
+AllenCCF-Ontology-2017-534,SUT,Supratrigeminal nucleus,#FFBA86,917.0,MBA:534,255,186,134,MBA:987
+AllenCCF-Ontology-2017-574,TRN,Tegmental reticular nucleus,#FFBA86,918.0,MBA:574,255,186,134,MBA:987
+AllenCCF-Ontology-2017-621,V,Motor nucleus of trigeminal,#FFBA86,919.0,MBA:621,255,186,134,MBA:987
+AllenCCF-Ontology-2017-549009215,P5,Peritrigeminal zone,#FFBA86,920.0,MBA:549009215,255,186,134,MBA:987
+AllenCCF-Ontology-2017-549009219,Acs5,Accessory trigeminal nucleus,#FFBA86,921.0,MBA:549009219,255,186,134,MBA:987
+AllenCCF-Ontology-2017-549009223,PC5,Parvicellular motor 5 nucleus,#FFBA86,922.0,MBA:549009223,255,186,134,MBA:987
+AllenCCF-Ontology-2017-549009227,I5,Intertrigeminal nucleus,#FFBA86,923.0,MBA:549009227,255,186,134,MBA:987
+AllenCCF-Ontology-2017-1117,P-sat,"Pons, behavioral state related",#FFC395,924.0,MBA:1117,255,195,149,MBA:771
+AllenCCF-Ontology-2017-679,CS,Superior central nucleus raphe,#FFC395,925.0,MBA:679,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-137,CSl,"Superior central nucleus raphe, lateral part",#FFC395,926.0,MBA:137,255,195,149,MBA:679
+AllenCCF-Ontology-2017-130,CSm,"Superior central nucleus raphe, medial part",#FFC395,927.0,MBA:130,255,195,149,MBA:679
+AllenCCF-Ontology-2017-147,LC,Locus ceruleus,#FFC395,928.0,MBA:147,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-162,LDT,Laterodorsal tegmental nucleus,#FFC395,929.0,MBA:162,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-604,NI,Nucleus incertus,#FFC395,930.0,MBA:604,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-146,PRNr,Pontine reticular nucleus,#FFC395,931.0,MBA:146,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-238,RPO,Nucleus raphe pontis,#FFC395,932.0,MBA:238,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-350,SLC,Subceruleus nucleus,#FFC395,933.0,MBA:350,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-358,SLD,Sublaterodorsal nucleus,#FFC395,934.0,MBA:358,255,195,149,MBA:1117
+AllenCCF-Ontology-2017-354,MY,Medulla,#FF9BCD,935.0,MBA:354,255,155,205,MBA:1065
+AllenCCF-Ontology-2017-386,MY-sen,"Medulla, sensory related",#FFA5D2,936.0,MBA:386,255,165,210,MBA:354
+AllenCCF-Ontology-2017-207,AP,Area postrema,#FFA5D2,937.0,MBA:207,255,165,210,MBA:386
+AllenCCF-Ontology-2017-607,CN,Cochlear nuclei,#FFA5D2,938.0,MBA:607,255,165,210,MBA:386
+AllenCCF-Ontology-2017-112,CNlam,Granular lamina of the cochlear nuclei,#FFA5D2,939.0,MBA:112,255,165,210,MBA:607
+AllenCCF-Ontology-2017-560,CNspg,"Cochlear nucleus, subpedunclular granular region",#FFA5D2,940.0,MBA:560,255,165,210,MBA:607
+AllenCCF-Ontology-2017-96,DCO,Dorsal cochlear nucleus,#FFA5D2,941.0,MBA:96,255,165,210,MBA:607
+AllenCCF-Ontology-2017-101,VCO,Ventral cochlear nucleus,#FFA5D2,942.0,MBA:101,255,165,210,MBA:607
+AllenCCF-Ontology-2017-720,DCN,Dorsal column nuclei,#FFA5D2,943.0,MBA:720,255,165,210,MBA:386
+AllenCCF-Ontology-2017-711,CU,Cuneate nucleus,#FFA5D2,944.0,MBA:711,255,165,210,MBA:720
+AllenCCF-Ontology-2017-1039,GR,Gracile nucleus,#FFA5D2,945.0,MBA:1039,255,165,210,MBA:720
+AllenCCF-Ontology-2017-903,ECU,External cuneate nucleus,#FFA5D2,946.0,MBA:903,255,165,210,MBA:386
+AllenCCF-Ontology-2017-642,NTB,Nucleus of the trapezoid body,#FFA5D2,947.0,MBA:642,255,165,210,MBA:386
+AllenCCF-Ontology-2017-651,NTS,Nucleus of the solitary tract,#FFA5D2,948.0,MBA:651,255,165,210,MBA:386
+AllenCCF-Ontology-2017-659,NTSce,"Nucleus of the solitary tract, central part",#FFA5D2,949.0,MBA:659,255,165,210,MBA:651
+AllenCCF-Ontology-2017-666,NTSco,"Nucleus of the solitary tract, commissural part",#FFA5D2,950.0,MBA:666,255,165,210,MBA:651
+AllenCCF-Ontology-2017-674,NTSge,"Nucleus of the solitary tract, gelatinous part",#FFA5D2,951.0,MBA:674,255,165,210,MBA:651
+AllenCCF-Ontology-2017-682,NTSl,"Nucleus of the solitary tract, lateral part",#FFA5D2,952.0,MBA:682,255,165,210,MBA:651
+AllenCCF-Ontology-2017-691,NTSm,"Nucleus of the solitary tract, medial part",#FFA5D2,953.0,MBA:691,255,165,210,MBA:651
+AllenCCF-Ontology-2017-429,SPVC,"Spinal nucleus of the trigeminal, caudal part",#FFA5D2,954.0,MBA:429,255,165,210,MBA:386
+AllenCCF-Ontology-2017-437,SPVI,"Spinal nucleus of the trigeminal, interpolar part",#FFA5D2,955.0,MBA:437,255,165,210,MBA:386
+AllenCCF-Ontology-2017-445,SPVO,"Spinal nucleus of the trigeminal, oral part",#FFA5D2,956.0,MBA:445,255,165,210,MBA:386
+AllenCCF-Ontology-2017-77,SPVOcdm,"Spinal nucleus of the trigeminal, oral part, caudal dorsomedial part",#FFA5D2,957.0,MBA:77,255,165,210,MBA:445
+AllenCCF-Ontology-2017-53,SPVOmdmd,"Spinal nucleus of the trigeminal, oral part, middle dorsomedial part, dorsal zone",#FFA5D2,958.0,MBA:53,255,165,210,MBA:445
+AllenCCF-Ontology-2017-61,SPVOmdmv,"Spinal nucleus of the trigeminal, oral part, middle dorsomedial part, ventral zone",#FFA5D2,959.0,MBA:61,255,165,210,MBA:445
+AllenCCF-Ontology-2017-45,SPVOrdm,"Spinal nucleus of the trigeminal, oral part, rostral dorsomedial part",#FFA5D2,960.0,MBA:45,255,165,210,MBA:445
+AllenCCF-Ontology-2017-69,SPVOvl,"Spinal nucleus of the trigeminal, oral part, ventrolateral part",#FFA5D2,961.0,MBA:69,255,165,210,MBA:445
+AllenCCF-Ontology-2017-589508451,Pa5,Paratrigeminal nucleus,#FFA5D2,962.0,MBA:589508451,255,165,210,MBA:386
+AllenCCF-Ontology-2017-789,z,Nucleus z,#FFA5D2,963.0,MBA:789,255,165,210,MBA:386
+AllenCCF-Ontology-2017-370,MY-mot,"Medulla, motor related",#FFB3D9,964.0,MBA:370,255,179,217,MBA:354
+AllenCCF-Ontology-2017-653,VI,Abducens nucleus,#FFB3D9,965.0,MBA:653,255,179,217,MBA:370
+AllenCCF-Ontology-2017-568,ACVI,Accessory abducens nucleus,#FFB3D9,966.0,MBA:568,255,179,217,MBA:370
+AllenCCF-Ontology-2017-661,VII,Facial motor nucleus,#FFB3D9,967.0,MBA:661,255,179,217,MBA:370
+AllenCCF-Ontology-2017-576,ACVII,Accessory facial motor nucleus,#FFB3D9,968.0,MBA:576,255,179,217,MBA:370
+AllenCCF-Ontology-2017-640,EV,Efferent vestibular nucleus,#FFB3D9,969.0,MBA:640,255,179,217,MBA:370
+AllenCCF-Ontology-2017-135,AMB,Nucleus ambiguus,#FFB3D9,970.0,MBA:135,255,179,217,MBA:370
+AllenCCF-Ontology-2017-939,AMBd,"Nucleus ambiguus, dorsal division",#FFB3D9,971.0,MBA:939,255,179,217,MBA:135
+AllenCCF-Ontology-2017-143,AMBv,"Nucleus ambiguus, ventral division",#FFB3D9,972.0,MBA:143,255,179,217,MBA:135
+AllenCCF-Ontology-2017-839,DMX,Dorsal motor nucleus of the vagus nerve,#FFB3D9,973.0,MBA:839,255,179,217,MBA:370
+AllenCCF-Ontology-2017-887,ECO,Efferent cochlear group,#FFB3D9,974.0,MBA:887,255,179,217,MBA:370
+AllenCCF-Ontology-2017-1048,GRN,Gigantocellular reticular nucleus,#FFB3D9,975.0,MBA:1048,255,179,217,MBA:370
+AllenCCF-Ontology-2017-372,ICB,Infracerebellar nucleus,#FFB3D9,976.0,MBA:372,255,179,217,MBA:370
+AllenCCF-Ontology-2017-83,IO,Inferior olivary complex,#FFB3D9,977.0,MBA:83,255,179,217,MBA:370
+AllenCCF-Ontology-2017-136,IRN,Intermediate reticular nucleus,#FFB3D9,978.0,MBA:136,255,179,217,MBA:370
+AllenCCF-Ontology-2017-106,ISN,Inferior salivatory nucleus,#FFB3D9,979.0,MBA:106,255,179,217,MBA:370
+AllenCCF-Ontology-2017-203,LIN,Linear nucleus of the medulla,#FFB3D9,980.0,MBA:203,255,179,217,MBA:370
+AllenCCF-Ontology-2017-235,LRN,Lateral reticular nucleus,#FFB3D9,981.0,MBA:235,255,179,217,MBA:370
+AllenCCF-Ontology-2017-955,LRNm,"Lateral reticular nucleus, magnocellular part",#FFB3D9,982.0,MBA:955,255,179,217,MBA:235
+AllenCCF-Ontology-2017-963,LRNp,"Lateral reticular nucleus, parvicellular part",#FFB3D9,983.0,MBA:963,255,179,217,MBA:235
+AllenCCF-Ontology-2017-307,MARN,Magnocellular reticular nucleus,#FFB3D9,984.0,MBA:307,255,179,217,MBA:370
+AllenCCF-Ontology-2017-395,MDRN,Medullary reticular nucleus,#FFB3D9,985.0,MBA:395,255,179,217,MBA:370
+AllenCCF-Ontology-2017-1098,MDRNd,"Medullary reticular nucleus, dorsal part",#FFB3D9,986.0,MBA:1098,255,179,217,MBA:395
+AllenCCF-Ontology-2017-1107,MDRNv,"Medullary reticular nucleus, ventral part",#FFB3D9,987.0,MBA:1107,255,179,217,MBA:395
+AllenCCF-Ontology-2017-852,PARN,Parvicellular reticular nucleus,#FFB3D9,988.0,MBA:852,255,179,217,MBA:370
+AllenCCF-Ontology-2017-859,PAS,Parasolitary nucleus,#FFB3D9,989.0,MBA:859,255,179,217,MBA:370
+AllenCCF-Ontology-2017-938,PGRN,Paragigantocellular reticular nucleus,#FFB3D9,990.0,MBA:938,255,179,217,MBA:370
+AllenCCF-Ontology-2017-970,PGRNd,"Paragigantocellular reticular nucleus, dorsal part",#FFB3D9,991.0,MBA:970,255,179,217,MBA:938
+AllenCCF-Ontology-2017-978,PGRNl,"Paragigantocellular reticular nucleus, lateral part",#FFB3D9,992.0,MBA:978,255,179,217,MBA:938
+AllenCCF-Ontology-2017-154,PHY,Perihypoglossal nuclei,#FFB3D9,993.0,MBA:154,255,179,217,MBA:370
+AllenCCF-Ontology-2017-161,NIS,Nucleus intercalatus,#FFB3D9,994.0,MBA:161,255,179,217,MBA:154
+AllenCCF-Ontology-2017-177,NR,Nucleus of Roller,#FFB3D9,995.0,MBA:177,255,179,217,MBA:154
+AllenCCF-Ontology-2017-169,PRP,Nucleus prepositus,#FFB3D9,996.0,MBA:169,255,179,217,MBA:154
+AllenCCF-Ontology-2017-995,PMR,Paramedian reticular nucleus,#FFB3D9,997.0,MBA:995,255,179,217,MBA:370
+AllenCCF-Ontology-2017-1069,PPY,Parapyramidal nucleus,#FFB3D9,998.0,MBA:1069,255,179,217,MBA:370
+AllenCCF-Ontology-2017-185,PPYd,"Parapyramidal nucleus, deep part",#FFB3D9,999.0,MBA:185,255,179,217,MBA:1069
+AllenCCF-Ontology-2017-193,PPYs,"Parapyramidal nucleus, superficial part",#FFB3D9,1000.0,MBA:193,255,179,217,MBA:1069
+AllenCCF-Ontology-2017-701,VNC,Vestibular nuclei,#FFB3D9,1001.0,MBA:701,255,179,217,MBA:370
+AllenCCF-Ontology-2017-209,LAV,Lateral vestibular nucleus,#FFB3D9,1002.0,MBA:209,255,179,217,MBA:701
+AllenCCF-Ontology-2017-202,MV,Medial vestibular nucleus,#FFB3D9,1003.0,MBA:202,255,179,217,MBA:701
+AllenCCF-Ontology-2017-225,SPIV,Spinal vestibular nucleus,#FFB3D9,1004.0,MBA:225,255,179,217,MBA:701
+AllenCCF-Ontology-2017-217,SUV,Superior vestibular nucleus,#FFB3D9,1005.0,MBA:217,255,179,217,MBA:701
+AllenCCF-Ontology-2017-765,x,Nucleus x,#FFB3D9,1006.0,MBA:765,255,179,217,MBA:370
+AllenCCF-Ontology-2017-773,XII,Hypoglossal nucleus,#FFB3D9,1007.0,MBA:773,255,179,217,MBA:370
+AllenCCF-Ontology-2017-781,y,Nucleus y,#FFB3D9,1008.0,MBA:781,255,179,217,MBA:370
+AllenCCF-Ontology-2017-76,INV,Interstitial nucleus of the vestibular nerve,#FFB3D9,1009.0,MBA:76,255,179,217,MBA:370
+AllenCCF-Ontology-2017-379,MY-sat,"Medulla, behavioral state related",#FFC6E2,1010.0,MBA:379,255,198,226,MBA:354
+AllenCCF-Ontology-2017-206,RM,Nucleus raphe magnus,#FFC6E2,1011.0,MBA:206,255,198,226,MBA:379
+AllenCCF-Ontology-2017-230,RPA,Nucleus raphe pallidus,#FFC6E2,1012.0,MBA:230,255,198,226,MBA:379
+AllenCCF-Ontology-2017-222,RO,Nucleus raphe obscurus,#FFC6E2,1013.0,MBA:222,255,198,226,MBA:379
+AllenCCF-Ontology-2017-512,CB,Cerebellum,#F0F080,1014.0,MBA:512,240,240,128,MBA:8
+AllenCCF-Ontology-2017-528,CBX,Cerebellar cortex,#F0F080,1015.0,MBA:528,240,240,128,MBA:512
+AllenCCF-Ontology-2017-1144,CBXmo,"Cerebellar cortex, molecular layer",#FFFC91,1016.0,MBA:1144,255,252,145,MBA:528
+AllenCCF-Ontology-2017-1145,CBXpu,"Cerebellar cortex, Purkinje layer",#FFFC91,1017.0,MBA:1145,255,252,145,MBA:528
+AllenCCF-Ontology-2017-1143,CBXgr,"Cerebellar cortex, granular layer",#ECE754,1018.0,MBA:1143,236,231,84,MBA:528
+AllenCCF-Ontology-2017-645,VERM,Vermal regions,#FFFC91,1019.0,MBA:645,255,252,145,MBA:528
+AllenCCF-Ontology-2017-912,LING,Lingula (I),#FFFC91,1020.0,MBA:912,255,252,145,MBA:645
+AllenCCF-Ontology-2017-10707,LINGmo,"Lingula (I), molecular layer",#FFFC91,1021.0,MBA:10707,255,252,145,MBA:912
+AllenCCF-Ontology-2017-10706,LINGpu,"Lingula (I), Purkinje layer",#FFFC91,1022.0,MBA:10706,255,252,145,MBA:912
+AllenCCF-Ontology-2017-10705,LINGgr,"Lingula (I), granular layer",#ECE754,1023.0,MBA:10705,236,231,84,MBA:912
+AllenCCF-Ontology-2017-920,CENT,Central lobule,#FFFC91,1024.0,MBA:920,255,252,145,MBA:645
+AllenCCF-Ontology-2017-976,CENT2,Lobule II,#FFFC91,1025.0,MBA:976,255,252,145,MBA:920
+AllenCCF-Ontology-2017-10710,CENT2mo,"Lobule II, molecular layer",#FFFC91,1026.0,MBA:10710,255,252,145,MBA:976
+AllenCCF-Ontology-2017-10709,CENT2pu,"Lobule II, Purkinje layer",#FFFC91,1027.0,MBA:10709,255,252,145,MBA:976
+AllenCCF-Ontology-2017-10708,CENT2gr,"Lobule II, granular layer",#ECE754,1028.0,MBA:10708,236,231,84,MBA:976
+AllenCCF-Ontology-2017-984,CENT3,Lobule III,#FFFC91,1029.0,MBA:984,255,252,145,MBA:920
+AllenCCF-Ontology-2017-10713,CENT3mo,"Lobule III, molecular layer",#FFFC91,1030.0,MBA:10713,255,252,145,MBA:984
+AllenCCF-Ontology-2017-10712,CENT3pu,"Lobule III, Purkinje layer",#FFFC91,1031.0,MBA:10712,255,252,145,MBA:984
+AllenCCF-Ontology-2017-10711,CENT3gr,"Lobule III, granular layer",#ECE754,1032.0,MBA:10711,236,231,84,MBA:984
+AllenCCF-Ontology-2017-928,CUL,Culmen,#FFFC91,1033.0,MBA:928,255,252,145,MBA:645
+AllenCCF-Ontology-2017-992,CUL4,Lobule IV,#FFFC91,1034.0,MBA:992,255,252,145,MBA:928
+AllenCCF-Ontology-2017-10716,CUL4mo,"Lobule IV, molecular layer",#FFFC91,1035.0,MBA:10716,255,252,145,MBA:992
+AllenCCF-Ontology-2017-10715,CUL4pu,"Lobule IV, Purkinje layer",#FFFC91,1036.0,MBA:10715,255,252,145,MBA:992
+AllenCCF-Ontology-2017-10714,CUL4gr,"Lobule IV, granular layer",#ECE754,1037.0,MBA:10714,236,231,84,MBA:992
+AllenCCF-Ontology-2017-1001,CUL5,Lobule V,#FFFC91,1038.0,MBA:1001,255,252,145,MBA:928
+AllenCCF-Ontology-2017-10719,CUL5mo,"Lobule V, molecular layer",#FFFC91,1039.0,MBA:10719,255,252,145,MBA:1001
+AllenCCF-Ontology-2017-10718,CUL5pu,"Lobule V, Purkinje layer",#FFFC91,1040.0,MBA:10718,255,252,145,MBA:1001
+AllenCCF-Ontology-2017-10717,CUL5gr,"Lobule V, granular layer",#ECE754,1041.0,MBA:10717,236,231,84,MBA:1001
+AllenCCF-Ontology-2017-1091,"CUL4, 5",Lobules IV-V,#FFFC91,1042.0,MBA:1091,255,252,145,MBA:928
+AllenCCF-Ontology-2017-10722,"CUL4, 5mo","Lobules IV-V, molecular layer",#FFFC91,1043.0,MBA:10722,255,252,145,MBA:1091
+AllenCCF-Ontology-2017-10721,"CUL4, 5pu","Lobules IV-V, Purkinje layer",#FFFC91,1044.0,MBA:10721,255,252,145,MBA:1091
+AllenCCF-Ontology-2017-10720,"CUL4, 5gr","Lobules IV-V, granular layer",#ECE754,1045.0,MBA:10720,236,231,84,MBA:1091
+AllenCCF-Ontology-2017-936,DEC,Declive (VI),#FFFC91,1046.0,MBA:936,255,252,145,MBA:645
+AllenCCF-Ontology-2017-10725,DECmo,"Declive (VI), molecular layer",#FFFC91,1047.0,MBA:10725,255,252,145,MBA:936
+AllenCCF-Ontology-2017-10724,DECpu,"Declive (VI), Purkinje layer",#FFFC91,1048.0,MBA:10724,255,252,145,MBA:936
+AllenCCF-Ontology-2017-10723,DECgr,"Declive (VI), granular layer",#ECE754,1049.0,MBA:10723,236,231,84,MBA:936
+AllenCCF-Ontology-2017-944,FOTU,Folium-tuber vermis (VII),#FFFC91,1050.0,MBA:944,255,252,145,MBA:645
+AllenCCF-Ontology-2017-10728,FOTUmo,"Folium-tuber vermis (VII), molecular layer",#FFFC91,1051.0,MBA:10728,255,252,145,MBA:944
+AllenCCF-Ontology-2017-10727,FOTUpu,"Folium-tuber vermis (VII), Purkinje layer",#FFFC91,1052.0,MBA:10727,255,252,145,MBA:944
+AllenCCF-Ontology-2017-10726,FOTUgr,"Folium-tuber vermis (VII), granular layer",#ECE754,1053.0,MBA:10726,236,231,84,MBA:944
+AllenCCF-Ontology-2017-951,PYR,Pyramus (VIII),#FFFC91,1054.0,MBA:951,255,252,145,MBA:645
+AllenCCF-Ontology-2017-10731,PYRmo,"Pyramus (VIII), molecular layer",#FFFC91,1055.0,MBA:10731,255,252,145,MBA:951
+AllenCCF-Ontology-2017-10730,PYRpu,"Pyramus (VIII), Purkinje layer",#FFFC91,1056.0,MBA:10730,255,252,145,MBA:951
+AllenCCF-Ontology-2017-10729,PYRgr,"Pyramus (VIII), granular layer",#ECE754,1057.0,MBA:10729,236,231,84,MBA:951
+AllenCCF-Ontology-2017-957,UVU,Uvula (IX),#FFFC91,1058.0,MBA:957,255,252,145,MBA:645
+AllenCCF-Ontology-2017-10734,UVUmo,"Uvula (IX), molecular layer",#FFFC91,1059.0,MBA:10734,255,252,145,MBA:957
+AllenCCF-Ontology-2017-10733,UVUpu,"Uvula (IX), Purkinje layer",#FFFC91,1060.0,MBA:10733,255,252,145,MBA:957
+AllenCCF-Ontology-2017-10732,UVUgr,"Uvula (IX), granular layer",#ECE754,1061.0,MBA:10732,236,231,84,MBA:957
+AllenCCF-Ontology-2017-968,NOD,Nodulus (X),#FFFC91,1062.0,MBA:968,255,252,145,MBA:645
+AllenCCF-Ontology-2017-10737,NODmo,"Nodulus (X), molecular layer",#FFFC91,1063.0,MBA:10737,255,252,145,MBA:968
+AllenCCF-Ontology-2017-10736,NODpu,"Nodulus (X), Purkinje layer",#FFFC91,1064.0,MBA:10736,255,252,145,MBA:968
+AllenCCF-Ontology-2017-10735,NODgr,"Nodulus (X), granular layer",#ECE754,1065.0,MBA:10735,236,231,84,MBA:968
+AllenCCF-Ontology-2017-1073,HEM,Hemispheric regions,#FFFC91,1066.0,MBA:1073,255,252,145,MBA:528
+AllenCCF-Ontology-2017-1007,SIM,Simple lobule,#FFFC91,1067.0,MBA:1007,255,252,145,MBA:1073
+AllenCCF-Ontology-2017-10674,SIMmo,"Simple lobule, molecular layer",#FFFC91,1068.0,MBA:10674,255,252,145,MBA:1007
+AllenCCF-Ontology-2017-10673,SIMpu,"Simple lobule, Purkinje layer",#FFFC91,1069.0,MBA:10673,255,252,145,MBA:1007
+AllenCCF-Ontology-2017-10672,SIMgr,"Simple lobule, granular layer",#ECE754,1070.0,MBA:10672,236,231,84,MBA:1007
+AllenCCF-Ontology-2017-1017,AN,Ansiform lobule,#FFFC91,1071.0,MBA:1017,255,252,145,MBA:1073
+AllenCCF-Ontology-2017-1056,ANcr1,Crus 1,#FFFC91,1072.0,MBA:1056,255,252,145,MBA:1017
+AllenCCF-Ontology-2017-10677,ANcr1mo,"Crus 1, molecular layer",#FFFC91,1073.0,MBA:10677,255,252,145,MBA:1056
+AllenCCF-Ontology-2017-10676,ANcr1pu,"Crus 1, Purkinje layer",#FFFC91,1074.0,MBA:10676,255,252,145,MBA:1056
+AllenCCF-Ontology-2017-10675,ANcr1gr,"Crus 1, granular layer",#ECE754,1075.0,MBA:10675,236,231,84,MBA:1056
+AllenCCF-Ontology-2017-1064,ANcr2,Crus 2,#FFFC91,1076.0,MBA:1064,255,252,145,MBA:1017
+AllenCCF-Ontology-2017-10680,ANcr2mo,"Crus 2, molecular layer",#FFFC91,1077.0,MBA:10680,255,252,145,MBA:1064
+AllenCCF-Ontology-2017-10679,ANcr2pu,"Crus 2, Purkinje layer",#FFFC91,1078.0,MBA:10679,255,252,145,MBA:1064
+AllenCCF-Ontology-2017-10678,ANcr2gr,"Crus 2, granular layer",#ECE754,1079.0,MBA:10678,236,231,84,MBA:1064
+AllenCCF-Ontology-2017-1025,PRM,Paramedian lobule,#FFFC91,1080.0,MBA:1025,255,252,145,MBA:1073
+AllenCCF-Ontology-2017-10683,PRMmo,"Paramedian lobule, molecular layer",#FFFC91,1081.0,MBA:10683,255,252,145,MBA:1025
+AllenCCF-Ontology-2017-10682,PRMpu,"Paramedian lobule, Purkinje layer",#FFFC91,1082.0,MBA:10682,255,252,145,MBA:1025
+AllenCCF-Ontology-2017-10681,PRMgr,"Paramedian lobule, granular layer",#ECE754,1083.0,MBA:10681,236,231,84,MBA:1025
+AllenCCF-Ontology-2017-1033,COPY,Copula pyramidis,#FFFC91,1084.0,MBA:1033,255,252,145,MBA:1073
+AllenCCF-Ontology-2017-10686,COPYmo,"Copula pyramidis, molecular layer",#FFFC91,1085.0,MBA:10686,255,252,145,MBA:1033
+AllenCCF-Ontology-2017-10685,COPYpu,"Copula pyramidis, Purkinje layer",#FFFC91,1086.0,MBA:10685,255,252,145,MBA:1033
+AllenCCF-Ontology-2017-10684,COPYgr,"Copula pyramidis, granular layer",#ECE754,1087.0,MBA:10684,236,231,84,MBA:1033
+AllenCCF-Ontology-2017-1041,PFL,Paraflocculus,#FFFC91,1088.0,MBA:1041,255,252,145,MBA:1073
+AllenCCF-Ontology-2017-10689,PFLmo,"Paraflocculus, molecular layer",#FFFC91,1089.0,MBA:10689,255,252,145,MBA:1041
+AllenCCF-Ontology-2017-10688,PFLpu,"Paraflocculus, Purkinje layer",#FFFC91,1090.0,MBA:10688,255,252,145,MBA:1041
+AllenCCF-Ontology-2017-10687,PFLgr,"Paraflocculus, granular layer",#ECE754,1091.0,MBA:10687,236,231,84,MBA:1041
+AllenCCF-Ontology-2017-1049,FL,Flocculus,#FFFC91,1092.0,MBA:1049,255,252,145,MBA:1073
+AllenCCF-Ontology-2017-10692,FLmo,"Flocculus, molecular layer",#FFFC91,1093.0,MBA:10692,255,252,145,MBA:1049
+AllenCCF-Ontology-2017-10691,FLpu,"Flocculus, Purkinje layer",#FFFC91,1094.0,MBA:10691,255,252,145,MBA:1049
+AllenCCF-Ontology-2017-10690,FLgr,"Flocculus, granular layer",#ECE754,1095.0,MBA:10690,236,231,84,MBA:1049
+AllenCCF-Ontology-2017-519,CBN,Cerebellar nuclei,#F0F080,1096.0,MBA:519,240,240,128,MBA:512
+AllenCCF-Ontology-2017-989,FN,Fastigial nucleus,#FFFDBC,1097.0,MBA:989,255,253,188,MBA:519
+AllenCCF-Ontology-2017-91,IP,Interposed nucleus,#FFFDBC,1098.0,MBA:91,255,253,188,MBA:519
+AllenCCF-Ontology-2017-846,DN,Dentate nucleus,#FFFDBC,1099.0,MBA:846,255,253,188,MBA:519
+AllenCCF-Ontology-2017-589508455,VeCB,Vestibulocerebellar nucleus,#FFFDBC,1100.0,MBA:589508455,255,253,188,MBA:519
+AllenCCF-Ontology-2017-1009,fiber tracts,fiber tracts,#CCCCCC,1101.0,MBA:1009,204,204,204,MBA:997
+AllenCCF-Ontology-2017-967,cm,cranial nerves,#CCCCCC,1102.0,MBA:967,204,204,204,MBA:1009
+AllenCCF-Ontology-2017-885,tn,terminal nerve,#CCCCCC,1103.0,MBA:885,204,204,204,MBA:967
+AllenCCF-Ontology-2017-949,von,vomeronasal nerve,#CCCCCC,1104.0,MBA:949,204,204,204,MBA:967
+AllenCCF-Ontology-2017-840,In,olfactory nerve,#CCCCCC,1105.0,MBA:840,204,204,204,MBA:967
+AllenCCF-Ontology-2017-1016,onl,olfactory nerve layer of main olfactory bulb,#CCCCCC,1106.0,MBA:1016,204,204,204,MBA:840
+AllenCCF-Ontology-2017-21,lotg,"lateral olfactory tract, general",#CCCCCC,1107.0,MBA:21,204,204,204,MBA:840
+AllenCCF-Ontology-2017-665,lot,"lateral olfactory tract, body",#CCCCCC,1108.0,MBA:665,204,204,204,MBA:21
+AllenCCF-Ontology-2017-538,lotd,dorsal limb,#CCCCCC,1109.0,MBA:538,204,204,204,MBA:21
+AllenCCF-Ontology-2017-459,aolt,accessory olfactory tract,#CCCCCC,1110.0,MBA:459,204,204,204,MBA:21
+AllenCCF-Ontology-2017-900,aco,"anterior commissure, olfactory limb",#CCCCCC,1111.0,MBA:900,204,204,204,MBA:840
+AllenCCF-Ontology-2017-848,IIn,optic nerve,#CCCCCC,1112.0,MBA:848,204,204,204,MBA:967
+AllenCCF-Ontology-2017-876,aot,accessory optic tract,#CCCCCC,1113.0,MBA:876,204,204,204,MBA:848
+AllenCCF-Ontology-2017-916,bsc,brachium of the superior colliculus,#CCCCCC,1114.0,MBA:916,204,204,204,MBA:848
+AllenCCF-Ontology-2017-336,csc,superior colliculus commissure,#CCCCCC,1115.0,MBA:336,204,204,204,MBA:848
+AllenCCF-Ontology-2017-117,och,optic chiasm,#CCCCCC,1116.0,MBA:117,204,204,204,MBA:848
+AllenCCF-Ontology-2017-125,opt,optic tract,#CCCCCC,1117.0,MBA:125,204,204,204,MBA:848
+AllenCCF-Ontology-2017-357,ttp,tectothalamic pathway,#CCCCCC,1118.0,MBA:357,204,204,204,MBA:848
+AllenCCF-Ontology-2017-832,IIIn,oculomotor nerve,#CCCCCC,1119.0,MBA:832,204,204,204,MBA:967
+AllenCCF-Ontology-2017-62,mlf,medial longitudinal fascicle,#CCCCCC,1120.0,MBA:62,204,204,204,MBA:832
+AllenCCF-Ontology-2017-158,pc,posterior commissure,#CCCCCC,1121.0,MBA:158,204,204,204,MBA:832
+AllenCCF-Ontology-2017-911,IVn,trochlear nerve,#CCCCCC,1122.0,MBA:911,204,204,204,MBA:967
+AllenCCF-Ontology-2017-384,IVd,trochlear nerve decussation,#CCCCCC,1123.0,MBA:384,204,204,204,MBA:911
+AllenCCF-Ontology-2017-710,VIn,abducens nerve,#CCCCCC,1124.0,MBA:710,204,204,204,MBA:967
+AllenCCF-Ontology-2017-901,Vn,trigeminal nerve,#CCCCCC,1125.0,MBA:901,204,204,204,MBA:967
+AllenCCF-Ontology-2017-93,moV,motor root of the trigeminal nerve,#CCCCCC,1126.0,MBA:93,204,204,204,MBA:901
+AllenCCF-Ontology-2017-229,sV,sensory root of the trigeminal nerve,#CCCCCC,1127.0,MBA:229,204,204,204,MBA:901
+AllenCCF-Ontology-2017-705,mtV,midbrain tract of the trigeminal nerve,#CCCCCC,1128.0,MBA:705,204,204,204,MBA:229
+AllenCCF-Ontology-2017-794,sptV,spinal tract of the trigeminal nerve,#CCCCCC,1129.0,MBA:794,204,204,204,MBA:229
+AllenCCF-Ontology-2017-798,VIIn,facial nerve,#CCCCCC,1130.0,MBA:798,204,204,204,MBA:967
+AllenCCF-Ontology-2017-1131,iVIIn,intermediate nerve,#CCCCCC,1131.0,MBA:1131,204,204,204,MBA:798
+AllenCCF-Ontology-2017-1116,gVIIn,genu of the facial nerve,#CCCCCC,1132.0,MBA:1116,204,204,204,MBA:798
+AllenCCF-Ontology-2017-933,VIIIn,vestibulocochlear nerve,#CCCCCC,1133.0,MBA:933,204,204,204,MBA:967
+AllenCCF-Ontology-2017-1076,cvb,efferent cochleovestibular bundle,#CCCCCC,1134.0,MBA:1076,204,204,204,MBA:933
+AllenCCF-Ontology-2017-413,vVIIIn,vestibular nerve,#CCCCCC,1135.0,MBA:413,204,204,204,MBA:933
+AllenCCF-Ontology-2017-948,cVIIIn,cochlear nerve,#CCCCCC,1136.0,MBA:948,204,204,204,MBA:933
+AllenCCF-Ontology-2017-841,tb,trapezoid body,#CCCCCC,1137.0,MBA:841,204,204,204,MBA:948
+AllenCCF-Ontology-2017-641,ias,intermediate acoustic stria,#CCCCCC,1138.0,MBA:641,204,204,204,MBA:948
+AllenCCF-Ontology-2017-506,das,dorsal acoustic stria,#CCCCCC,1139.0,MBA:506,204,204,204,MBA:948
+AllenCCF-Ontology-2017-658,ll,lateral lemniscus,#CCCCCC,1140.0,MBA:658,204,204,204,MBA:948
+AllenCCF-Ontology-2017-633,cic,inferior colliculus commissure,#CCCCCC,1141.0,MBA:633,204,204,204,MBA:948
+AllenCCF-Ontology-2017-482,bic,brachium of the inferior colliculus,#CCCCCC,1142.0,MBA:482,204,204,204,MBA:948
+AllenCCF-Ontology-2017-808,IXn,glossopharyngeal nerve,#CCCCCC,1143.0,MBA:808,204,204,204,MBA:967
+AllenCCF-Ontology-2017-917,Xn,vagus nerve,#CCCCCC,1144.0,MBA:917,204,204,204,MBA:967
+AllenCCF-Ontology-2017-237,ts,solitary tract,#CCCCCC,1145.0,MBA:237,204,204,204,MBA:917
+AllenCCF-Ontology-2017-717,XIn,accessory spinal nerve,#CCCCCC,1146.0,MBA:717,204,204,204,MBA:967
+AllenCCF-Ontology-2017-813,XIIn,hypoglossal nerve,#CCCCCC,1147.0,MBA:813,204,204,204,MBA:967
+AllenCCF-Ontology-2017-925,vrt,ventral roots,#CCCCCC,1148.0,MBA:925,204,204,204,MBA:967
+AllenCCF-Ontology-2017-792,drt,dorsal roots,#CCCCCC,1149.0,MBA:792,204,204,204,MBA:967
+AllenCCF-Ontology-2017-932,cett,cervicothalamic tract,#CCCCCC,1150.0,MBA:932,204,204,204,MBA:792
+AllenCCF-Ontology-2017-570,dl,dorsolateral fascicle,#CCCCCC,1151.0,MBA:570,204,204,204,MBA:932
+AllenCCF-Ontology-2017-522,dcm,dorsal commissure of the spinal cord,#CCCCCC,1152.0,MBA:522,204,204,204,MBA:932
+AllenCCF-Ontology-2017-858,vc,ventral commissure of the spinal cord,#CCCCCC,1153.0,MBA:858,204,204,204,MBA:932
+AllenCCF-Ontology-2017-586,fpr,fasciculus proprius,#CCCCCC,1154.0,MBA:586,204,204,204,MBA:932
+AllenCCF-Ontology-2017-514,dc,dorsal column,#CCCCCC,1155.0,MBA:514,204,204,204,MBA:932
+AllenCCF-Ontology-2017-380,cuf,cuneate fascicle,#CCCCCC,1156.0,MBA:380,204,204,204,MBA:514
+AllenCCF-Ontology-2017-388,grf,gracile fascicle,#CCCCCC,1157.0,MBA:388,204,204,204,MBA:514
+AllenCCF-Ontology-2017-396,iaf,internal arcuate fibers,#CCCCCC,1158.0,MBA:396,204,204,204,MBA:514
+AllenCCF-Ontology-2017-697,ml,medial lemniscus,#CCCCCC,1159.0,MBA:697,204,204,204,MBA:932
+AllenCCF-Ontology-2017-871,sst,spinothalamic tract,#CCCCCC,1160.0,MBA:871,204,204,204,MBA:967
+AllenCCF-Ontology-2017-29,sttl,lateral spinothalamic tract,#CCCCCC,1161.0,MBA:29,204,204,204,MBA:871
+AllenCCF-Ontology-2017-389,sttv,ventral spinothalamic tract,#CCCCCC,1162.0,MBA:389,204,204,204,MBA:871
+AllenCCF-Ontology-2017-245,scrt,spinocervical tract,#CCCCCC,1163.0,MBA:245,204,204,204,MBA:871
+AllenCCF-Ontology-2017-261,sop,spino-olivary pathway,#CCCCCC,1164.0,MBA:261,204,204,204,MBA:871
+AllenCCF-Ontology-2017-270,srp,spinoreticular pathway,#CCCCCC,1165.0,MBA:270,204,204,204,MBA:871
+AllenCCF-Ontology-2017-293,svp,spinovestibular pathway,#CCCCCC,1166.0,MBA:293,204,204,204,MBA:871
+AllenCCF-Ontology-2017-277,stp,spinotectal pathway,#CCCCCC,1167.0,MBA:277,204,204,204,MBA:871
+AllenCCF-Ontology-2017-253,shp,spinohypothalamic pathway,#CCCCCC,1168.0,MBA:253,204,204,204,MBA:871
+AllenCCF-Ontology-2017-285,step,spinotelenchephalic pathway,#CCCCCC,1169.0,MBA:285,204,204,204,MBA:871
+AllenCCF-Ontology-2017-627,hht,hypothalamohypophysial tract,#CCCCCC,1170.0,MBA:627,204,204,204,MBA:285
+AllenCCF-Ontology-2017-960,cbf,cerebellum related fiber tracts,#CCCCCC,1171.0,MBA:960,204,204,204,MBA:1009
+AllenCCF-Ontology-2017-744,cbc,cerebellar commissure,#CCCCCC,1172.0,MBA:744,204,204,204,MBA:960
+AllenCCF-Ontology-2017-752,cbp,cerebellar peduncles,#CCCCCC,1173.0,MBA:752,204,204,204,MBA:960
+AllenCCF-Ontology-2017-326,scp,superior cerebelar peduncles,#CCCCCC,1174.0,MBA:326,204,204,204,MBA:752
+AllenCCF-Ontology-2017-812,dscp,superior cerebellar peduncle decussation,#CCCCCC,1175.0,MBA:812,204,204,204,MBA:326
+AllenCCF-Ontology-2017-85,sct,spinocerebellar tract,#CCCCCC,1176.0,MBA:85,204,204,204,MBA:812
+AllenCCF-Ontology-2017-850,uf,uncinate fascicle,#CCCCCC,1177.0,MBA:850,204,204,204,MBA:326
+AllenCCF-Ontology-2017-866,sctv,ventral spinocerebellar tract,#CCCCCC,1178.0,MBA:866,204,204,204,MBA:326
+AllenCCF-Ontology-2017-78,mcp,middle cerebellar peduncle,#CCCCCC,1179.0,MBA:78,204,204,204,MBA:752
+AllenCCF-Ontology-2017-1123,icp,inferior cerebellar peduncle,#CCCCCC,1180.0,MBA:1123,204,204,204,MBA:752
+AllenCCF-Ontology-2017-553,sctd,dorsal spinocerebellar tract,#CCCCCC,1181.0,MBA:553,204,204,204,MBA:1123
+AllenCCF-Ontology-2017-499,cct,cuneocerebellar tract,#CCCCCC,1182.0,MBA:499,204,204,204,MBA:1123
+AllenCCF-Ontology-2017-650,jrb,juxtarestiform body,#CCCCCC,1183.0,MBA:650,204,204,204,MBA:1123
+AllenCCF-Ontology-2017-490,bct,bulbocerebellar tract,#CCCCCC,1184.0,MBA:490,204,204,204,MBA:1123
+AllenCCF-Ontology-2017-404,oct,olivocerebellar tract,#CCCCCC,1185.0,MBA:404,204,204,204,MBA:490
+AllenCCF-Ontology-2017-410,rct,reticulocerebellar tract,#CCCCCC,1186.0,MBA:410,204,204,204,MBA:490
+AllenCCF-Ontology-2017-373,tct,trigeminocerebellar tract,#CCCCCC,1187.0,MBA:373,204,204,204,MBA:752
+AllenCCF-Ontology-2017-728,arb,arbor vitae,#CCCCCC,1188.0,MBA:728,204,204,204,MBA:960
+AllenCCF-Ontology-2017-484682512,scwm,supra-callosal cerebral white matter,#CCCCCC,1189.0,MBA:484682512,204,204,204,MBA:1009
+AllenCCF-Ontology-2017-983,lfbs,lateral forebrain bundle system,#CCCCCC,1190.0,MBA:983,204,204,204,MBA:1009
+AllenCCF-Ontology-2017-776,cc,corpus callosum,#CCCCCC,1191.0,MBA:776,204,204,204,MBA:983
+AllenCCF-Ontology-2017-956,fa,"corpus callosum, anterior forceps",#CCCCCC,1192.0,MBA:956,204,204,204,MBA:776
+AllenCCF-Ontology-2017-579,ec,external capsule,#CCCCCC,1193.0,MBA:579,204,204,204,MBA:956
+AllenCCF-Ontology-2017-964,ee,"corpus callosum, extreme capsule",#CCCCCC,1194.0,MBA:964,204,204,204,MBA:776
+AllenCCF-Ontology-2017-1108,ccg,genu of corpus callosum,#CCCCCC,1195.0,MBA:1108,204,204,204,MBA:776
+AllenCCF-Ontology-2017-971,fp,"corpus callosum, posterior forceps",#CCCCCC,1196.0,MBA:971,204,204,204,MBA:776
+AllenCCF-Ontology-2017-979,ccr,"corpus callosum, rostrum",#CCCCCC,1197.0,MBA:979,204,204,204,MBA:776
+AllenCCF-Ontology-2017-484682516,ccb,"corpus callosum, body",#CCCCCC,1198.0,MBA:484682516,204,204,204,MBA:776
+AllenCCF-Ontology-2017-986,ccs,"corpus callosum, splenium",#CCCCCC,1199.0,MBA:986,204,204,204,MBA:776
+AllenCCF-Ontology-2017-784,cst,corticospinal tract,#CCCCCC,1200.0,MBA:784,204,204,204,MBA:983
+AllenCCF-Ontology-2017-6,int,internal capsule,#CCCCCC,1201.0,MBA:6,204,204,204,MBA:784
+AllenCCF-Ontology-2017-924,cpd,cerebal peduncle,#CCCCCC,1202.0,MBA:924,204,204,204,MBA:784
+AllenCCF-Ontology-2017-1036,cte,corticotectal tract,#CCCCCC,1203.0,MBA:1036,204,204,204,MBA:784
+AllenCCF-Ontology-2017-1012,crt,corticorubral tract,#CCCCCC,1204.0,MBA:1012,204,204,204,MBA:784
+AllenCCF-Ontology-2017-1003,cpt,corticopontine tract,#CCCCCC,1205.0,MBA:1003,204,204,204,MBA:784
+AllenCCF-Ontology-2017-994,cbt,corticobulbar tract,#CCCCCC,1206.0,MBA:994,204,204,204,MBA:784
+AllenCCF-Ontology-2017-190,py,pyramid,#CCCCCC,1207.0,MBA:190,204,204,204,MBA:784
+AllenCCF-Ontology-2017-198,pyd,pyramidal decussation,#CCCCCC,1208.0,MBA:198,204,204,204,MBA:784
+AllenCCF-Ontology-2017-1019,cstc,"corticospinal tract, crossed",#CCCCCC,1209.0,MBA:1019,204,204,204,MBA:784
+AllenCCF-Ontology-2017-1028,cstu,"corticospinal tract, uncrossed",#CCCCCC,1210.0,MBA:1028,204,204,204,MBA:784
+AllenCCF-Ontology-2017-896,lfbst,thalamus related,#CCCCCC,1211.0,MBA:896,204,204,204,MBA:983
+AllenCCF-Ontology-2017-1092,em,external medullary lamina of the thalamus,#CCCCCC,1212.0,MBA:1092,204,204,204,MBA:896
+AllenCCF-Ontology-2017-14,im,internal medullary lamina of the thalamus,#CCCCCC,1213.0,MBA:14,204,204,204,MBA:896
+AllenCCF-Ontology-2017-86,mtc,middle thalamic commissure,#CCCCCC,1214.0,MBA:86,204,204,204,MBA:896
+AllenCCF-Ontology-2017-365,tp,thalamic peduncles,#CCCCCC,1215.0,MBA:365,204,204,204,MBA:896
+AllenCCF-Ontology-2017-484682520,or,optic radiation,#CCCCCC,1216.0,MBA:484682520,204,204,204,MBA:896
+AllenCCF-Ontology-2017-484682524,ar,auditory radiation,#CCCCCC,1217.0,MBA:484682524,204,204,204,MBA:896
+AllenCCF-Ontology-2017-1000,eps,extrapyramidal fiber systems,#CCCCCC,1218.0,MBA:1000,204,204,204,MBA:1009
+AllenCCF-Ontology-2017-760,epsc,cerebral nuclei related,#CCCCCC,1219.0,MBA:760,204,204,204,MBA:1000
+AllenCCF-Ontology-2017-142,pap,pallidothalamic pathway,#CCCCCC,1220.0,MBA:142,204,204,204,MBA:760
+AllenCCF-Ontology-2017-102,nst,nigrostriatal tract,#CCCCCC,1221.0,MBA:102,204,204,204,MBA:760
+AllenCCF-Ontology-2017-109,ntt,nigrothalamic fibers,#CCCCCC,1222.0,MBA:109,204,204,204,MBA:760
+AllenCCF-Ontology-2017-134,ptf,pallidotegmental fascicle,#CCCCCC,1223.0,MBA:134,204,204,204,MBA:760
+AllenCCF-Ontology-2017-309,snp,striatonigral pathway,#CCCCCC,1224.0,MBA:309,204,204,204,MBA:760
+AllenCCF-Ontology-2017-317,stf,subthalamic fascicle,#CCCCCC,1225.0,MBA:317,204,204,204,MBA:760
+AllenCCF-Ontology-2017-877,tsp,tectospinal pathway,#CCCCCC,1226.0,MBA:877,204,204,204,MBA:1000
+AllenCCF-Ontology-2017-1051,tspd,direct tectospinal pathway,#CCCCCC,1227.0,MBA:1051,204,204,204,MBA:877
+AllenCCF-Ontology-2017-1060,dtd,doral tegmental decussation,#CCCCCC,1228.0,MBA:1060,204,204,204,MBA:877
+AllenCCF-Ontology-2017-1043,tspc,crossed tectospinal pathway,#CCCCCC,1229.0,MBA:1043,204,204,204,MBA:877
+AllenCCF-Ontology-2017-863,rust,rubrospinal tract,#CCCCCC,1230.0,MBA:863,204,204,204,MBA:1000
+AllenCCF-Ontology-2017-397,vtd,ventral tegmental decussation,#CCCCCC,1231.0,MBA:397,204,204,204,MBA:863
+AllenCCF-Ontology-2017-221,rrt,rubroreticular tract,#CCCCCC,1232.0,MBA:221,204,204,204,MBA:863
+AllenCCF-Ontology-2017-736,ctb,central tegmental bundle,#CCCCCC,1233.0,MBA:736,204,204,204,MBA:1000
+AllenCCF-Ontology-2017-855,rst,retriculospinal tract,#CCCCCC,1234.0,MBA:855,204,204,204,MBA:1000
+AllenCCF-Ontology-2017-205,rstl,"retriculospinal tract, lateral part",#CCCCCC,1235.0,MBA:205,204,204,204,MBA:855
+AllenCCF-Ontology-2017-213,rstm,"retriculospinal tract, medial part",#CCCCCC,1236.0,MBA:213,204,204,204,MBA:855
+AllenCCF-Ontology-2017-941,vsp,vestibulospinal pathway,#CCCCCC,1237.0,MBA:941,204,204,204,MBA:1000
+AllenCCF-Ontology-2017-991,mfbs,medial forebrain bundle system,#CCCCCC,1238.0,MBA:991,204,204,204,MBA:1009
+AllenCCF-Ontology-2017-768,mfbc,cerebrum related,#CCCCCC,1239.0,MBA:768,204,204,204,MBA:991
+AllenCCF-Ontology-2017-884,amc,amygdalar capsule,#CCCCCC,1240.0,MBA:884,204,204,204,MBA:768
+AllenCCF-Ontology-2017-892,apd,ansa peduncularis,#CCCCCC,1241.0,MBA:892,204,204,204,MBA:768
+AllenCCF-Ontology-2017-908,act,"anterior commissure, temporal limb",#CCCCCC,1242.0,MBA:908,204,204,204,MBA:768
+AllenCCF-Ontology-2017-940,cing,cingulum bundle,#CCCCCC,1243.0,MBA:940,204,204,204,MBA:768
+AllenCCF-Ontology-2017-1099,fxs,fornix system,#CCCCCC,1244.0,MBA:1099,204,204,204,MBA:768
+AllenCCF-Ontology-2017-466,alv,alveus,#CCCCCC,1245.0,MBA:466,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-530,df,dorsal fornix,#CCCCCC,1246.0,MBA:530,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-603,fi,fimbria,#CCCCCC,1247.0,MBA:603,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-745,fxprg,"precommissural fornix, general",#CCCCCC,1248.0,MBA:745,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-420,db,precommissural fornix diagonal band,#CCCCCC,1249.0,MBA:420,204,204,204,MBA:745
+AllenCCF-Ontology-2017-737,fxpo,postcommissural fornix,#CCCCCC,1250.0,MBA:737,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-428,mct,medial corticohypothalamic tract,#CCCCCC,1251.0,MBA:428,204,204,204,MBA:737
+AllenCCF-Ontology-2017-436,fx,columns of the fornix,#CCCCCC,1252.0,MBA:436,204,204,204,MBA:737
+AllenCCF-Ontology-2017-618,hc,hippocampal commissures,#CCCCCC,1253.0,MBA:618,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-443,dhc,dorsal hippocampal commissure,#CCCCCC,1254.0,MBA:443,204,204,204,MBA:618
+AllenCCF-Ontology-2017-449,vhc,ventral hippocampal commissure,#CCCCCC,1255.0,MBA:449,204,204,204,MBA:618
+AllenCCF-Ontology-2017-713,per,perforant path,#CCCCCC,1256.0,MBA:713,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-474,ab,angular path,#CCCCCC,1257.0,MBA:474,204,204,204,MBA:1099
+AllenCCF-Ontology-2017-37,lab,longitudinal association bundle,#CCCCCC,1258.0,MBA:37,204,204,204,MBA:768
+AllenCCF-Ontology-2017-301,st,stria terminalis,#CCCCCC,1259.0,MBA:301,204,204,204,MBA:768
+AllenCCF-Ontology-2017-484682528,stc,commissural branch of stria terminalis,#CCCCCC,1260.0,MBA:484682528,204,204,204,MBA:301
+AllenCCF-Ontology-2017-824,mfsbshy,hypothalamus related,#CCCCCC,1261.0,MBA:824,204,204,204,MBA:991
+AllenCCF-Ontology-2017-54,mfb,medial forebrain bundle,#CCCCCC,1262.0,MBA:54,204,204,204,MBA:824
+AllenCCF-Ontology-2017-405,vlt,ventrolateral hypothalamic tract,#CCCCCC,1263.0,MBA:405,204,204,204,MBA:824
+AllenCCF-Ontology-2017-174,poc,preoptic commissure,#CCCCCC,1264.0,MBA:174,204,204,204,MBA:824
+AllenCCF-Ontology-2017-349,sup,supraoptic commissures,#CCCCCC,1265.0,MBA:349,204,204,204,MBA:824
+AllenCCF-Ontology-2017-817,supa,"supraoptic commissures, anterior",#CCCCCC,1266.0,MBA:817,204,204,204,MBA:349
+AllenCCF-Ontology-2017-825,supd,"supraoptic commissures, dorsal",#CCCCCC,1267.0,MBA:825,204,204,204,MBA:349
+AllenCCF-Ontology-2017-833,supv,"supraoptic commissures, ventral",#CCCCCC,1268.0,MBA:833,204,204,204,MBA:349
+AllenCCF-Ontology-2017-166,pmx,premammillary commissure,#CCCCCC,1269.0,MBA:166,204,204,204,MBA:824
+AllenCCF-Ontology-2017-341,smd,supramammillary decussation,#CCCCCC,1270.0,MBA:341,204,204,204,MBA:824
+AllenCCF-Ontology-2017-182,php,propriohypothalamic pathways,#CCCCCC,1271.0,MBA:182,204,204,204,MBA:824
+AllenCCF-Ontology-2017-762,phpd,"propriohypothalamic pathways, dorsal",#CCCCCC,1272.0,MBA:762,204,204,204,MBA:182
+AllenCCF-Ontology-2017-770,phpl,"propriohypothalamic pathways, lateral",#CCCCCC,1273.0,MBA:770,204,204,204,MBA:182
+AllenCCF-Ontology-2017-779,phpm,"propriohypothalamic pathways, medial",#CCCCCC,1274.0,MBA:779,204,204,204,MBA:182
+AllenCCF-Ontology-2017-787,phpv,"propriohypothalamic pathways, ventral",#CCCCCC,1275.0,MBA:787,204,204,204,MBA:182
+AllenCCF-Ontology-2017-150,pvbh,periventricular bundle of the hypothalamus,#CCCCCC,1276.0,MBA:150,204,204,204,MBA:824
+AllenCCF-Ontology-2017-46,mfbsma,mammillary related,#CCCCCC,1277.0,MBA:46,204,204,204,MBA:824
+AllenCCF-Ontology-2017-753,pm,principal mammillary tract,#CCCCCC,1278.0,MBA:753,204,204,204,MBA:46
+AllenCCF-Ontology-2017-690,mtt,mammillothalamic tract,#CCCCCC,1279.0,MBA:690,204,204,204,MBA:46
+AllenCCF-Ontology-2017-681,mtg,mammillotegmental tract,#CCCCCC,1280.0,MBA:681,204,204,204,MBA:46
+AllenCCF-Ontology-2017-673,mp,mammillary peduncle,#CCCCCC,1281.0,MBA:673,204,204,204,MBA:46
+AllenCCF-Ontology-2017-1068,mfbst,dorsal thalamus related,#CCCCCC,1282.0,MBA:1068,204,204,204,MBA:824
+AllenCCF-Ontology-2017-722,pvbt,periventricular bundle of the thalamus,#CCCCCC,1283.0,MBA:722,204,204,204,MBA:1068
+AllenCCF-Ontology-2017-1083,mfbse,epithalamus related,#CCCCCC,1284.0,MBA:1083,204,204,204,MBA:824
+AllenCCF-Ontology-2017-802,sm,stria medullaris,#CCCCCC,1285.0,MBA:802,204,204,204,MBA:1083
+AllenCCF-Ontology-2017-595,fr,fasciculus retroflexus,#CCCCCC,1286.0,MBA:595,204,204,204,MBA:1083
+AllenCCF-Ontology-2017-611,hbc,habenular commissure,#CCCCCC,1287.0,MBA:611,204,204,204,MBA:1083
+AllenCCF-Ontology-2017-730,PIS,pineal stalk,#CCCCCC,1288.0,MBA:730,204,204,204,MBA:1083
+AllenCCF-Ontology-2017-70,mfbsm,midbrain related,#CCCCCC,1289.0,MBA:70,204,204,204,MBA:824
+AllenCCF-Ontology-2017-547,dlf,dorsal longitudinal fascicle,#CCCCCC,1290.0,MBA:547,204,204,204,MBA:70
+AllenCCF-Ontology-2017-563,dtt,dorsal tegmental tract,#CCCCCC,1291.0,MBA:563,204,204,204,MBA:70
+AllenCCF-Ontology-2017-73,VS,ventricular systems,#AAAAAA,1292.0,MBA:73,170,170,170,MBA:997
+AllenCCF-Ontology-2017-81,VL,lateral ventricle,#AAAAAA,1293.0,MBA:81,170,170,170,MBA:73
+AllenCCF-Ontology-2017-89,RC,rhinocele,#AAAAAA,1294.0,MBA:89,170,170,170,MBA:81
+AllenCCF-Ontology-2017-98,SEZ,subependymal zone,#AAAAAA,1295.0,MBA:98,170,170,170,MBA:81
+AllenCCF-Ontology-2017-108,chpl,choroid plexus,#AAAAAA,1296.0,MBA:108,170,170,170,MBA:81
+AllenCCF-Ontology-2017-116,chfl,choroid fissure,#AAAAAA,1297.0,MBA:116,170,170,170,MBA:81
+AllenCCF-Ontology-2017-124,IVF,interventricular foramen,#AAAAAA,1298.0,MBA:124,170,170,170,MBA:73
+AllenCCF-Ontology-2017-129,V3,third ventricle,#AAAAAA,1299.0,MBA:129,170,170,170,MBA:73
+AllenCCF-Ontology-2017-140,AQ,cerebral aqueduct,#AAAAAA,1300.0,MBA:140,170,170,170,MBA:73
+AllenCCF-Ontology-2017-145,V4,fourth ventricle,#AAAAAA,1301.0,MBA:145,170,170,170,MBA:73
+AllenCCF-Ontology-2017-153,V4r,lateral recess,#AAAAAA,1302.0,MBA:153,170,170,170,MBA:145
+AllenCCF-Ontology-2017-164,c,"central canal, spinal cord/medulla",#AAAAAA,1303.0,MBA:164,170,170,170,MBA:73
+AllenCCF-Ontology-2017-1024,grv,grooves,#AAAAAA,1304.0,MBA:1024,170,170,170,MBA:997
+AllenCCF-Ontology-2017-1032,grv of CTX,grooves of the cerebral cortex,#AAAAAA,1305.0,MBA:1032,170,170,170,MBA:1024
+AllenCCF-Ontology-2017-1055,eg,endorhinal groove,#AAAAAA,1306.0,MBA:1055,170,170,170,MBA:1032
+AllenCCF-Ontology-2017-1063,hf,hippocampal fissure,#AAAAAA,1307.0,MBA:1063,170,170,170,MBA:1032
+AllenCCF-Ontology-2017-1071,rf,rhinal fissure,#AAAAAA,1308.0,MBA:1071,170,170,170,MBA:1032
+AllenCCF-Ontology-2017-1078,ri,rhinal incisure,#AAAAAA,1309.0,MBA:1078,170,170,170,MBA:1032
+AllenCCF-Ontology-2017-1040,grv of CBX,grooves of the cerebellar cortex,#AAAAAA,1310.0,MBA:1040,170,170,170,MBA:1024
+AllenCCF-Ontology-2017-1087,pce,precentral fissure,#AAAAAA,1311.0,MBA:1087,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-1095,pcf,preculminate fissure,#AAAAAA,1312.0,MBA:1095,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-1103,pri,primary fissure,#AAAAAA,1313.0,MBA:1103,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-1112,psf,posterior superior fissure,#AAAAAA,1314.0,MBA:1112,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-1119,ppf,prepyramidal fissure,#AAAAAA,1315.0,MBA:1119,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-3,sec,secondary fissure,#AAAAAA,1316.0,MBA:3,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-11,plf,posterolateral fissure,#AAAAAA,1317.0,MBA:11,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-18,nf,nodular fissure,#AAAAAA,1318.0,MBA:18,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-25,sif,simple fissure,#AAAAAA,1319.0,MBA:25,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-34,icf,intercrural fissure,#AAAAAA,1320.0,MBA:34,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-43,apf,ansoparamedian fissure,#AAAAAA,1321.0,MBA:43,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-49,ipf,intraparafloccular fissure,#AAAAAA,1322.0,MBA:49,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-57,pms,paramedian sulcus,#AAAAAA,1323.0,MBA:57,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-65,pfs,parafloccular sulcus,#AAAAAA,1324.0,MBA:65,170,170,170,MBA:1040
+AllenCCF-Ontology-2017-624,IPF,Interpeduncular fossa,#AAAAAA,1325.0,MBA:624,170,170,170,MBA:1024
+AllenCCF-Ontology-2017-304325711,retina,retina,#7F2E7E,1326.0,MBA:304325711,127,46,126,MBA:997
+ABC-Ontology-2023-unassigned-organ,unassigned,unassigned,#000000,1327.0,,0,0,0,
+ABC-Ontology-2023-unassigned-category,unassigned,unassigned,#000000,1327.1,,0,0,0,
+ABC-Ontology-2023-unassigned-division,unassigned,unassigned,#000000,1327.2,,0,0,0,
+ABC-Ontology-2023-unassigned-structure,unassigned,unassigned,#000000,1327.3,,0,0,0,
+ABC-Ontology-2023-unassigned-substructure,unassigned,unassigned,#000000,1327.4,,0,0,0,
+ABC-Ontology-2023-brain-category,brain-unassigned,"brain, unassigned",#FFFFFF,0.1,MBA:997,255,255,255,
+ABC-Ontology-2023-brain-division,brain-unassigned,"brain, unassigned",#FFFFFF,0.2,MBA:997,255,255,255,
+ABC-Ontology-2023-brain-structure,brain-unassigned,"brain, unassigned",#FFFFFF,0.3,MBA:997,255,255,255,
+ABC-Ontology-2023-brain-substructure,brain-unassigned,"brain, unassigned",#FFFFFF,0.4,MBA:997,255,255,255,
+ABC-Ontology-2023-OLF-structure,OLF-unassigned,"Olfactory areas, unassigned",#9AD2BD,379.3,MBA:698,154,210,189,
+ABC-Ontology-2023-OLF-substructure,OLF-unassigned,"Olfactory areas, unassigned",#9AD2BD,379.4,MBA:698,154,210,189,
+ABC-Ontology-2023-MOB-substructure,MOB-unassigned,"Main olfactory bulb, unassigned",#9AD2BD,380.4,MBA:507,154,210,189,
+ABC-Ontology-2023-AON-substructure,AON,Anterior olfactory nucleus,#54BF94,390.4,MBA:159,84,191,148,
+ABC-Ontology-2023-DP-substructure,DP,Dorsal peduncular area,#A4DAA4,410.4,MBA:814,164,218,164,
+ABC-Ontology-2023-PIR-substructure,PIR,Piriform area,#6ACBBA,416.4,MBA:961,106,203,186,
+ABC-Ontology-2023-COAa-substructure,COAa,"Cortical amygdalar area, anterior part",#61E7B7,427.4,MBA:639,97,231,183,
+ABC-Ontology-2023-PAA-substructure,PAA,Piriform-amygdalar area,#59DAAB,444.4,MBA:788,89,218,171,
+ABC-Ontology-2023-TR-substructure,TR,Postpiriform transition area,#A8ECD3,449.4,MBA:566,168,236,211,
+ABC-Ontology-2023-HPF-structure,HPF-unassigned,"Hippocampal formation, unassigned",#7ED04B,454.3,MBA:1089,126,208,75,
+ABC-Ontology-2023-HPF-substructure,HPF-unassigned,"Hippocampal formation, unassigned",#7ED04B,454.4,MBA:1089,126,208,75,
+ABC-Ontology-2023-CA1-substructure,CA1-unassigned,"Field CA1, unassigned",#7ED04B,457.4,MBA:382,126,208,75,
+ABC-Ontology-2023-CA3-substructure,CA3-unassigned,"Field CA3, unassigned",#7ED04B,467.4,MBA:463,126,208,75,
+ABC-Ontology-2023-FC-substructure,FC,Fasciola cinerea,#7ED04B,490.4,MBA:982,126,208,75,
+ABC-Ontology-2023-IG-substructure,IG,Induseum griseum,#7ED04B,491.4,MBA:19,126,208,75,
+ABC-Ontology-2023-PAR-substructure,PAR,Parasubiculum,#72D569,523.4,MBA:843,114,213,105,
+ABC-Ontology-2023-POST-substructure,POST,Postsubiculum,#48C83C,527.4,MBA:1037,72,200,60,
+ABC-Ontology-2023-PRE-substructure,PRE,Presubiculum,#59B947,531.4,MBA:1084,89,185,71,
+ABC-Ontology-2023-SUB-substructure,SUB,Subiculum,#4FC244,535.4,MBA:502,79,194,68,
+ABC-Ontology-2023-ProS-substructure,ProS,Prosubiculum,#58BA48,544.4,MBA:484682470,88,186,72,
+ABC-Ontology-2023-HATA-substructure,HATA,Hippocampo-amygdalar transition area,#33B932,553.4,MBA:589508447,51,185,50,
+ABC-Ontology-2023-APr-substructure,APr,Area prostriata,#33B932,554.4,MBA:484682508,51,185,50,
+ABC-Ontology-2023-CTXsp-structure,CTXsp-unassigned,"Cortical subplate, unassigned",#8ADA87,555.3,MBA:703,138,218,135,
+ABC-Ontology-2023-CTXsp-substructure,CTXsp-unassigned,"Cortical subplate, unassigned",#8ADA87,555.4,MBA:703,138,218,135,
+ABC-Ontology-2023-CLA-substructure,CLA,Claustrum,#8ADA87,557.4,MBA:583,138,218,135,
+ABC-Ontology-2023-EPd-substructure,EPd,"Endopiriform nucleus, dorsal part",#A0EE9D,559.4,MBA:952,160,238,157,
+ABC-Ontology-2023-EPv-substructure,EPv,"Endopiriform nucleus, ventral part",#A0EE9D,560.4,MBA:966,160,238,157,
+ABC-Ontology-2023-LA-substructure,LA,Lateral amygdalar nucleus,#90EB8D,561.4,MBA:131,144,235,141,
+ABC-Ontology-2023-PA-substructure,PA,Posterior amygdalar nucleus,#97EC93,569.4,MBA:780,151,236,147,
+ABC-Ontology-2023-STR-structure,STR-unassigned,"Striatum, unassigned",#98D6F9,571.3,MBA:477,152,214,249,
+ABC-Ontology-2023-STR-substructure,STR-unassigned,"Striatum, unassigned",#98D6F9,571.4,MBA:477,152,214,249,
+ABC-Ontology-2023-CP-substructure,CP,Caudoputamen,#98D6F9,573.4,MBA:672,152,214,249,
+ABC-Ontology-2023-ACB-substructure,ACB,Nucleus accumbens,#80CDF8,575.4,MBA:56,128,205,248,
+ABC-Ontology-2023-FS-substructure,FS,Fundus of striatum,#80CDF8,576.4,MBA:998,128,205,248,
+ABC-Ontology-2023-OT-substructure,OT,Olfactory tubercle,#80CDF8,577.4,MBA:754,128,205,248,
+ABC-Ontology-2023-LSc-substructure,LSc,"Lateral septal nucleus, caudal (caudodorsal) part",#90CBED,587.4,MBA:250,144,203,237,
+ABC-Ontology-2023-LSr-substructure,LSr,"Lateral septal nucleus, rostral (rostroventral) part",#90CBED,588.4,MBA:258,144,203,237,
+ABC-Ontology-2023-LSv-substructure,LSv,"Lateral septal nucleus, ventral part",#90CBED,589.4,MBA:266,144,203,237,
+ABC-Ontology-2023-SF-substructure,SF,Septofimbrial nucleus,#90CBED,590.4,MBA:310,144,203,237,
+ABC-Ontology-2023-SH-substructure,SH,Septohippocampal nucleus,#90CBED,591.4,MBA:333,144,203,237,
+ABC-Ontology-2023-AAA-substructure,AAA,Anterior amygdalar area,#80C0E2,593.4,MBA:23,128,192,226,
+ABC-Ontology-2023-BA-substructure,BA,Bed nucleus of the accessory olfactory tract,#80C0E2,594.4,MBA:292,128,192,226,
+ABC-Ontology-2023-IA-substructure,IA,Intercalated amygdalar nucleus,#80C0E2,599.4,MBA:1105,128,192,226,
+ABC-Ontology-2023-MEA-substructure,MEA,Medial amygdalar nucleus,#80C0E2,600.4,MBA:403,128,192,226,
+ABC-Ontology-2023-PAL-structure,PAL-unassigned,"Pallidum, unassigned",#8599CC,608.3,MBA:803,133,153,204,
+ABC-Ontology-2023-PAL-substructure,PAL-unassigned,"Pallidum, unassigned",#8599CC,608.4,MBA:803,133,153,204,
+ABC-Ontology-2023-GPe-substructure,GPe,"Globus pallidus, external segment",#8599CC,610.4,MBA:1022,133,153,204,
+ABC-Ontology-2023-GPi-substructure,GPi,"Globus pallidus, internal segment",#8599CC,611.4,MBA:1031,133,153,204,
+ABC-Ontology-2023-SI-substructure,SI,Substantia innominata,#A2B1D8,613.4,MBA:342,162,177,216,
+ABC-Ontology-2023-MA-substructure,MA,Magnocellular nucleus,#A2B1D8,614.4,MBA:298,162,177,216,
+ABC-Ontology-2023-MS-substructure,MS,Medial septal nucleus,#96A7D3,617.4,MBA:564,150,167,211,
+ABC-Ontology-2023-NDB-substructure,NDB,Diagonal band nucleus,#96A7D3,618.4,MBA:596,150,167,211,
+ABC-Ontology-2023-TRS-substructure,TRS,Triangular nucleus of septum,#96A7D3,619.4,MBA:581,150,167,211,
+ABC-Ontology-2023-BST-substructure,BST,Bed nuclei of the stria terminalis,#B3C0DF,621.4,MBA:351,179,192,223,
+ABC-Ontology-2023-BAC-substructure,BAC,Bed nucleus of the anterior commissure,#B3C0DF,638.4,MBA:287,179,192,223,
+ABC-Ontology-2023-TH-structure,TH-unassigned,"Thalamus, unassigned",#FF7080,641.3,MBA:549,255,112,128,
+ABC-Ontology-2023-TH-substructure,TH-unassigned,"Thalamus, unassigned",#FF7080,641.4,MBA:549,255,112,128,
+ABC-Ontology-2023-VAL-substructure,VAL,Ventral anterior-lateral complex of the thalamus,#FF8084,644.4,MBA:629,255,128,132,
+ABC-Ontology-2023-VM-substructure,VM,Ventral medial nucleus of the thalamus,#FF8084,645.4,MBA:685,255,128,132,
+ABC-Ontology-2023-VPL-substructure,VPL,Ventral posterolateral nucleus of the thalamus,#FF8084,647.4,MBA:718,255,128,132,
+ABC-Ontology-2023-VPLpc-substructure,VPLpc,"Ventral posterolateral nucleus of the thalamus, parvicellular part",#FF8084,648.4,MBA:725,255,128,132,
+ABC-Ontology-2023-VPM-substructure,VPM,Ventral posteromedial nucleus of the thalamus,#FF8084,649.4,MBA:733,255,128,132,
+ABC-Ontology-2023-VPMpc-substructure,VPMpc,"Ventral posteromedial nucleus of the thalamus, parvicellular part",#FF8084,650.4,MBA:741,255,128,132,
+ABC-Ontology-2023-PoT-substructure,PoT,Posterior triangular thalamic nucleus,#FF8084,651.4,MBA:563807435,255,128,132,
+ABC-Ontology-2023-SPFm-substructure,SPFm,"Subparafascicular nucleus, magnocellular part",#FF8084,653.4,MBA:414,255,128,132,
+ABC-Ontology-2023-SPFp-substructure,SPFp,"Subparafascicular nucleus, parvicellular part",#FF8084,654.4,MBA:422,255,128,132,
+ABC-Ontology-2023-SPA-substructure,SPA,Subparafascicular area,#FF8084,655.4,MBA:609,255,128,132,
+ABC-Ontology-2023-PP-substructure,PP,Peripeduncular nucleus,#FF8084,656.4,MBA:1044,255,128,132,
+ABC-Ontology-2023-LP-substructure,LP,Lateral posterior nucleus of the thalamus,#FF909F,668.4,MBA:218,255,144,159,
+ABC-Ontology-2023-PO-substructure,PO,Posterior complex of the thalamus,#FF909F,669.4,MBA:1020,255,144,159,
+ABC-Ontology-2023-POL-substructure,POL,Posterior limiting nucleus of the thalamus,#FF909F,670.4,MBA:1029,255,144,159,
+ABC-Ontology-2023-SGN-substructure,SGN,Suprageniculate nucleus,#FF909F,671.4,MBA:325,255,144,159,
+ABC-Ontology-2023-Eth-substructure,Eth,Ethmoid nucleus of the thalamus,#FF909F,672.4,MBA:560581551,255,144,159,
+ABC-Ontology-2023-AV-substructure,AV,Anteroventral nucleus of thalamus,#FF909F,675.4,MBA:255,255,144,159,
+ABC-Ontology-2023-AD-substructure,AD,Anterodorsal nucleus,#FF909F,679.4,MBA:64,255,144,159,
+ABC-Ontology-2023-IAM-substructure,IAM,Interanteromedial nucleus of the thalamus,#FF909F,680.4,MBA:1120,255,144,159,
+ABC-Ontology-2023-IAD-substructure,IAD,Interanterodorsal nucleus of the thalamus,#FF909F,681.4,MBA:1113,255,144,159,
+ABC-Ontology-2023-LD-substructure,LD,Lateral dorsal nucleus of thalamus,#FF909F,682.4,MBA:155,255,144,159,
+ABC-Ontology-2023-IMD-substructure,IMD,Intermediodorsal nucleus of the thalamus,#FF909F,684.4,MBA:59,255,144,159,
+ABC-Ontology-2023-MD-substructure,MD,Mediodorsal nucleus of thalamus,#FF909F,685.4,MBA:362,255,144,159,
+ABC-Ontology-2023-SMT-substructure,SMT,Submedial nucleus of the thalamus,#FF909F,689.4,MBA:366,255,144,159,
+ABC-Ontology-2023-PR-substructure,PR,Perireunensis nucleus,#FF909F,690.4,MBA:1077,255,144,159,
+ABC-Ontology-2023-PVT-substructure,PVT,Paraventricular nucleus of the thalamus,#FF909F,692.4,MBA:149,255,144,159,
+ABC-Ontology-2023-PT-substructure,PT,Parataenial nucleus,#FF909F,693.4,MBA:15,255,144,159,
+ABC-Ontology-2023-RE-substructure,RE,Nucleus of reuniens,#FF909F,694.4,MBA:181,255,144,159,
+ABC-Ontology-2023-Xi-substructure,Xi,Xiphoid thalamic nucleus,#FF909F,695.4,MBA:560581559,255,144,159,
+ABC-Ontology-2023-RH-substructure,RH,Rhomboid nucleus,#FF909F,697.4,MBA:189,255,144,159,
+ABC-Ontology-2023-CM-substructure,CM,Central medial nucleus of the thalamus,#FF909F,698.4,MBA:599,255,144,159,
+ABC-Ontology-2023-PCN-substructure,PCN,Paracentral nucleus,#FF909F,699.4,MBA:907,255,144,159,
+ABC-Ontology-2023-CL-substructure,CL,Central lateral nucleus of the thalamus,#FF909F,700.4,MBA:575,255,144,159,
+ABC-Ontology-2023-PF-substructure,PF,Parafascicular nucleus,#FF909F,701.4,MBA:930,255,144,159,
+ABC-Ontology-2023-PIL-substructure,PIL,Posterior intralaminar thalamic nucleus,#FF909F,702.4,MBA:560581563,255,144,159,
+ABC-Ontology-2023-RT-substructure,RT,Reticular nucleus of the thalamus,#FF909F,703.4,MBA:262,255,144,159,
+ABC-Ontology-2023-IGL-substructure,IGL,Intergeniculate leaflet of the lateral geniculate complex,#FF909F,705.4,MBA:27,255,144,159,
+ABC-Ontology-2023-IntG-substructure,IntG,Intermediate geniculate nucleus,#FF909F,706.4,MBA:563807439,255,144,159,
+ABC-Ontology-2023-LGv-substructure,LGv,Ventral part of the lateral geniculate complex,#FF909F,707.4,MBA:178,255,144,159,
+ABC-Ontology-2023-SubG-substructure,SubG,Subgeniculate nucleus,#FF909F,710.4,MBA:321,255,144,159,
+ABC-Ontology-2023-MH-substructure,MH,Medial habenula,#FF909F,712.4,MBA:483,255,144,159,
+ABC-Ontology-2023-LH-substructure,LH,Lateral habenula,#FF909F,713.4,MBA:186,255,144,159,
+ABC-Ontology-2023-HY-structure,HY-unassigned,"Hypothalamus, unassigned",#E64438,715.3,MBA:1097,230,68,56,
+ABC-Ontology-2023-HY-substructure,HY-unassigned,"Hypothalamus, unassigned",#E64438,715.4,MBA:1097,230,68,56,
+ABC-Ontology-2023-SO-substructure,SO,Supraoptic nucleus,#FF5D50,717.4,MBA:390,255,93,80,
+ABC-Ontology-2023-ASO-substructure,ASO,Accessory supraoptic group,#FF5D50,718.4,MBA:332,255,93,80,
+ABC-Ontology-2023-PVH-substructure,PVH,Paraventricular hypothalamic nucleus,#FF5D50,720.4,MBA:38,255,93,80,
+ABC-Ontology-2023-PVa-substructure,PVa,"Periventricular hypothalamic nucleus, anterior part",#FF5D50,731.4,MBA:30,255,93,80,
+ABC-Ontology-2023-PVi-substructure,PVi,"Periventricular hypothalamic nucleus, intermediate part",#FF5D50,732.4,MBA:118,255,93,80,
+ABC-Ontology-2023-ARH-substructure,ARH,Arcuate hypothalamic nucleus,#FF5D50,733.4,MBA:223,255,93,80,
+ABC-Ontology-2023-ADP-substructure,ADP,Anterodorsal preoptic nucleus,#FF5547,735.4,MBA:72,255,85,71,
+ABC-Ontology-2023-AVP-substructure,AVP,Anteroventral preoptic nucleus,#FF5547,737.4,MBA:263,255,85,71,
+ABC-Ontology-2023-AVPV-substructure,AVPV,Anteroventral periventricular nucleus,#FF5547,738.4,MBA:272,255,85,71,
+ABC-Ontology-2023-DMH-substructure,DMH,Dorsomedial nucleus of the hypothalamus,#FF5547,739.4,MBA:830,255,85,71,
+ABC-Ontology-2023-MEPO-substructure,MEPO,Median preoptic nucleus,#FF5547,743.4,MBA:452,255,85,71,
+ABC-Ontology-2023-MPO-substructure,MPO,Medial preoptic area,#FF5547,744.4,MBA:523,255,85,71,
+ABC-Ontology-2023-OV-substructure,OV,Vascular organ of the lamina terminalis,#FF5547,745.4,MBA:763,255,85,71,
+ABC-Ontology-2023-PD-substructure,PD,Posterodorsal preoptic nucleus,#FF5547,746.4,MBA:914,255,85,71,
+ABC-Ontology-2023-PS-substructure,PS,Parastrial nucleus,#FF5547,747.4,MBA:1109,255,85,71,
+ABC-Ontology-2023-PVp-substructure,PVp,"Periventricular hypothalamic nucleus, posterior part",#FF5547,749.4,MBA:126,255,85,71,
+ABC-Ontology-2023-PVpo-substructure,PVpo,"Periventricular hypothalamic nucleus, preoptic part",#FF5547,750.4,MBA:133,255,85,71,
+ABC-Ontology-2023-SBPV-substructure,SBPV,Subparaventricular zone,#FF5547,751.4,MBA:347,255,85,71,
+ABC-Ontology-2023-SCH-substructure,SCH,Suprachiasmatic nucleus,#FF5547,752.4,MBA:286,255,85,71,
+ABC-Ontology-2023-SFO-substructure,SFO,Subfornical organ,#FF5547,753.4,MBA:338,255,85,71,
+ABC-Ontology-2023-VMPO-substructure,VMPO,Ventromedial preoptic nucleus,#FF5547,754.4,MBA:576073699,255,85,71,
+ABC-Ontology-2023-VLPO-substructure,VLPO,Ventrolateral preoptic nucleus,#FF5547,755.4,MBA:689,255,85,71,
+ABC-Ontology-2023-AHN-substructure,AHN,Anterior hypothalamic nucleus,#FF4C3E,757.4,MBA:88,255,76,62,
+ABC-Ontology-2023-LM-substructure,LM,Lateral mammillary nucleus,#FF4C3E,763.4,MBA:210,255,76,62,
+ABC-Ontology-2023-SUM-substructure,SUM,Supramammillary nucleus,#FF4C3E,770.4,MBA:525,255,76,62,
+ABC-Ontology-2023-TMd-substructure,TMd,"Tuberomammillary nucleus, dorsal part",#FF4C3E,774.4,MBA:1126,255,76,62,
+ABC-Ontology-2023-TMv-substructure,TMv,"Tuberomammillary nucleus, ventral part",#FF4C3E,775.4,MBA:1,255,76,62,
+ABC-Ontology-2023-MPN-substructure,MPN,Medial preoptic nucleus,#FF4C3E,776.4,MBA:515,255,76,62,
+ABC-Ontology-2023-PMd-substructure,PMd,Dorsal premammillary nucleus,#FF4C3E,780.4,MBA:980,255,76,62,
+ABC-Ontology-2023-PMv-substructure,PMv,Ventral premammillary nucleus,#FF4C3E,781.4,MBA:1004,255,76,62,
+ABC-Ontology-2023-PVHd-substructure,PVHd,"Paraventricular hypothalamic nucleus, descending division",#FF4C3E,782.4,MBA:63,255,76,62,
+ABC-Ontology-2023-VMH-substructure,VMH,Ventromedial hypothalamic nucleus,#FF4C3E,787.4,MBA:693,255,76,62,
+ABC-Ontology-2023-PH-substructure,PH,Posterior hypothalamic nucleus,#FF4C3E,792.4,MBA:946,255,76,62,
+ABC-Ontology-2023-LHA-substructure,LHA,Lateral hypothalamic area,#F2483B,794.4,MBA:194,242,72,59,
+ABC-Ontology-2023-LPO-substructure,LPO,Lateral preoptic area,#F2483B,795.4,MBA:226,242,72,59,
+ABC-Ontology-2023-PST-substructure,PST,Preparasubthalamic nucleus,#F2483B,796.4,MBA:356,242,72,59,
+ABC-Ontology-2023-PSTN-substructure,PSTN,Parasubthalamic nucleus,#F2483B,797.4,MBA:364,242,72,59,
+ABC-Ontology-2023-PeF-substructure,PeF,Perifornical nucleus,#F2483B,798.4,MBA:576073704,242,72,59,
+ABC-Ontology-2023-RCH-substructure,RCH,Retrochiasmatic area,#F2483B,799.4,MBA:173,242,72,59,
+ABC-Ontology-2023-STN-substructure,STN,Subthalamic nucleus,#F2483B,800.4,MBA:470,242,72,59,
+ABC-Ontology-2023-TU-substructure,TU,Tuberal nucleus,#F2483B,801.4,MBA:614,242,72,59,
+ABC-Ontology-2023-ZI-substructure,ZI-unassigned,"Zona incerta, unassigned",#F2483B,802.4,MBA:797,242,72,59,
+ABC-Ontology-2023-ME-substructure,ME,Median eminence,#F2483B,805.4,MBA:10671,242,72,59,
+ABC-Ontology-2023-MB-structure,MB-unassigned,"Midbrain, unassigned",#FF64FF,806.3,MBA:313,255,100,255,
+ABC-Ontology-2023-MB-substructure,MB-unassigned,"Midbrain, unassigned",#FF64FF,806.4,MBA:313,255,100,255,
+ABC-Ontology-2023-NB-substructure,NB,Nucleus of the brachium of the inferior colliculus,#FF7AFF,816.4,MBA:580,255,122,255,
+ABC-Ontology-2023-SAG-substructure,SAG,Nucleus sagulum,#FF7AFF,817.4,MBA:271,255,122,255,
+ABC-Ontology-2023-PBG-substructure,PBG,Parabigeminal nucleus,#FF7AFF,818.4,MBA:874,255,122,255,
+ABC-Ontology-2023-SCO-substructure,SCO,Subcommissural organ,#FF7AFF,820.4,MBA:599626923,255,122,255,
+ABC-Ontology-2023-SNr-substructure,SNr,"Substantia nigra, reticular part",#FF90FF,822.4,MBA:381,255,144,255,
+ABC-Ontology-2023-VTA-substructure,VTA,Ventral tegmental area,#FF90FF,823.4,MBA:749,255,144,255,
+ABC-Ontology-2023-PN-substructure,PN,Paranigral nucleus,#FF90FF,824.4,MBA:607344830,255,144,255,
+ABC-Ontology-2023-RR-substructure,RR,"Midbrain reticular nucleus, retrorubral area",#FF90FF,825.4,MBA:246,255,144,255,
+ABC-Ontology-2023-MRN-substructure,MRN,Midbrain reticular nucleus,#FF90FF,826.4,MBA:128,255,144,255,
+ABC-Ontology-2023-PAG-substructure,PAG-unassigned,"Periaqueductal gray, unassigned",#FF90FF,838.4,MBA:795,255,144,255,
+ABC-Ontology-2023-APN-substructure,APN,Anterior pretectal nucleus,#FF90FF,844.4,MBA:215,255,144,255,
+ABC-Ontology-2023-MPT-substructure,MPT,Medial pretectal area,#FF90FF,845.4,MBA:531,255,144,255,
+ABC-Ontology-2023-NOT-substructure,NOT,Nucleus of the optic tract,#FF90FF,846.4,MBA:628,255,144,255,
+ABC-Ontology-2023-NPC-substructure,NPC,Nucleus of the posterior commissure,#FF90FF,847.4,MBA:634,255,144,255,
+ABC-Ontology-2023-OP-substructure,OP,Olivary pretectal nucleus,#FF90FF,848.4,MBA:706,255,144,255,
+ABC-Ontology-2023-PPT-substructure,PPT,Posterior pretectal nucleus,#FF90FF,849.4,MBA:1061,255,144,255,
+ABC-Ontology-2023-RPF-substructure,RPF,Retroparafascicular nucleus,#FF90FF,850.4,MBA:549009203,255,144,255,
+ABC-Ontology-2023-CUN-substructure,CUN,Cuneiform nucleus,#FF90FF,852.4,MBA:616,255,144,255,
+ABC-Ontology-2023-RN-substructure,RN,Red nucleus,#FF90FF,853.4,MBA:214,255,144,255,
+ABC-Ontology-2023-III-substructure,III,Oculomotor nucleus,#FF90FF,854.4,MBA:35,255,144,255,
+ABC-Ontology-2023-MA3-substructure,MA3,Medial accesory oculomotor nucleus,#FF90FF,855.4,MBA:549009211,255,144,255,
+ABC-Ontology-2023-EW-substructure,EW,Edinger-Westphal nucleus,#FF90FF,856.4,MBA:975,255,144,255,
+ABC-Ontology-2023-IV-substructure,IV,Trochlear nucleus,#FF90FF,857.4,MBA:115,255,144,255,
+ABC-Ontology-2023-Pa4-substructure,Pa4,Paratrochlear nucleus,#FF90FF,858.4,MBA:606826663,255,144,255,
+ABC-Ontology-2023-VTN-substructure,VTN,Ventral tegmental nucleus,#FF90FF,859.4,MBA:757,255,144,255,
+ABC-Ontology-2023-AT-substructure,AT,Anterior tegmental nucleus,#FF90FF,860.4,MBA:231,255,144,255,
+ABC-Ontology-2023-LT-substructure,LT,Lateral terminal nucleus of the accessory optic tract,#FF90FF,861.4,MBA:66,255,144,255,
+ABC-Ontology-2023-DT-substructure,DT,Dorsal terminal nucleus of the accessory optic tract,#FF90FF,862.4,MBA:75,255,144,255,
+ABC-Ontology-2023-MT-substructure,MT,Medial terminal nucleus of the accessory optic tract,#FF90FF,863.4,MBA:58,255,144,255,
+ABC-Ontology-2023-SNc-substructure,SNc,"Substantia nigra, compact part",#FFA6FF,866.4,MBA:374,255,166,255,
+ABC-Ontology-2023-PPN-substructure,PPN,Pedunculopontine nucleus,#FFA6FF,867.4,MBA:1052,255,166,255,
+ABC-Ontology-2023-IF-substructure,IF,Interfascicular nucleus raphe,#FFA6FF,869.4,MBA:12,255,166,255,
+ABC-Ontology-2023-IPN-substructure,IPN-unassigned,"Interpeduncular nucleus, unassigned",#FFA6FF,870.4,MBA:100,255,166,255,
+ABC-Ontology-2023-RL-substructure,RL,Rostral linear nucleus raphe,#FFA6FF,879.4,MBA:197,255,166,255,
+ABC-Ontology-2023-CLI-substructure,CLI,Central linear nucleus raphe,#FFA6FF,880.4,MBA:591,255,166,255,
+ABC-Ontology-2023-DR-substructure,DR,Dorsal nucleus raphe,#FFA6FF,881.4,MBA:872,255,166,255,
+ABC-Ontology-2023-P-structure,P-unassigned,"Pons, unassigned",#FF9B88,883.3,MBA:771,255,155,136,
+ABC-Ontology-2023-P-substructure,P-unassigned,"Pons, unassigned",#FF9B88,883.4,MBA:771,255,155,136,
+ABC-Ontology-2023-NLL-substructure,NLL,Nucleus of the lateral lemniscus,#FFAE6F,885.4,MBA:612,255,174,111,
+ABC-Ontology-2023-PSV-substructure,PSV,Principal sensory nucleus of the trigeminal,#FFAE6F,889.4,MBA:7,255,174,111,
+ABC-Ontology-2023-PB-substructure,PB-unassigned,"Parabrachial nucleus, unassigned",#FFAE6F,890.4,MBA:867,255,174,111,
+ABC-Ontology-2023-B-substructure,B,Barrington's nucleus,#FFBA86,907.4,MBA:280,255,186,134,
+ABC-Ontology-2023-DTN-substructure,DTN,Dorsal tegmental nucleus,#FFBA86,908.4,MBA:880,255,186,134,
+ABC-Ontology-2023-PDTg-substructure,PDTg,Posterodorsal tegmental nucleus,#FFBA86,910.4,MBA:599626927,255,186,134,
+ABC-Ontology-2023-PCG-substructure,PCG,Pontine central gray,#FFBA86,911.4,MBA:898,255,186,134,
+ABC-Ontology-2023-PG-substructure,PG,Pontine gray,#FFBA86,912.4,MBA:931,255,186,134,
+ABC-Ontology-2023-PRNc-substructure,PRNc,"Pontine reticular nucleus, caudal part",#FFBA86,913.4,MBA:1093,255,186,134,
+ABC-Ontology-2023-SG-substructure,SG,Supragenual nucleus,#FFBA86,915.4,MBA:318,255,186,134,
+ABC-Ontology-2023-SUT-substructure,SUT,Supratrigeminal nucleus,#FFBA86,917.4,MBA:534,255,186,134,
+ABC-Ontology-2023-TRN-substructure,TRN,Tegmental reticular nucleus,#FFBA86,918.4,MBA:574,255,186,134,
+ABC-Ontology-2023-V-substructure,V,Motor nucleus of trigeminal,#FFBA86,919.4,MBA:621,255,186,134,
+ABC-Ontology-2023-P5-substructure,P5,Peritrigeminal zone,#FFBA86,920.4,MBA:549009215,255,186,134,
+ABC-Ontology-2023-Acs5-substructure,Acs5,Accessory trigeminal nucleus,#FFBA86,921.4,MBA:549009219,255,186,134,
+ABC-Ontology-2023-PC5-substructure,PC5,Parvicellular motor 5 nucleus,#FFBA86,922.4,MBA:549009223,255,186,134,
+ABC-Ontology-2023-I5-substructure,I5,Intertrigeminal nucleus,#FFBA86,923.4,MBA:549009227,255,186,134,
+ABC-Ontology-2023-CS-substructure,CS,Superior central nucleus raphe,#FFC395,925.4,MBA:679,255,195,149,
+ABC-Ontology-2023-LC-substructure,LC,Locus ceruleus,#FFC395,928.4,MBA:147,255,195,149,
+ABC-Ontology-2023-LDT-substructure,LDT,Laterodorsal tegmental nucleus,#FFC395,929.4,MBA:162,255,195,149,
+ABC-Ontology-2023-NI-substructure,NI,Nucleus incertus,#FFC395,930.4,MBA:604,255,195,149,
+ABC-Ontology-2023-PRNr-substructure,PRNr,Pontine reticular nucleus,#FFC395,931.4,MBA:146,255,195,149,
+ABC-Ontology-2023-RPO-substructure,RPO,Nucleus raphe pontis,#FFC395,932.4,MBA:238,255,195,149,
+ABC-Ontology-2023-SLC-substructure,SLC,Subceruleus nucleus,#FFC395,933.4,MBA:350,255,195,149,
+ABC-Ontology-2023-SLD-substructure,SLD,Sublaterodorsal nucleus,#FFC395,934.4,MBA:358,255,195,149,
+ABC-Ontology-2023-MY-structure,MY-unassigned,"Medulla, unassigned",#FF9BCD,935.3,MBA:354,255,155,205,
+ABC-Ontology-2023-MY-substructure,MY-unassigned,"Medulla, unassigned",#FF9BCD,935.4,MBA:354,255,155,205,
+ABC-Ontology-2023-AP-substructure,AP,Area postrema,#FFA5D2,937.4,MBA:207,255,165,210,
+ABC-Ontology-2023-DCO-substructure,DCO,Dorsal cochlear nucleus,#FFA5D2,941.4,MBA:96,255,165,210,
+ABC-Ontology-2023-VCO-substructure,VCO,Ventral cochlear nucleus,#FFA5D2,942.4,MBA:101,255,165,210,
+ABC-Ontology-2023-CU-substructure,CU,Cuneate nucleus,#FFA5D2,944.4,MBA:711,255,165,210,
+ABC-Ontology-2023-GR-substructure,GR,Gracile nucleus,#FFA5D2,945.4,MBA:1039,255,165,210,
+ABC-Ontology-2023-ECU-substructure,ECU,External cuneate nucleus,#FFA5D2,946.4,MBA:903,255,165,210,
+ABC-Ontology-2023-NTB-substructure,NTB,Nucleus of the trapezoid body,#FFA5D2,947.4,MBA:642,255,165,210,
+ABC-Ontology-2023-NTS-substructure,NTS,Nucleus of the solitary tract,#FFA5D2,948.4,MBA:651,255,165,210,
+ABC-Ontology-2023-SPVC-substructure,SPVC,"Spinal nucleus of the trigeminal, caudal part",#FFA5D2,954.4,MBA:429,255,165,210,
+ABC-Ontology-2023-SPVI-substructure,SPVI,"Spinal nucleus of the trigeminal, interpolar part",#FFA5D2,955.4,MBA:437,255,165,210,
+ABC-Ontology-2023-SPVO-substructure,SPVO,"Spinal nucleus of the trigeminal, oral part",#FFA5D2,956.4,MBA:445,255,165,210,
+ABC-Ontology-2023-Pa5-substructure,Pa5,Paratrigeminal nucleus,#FFA5D2,962.4,MBA:589508451,255,165,210,
+ABC-Ontology-2023-VI-substructure,VI,Abducens nucleus,#FFB3D9,965.4,MBA:653,255,179,217,
+ABC-Ontology-2023-VII-substructure,VII,Facial motor nucleus,#FFB3D9,967.4,MBA:661,255,179,217,
+ABC-Ontology-2023-ACVII-substructure,ACVII,Accessory facial motor nucleus,#FFB3D9,968.4,MBA:576,255,179,217,
+ABC-Ontology-2023-DMX-substructure,DMX,Dorsal motor nucleus of the vagus nerve,#FFB3D9,973.4,MBA:839,255,179,217,
+ABC-Ontology-2023-GRN-substructure,GRN,Gigantocellular reticular nucleus,#FFB3D9,975.4,MBA:1048,255,179,217,
+ABC-Ontology-2023-ICB-substructure,ICB,Infracerebellar nucleus,#FFB3D9,976.4,MBA:372,255,179,217,
+ABC-Ontology-2023-IO-substructure,IO,Inferior olivary complex,#FFB3D9,977.4,MBA:83,255,179,217,
+ABC-Ontology-2023-IRN-substructure,IRN,Intermediate reticular nucleus,#FFB3D9,978.4,MBA:136,255,179,217,
+ABC-Ontology-2023-ISN-substructure,ISN,Inferior salivatory nucleus,#FFB3D9,979.4,MBA:106,255,179,217,
+ABC-Ontology-2023-LIN-substructure,LIN,Linear nucleus of the medulla,#FFB3D9,980.4,MBA:203,255,179,217,
+ABC-Ontology-2023-MARN-substructure,MARN,Magnocellular reticular nucleus,#FFB3D9,984.4,MBA:307,255,179,217,
+ABC-Ontology-2023-PARN-substructure,PARN,Parvicellular reticular nucleus,#FFB3D9,988.4,MBA:852,255,179,217,
+ABC-Ontology-2023-PAS-substructure,PAS,Parasolitary nucleus,#FFB3D9,989.4,MBA:859,255,179,217,
+ABC-Ontology-2023-PGRNd-substructure,PGRNd,"Paragigantocellular reticular nucleus, dorsal part",#FFB3D9,991.4,MBA:970,255,179,217,
+ABC-Ontology-2023-PGRNl-substructure,PGRNl,"Paragigantocellular reticular nucleus, lateral part",#FFB3D9,992.4,MBA:978,255,179,217,
+ABC-Ontology-2023-NR-substructure,NR,Nucleus of Roller,#FFB3D9,995.4,MBA:177,255,179,217,
+ABC-Ontology-2023-PRP-substructure,PRP,Nucleus prepositus,#FFB3D9,996.4,MBA:169,255,179,217,
+ABC-Ontology-2023-PPY-substructure,PPY,Parapyramidal nucleus,#FFB3D9,998.4,MBA:1069,255,179,217,
+ABC-Ontology-2023-LAV-substructure,LAV,Lateral vestibular nucleus,#FFB3D9,1002.4,MBA:209,255,179,217,
+ABC-Ontology-2023-MV-substructure,MV,Medial vestibular nucleus,#FFB3D9,1003.4,MBA:202,255,179,217,
+ABC-Ontology-2023-SPIV-substructure,SPIV,Spinal vestibular nucleus,#FFB3D9,1004.4,MBA:225,255,179,217,
+ABC-Ontology-2023-SUV-substructure,SUV,Superior vestibular nucleus,#FFB3D9,1005.4,MBA:217,255,179,217,
+ABC-Ontology-2023-x-substructure,x,Nucleus x,#FFB3D9,1006.4,MBA:765,255,179,217,
+ABC-Ontology-2023-XII-substructure,XII,Hypoglossal nucleus,#FFB3D9,1007.4,MBA:773,255,179,217,
+ABC-Ontology-2023-y-substructure,y,Nucleus y,#FFB3D9,1008.4,MBA:781,255,179,217,
+ABC-Ontology-2023-RM-substructure,RM,Nucleus raphe magnus,#FFC6E2,1011.4,MBA:206,255,198,226,
+ABC-Ontology-2023-RPA-substructure,RPA,Nucleus raphe pallidus,#FFC6E2,1012.4,MBA:230,255,198,226,
+ABC-Ontology-2023-RO-substructure,RO,Nucleus raphe obscurus,#FFC6E2,1013.4,MBA:222,255,198,226,
+ABC-Ontology-2023-CB-structure,CB-unassigned,"Cerebellum, unassigned",#F0F080,1014.3,MBA:512,240,240,128,
+ABC-Ontology-2023-CB-substructure,CB-unassigned,"Cerebellum, unassigned",#F0F080,1014.4,MBA:512,240,240,128,
+ABC-Ontology-2023-LING-substructure,LING,Lingula (I),#FFFC91,1020.4,MBA:912,255,252,145,
+ABC-Ontology-2023-DEC-substructure,DEC,Declive (VI),#FFFC91,1046.4,MBA:936,255,252,145,
+ABC-Ontology-2023-FOTU-substructure,FOTU,Folium-tuber vermis (VII),#FFFC91,1050.4,MBA:944,255,252,145,
+ABC-Ontology-2023-PYR-substructure,PYR,Pyramus (VIII),#FFFC91,1054.4,MBA:951,255,252,145,
+ABC-Ontology-2023-UVU-substructure,UVU,Uvula (IX),#FFFC91,1058.4,MBA:957,255,252,145,
+ABC-Ontology-2023-NOD-substructure,NOD,Nodulus (X),#FFFC91,1062.4,MBA:968,255,252,145,
+ABC-Ontology-2023-SIM-substructure,SIM,Simple lobule,#FFFC91,1067.4,MBA:1007,255,252,145,
+ABC-Ontology-2023-PRM-substructure,PRM,Paramedian lobule,#FFFC91,1080.4,MBA:1025,255,252,145,
+ABC-Ontology-2023-COPY-substructure,COPY,Copula pyramidis,#FFFC91,1084.4,MBA:1033,255,252,145,
+ABC-Ontology-2023-PFL-substructure,PFL,Paraflocculus,#FFFC91,1088.4,MBA:1041,255,252,145,
+ABC-Ontology-2023-FL-substructure,FL,Flocculus,#FFFC91,1092.4,MBA:1049,255,252,145,
+ABC-Ontology-2023-FN-substructure,FN,Fastigial nucleus,#FFFDBC,1097.4,MBA:989,255,253,188,
+ABC-Ontology-2023-IP-substructure,IP,Interposed nucleus,#FFFDBC,1098.4,MBA:91,255,253,188,
+ABC-Ontology-2023-DN-substructure,DN,Dentate nucleus,#FFFDBC,1099.4,MBA:846,255,253,188,
+ABC-Ontology-2023-VeCB-substructure,VeCB,Vestibulocerebellar nucleus,#FFFDBC,1100.4,MBA:589508455,255,253,188,
+ABC-Ontology-2023-fiber tracts-division,fiber tracts-unassigned,"fiber tracts, unassigned",#CCCCCC,1101.2,MBA:1009,204,204,204,
+ABC-Ontology-2023-fiber tracts-structure,fiber tracts-unassigned,"fiber tracts, unassigned",#CCCCCC,1101.3,MBA:1009,204,204,204,
+ABC-Ontology-2023-fiber tracts-substructure,fiber tracts-unassigned,"fiber tracts, unassigned",#CCCCCC,1101.4,MBA:1009,204,204,204,
+ABC-Ontology-2023-von-substructure,von,vomeronasal nerve,#CCCCCC,1104.4,MBA:949,204,204,204,
+ABC-Ontology-2023-IIn-substructure,IIn-unassigned,"optic nerve, unassigned",#CCCCCC,1112.4,MBA:848,204,204,204,
+ABC-Ontology-2023-IIIn-substructure,IIIn-unassigned,"oculomotor nerve, unassigned",#CCCCCC,1119.4,MBA:832,204,204,204,
+ABC-Ontology-2023-IVn-substructure,IVn,trochlear nerve,#CCCCCC,1122.4,MBA:911,204,204,204,
+ABC-Ontology-2023-VIIn-substructure,VIIn-unassigned,"facial nerve, unassigned",#CCCCCC,1130.4,MBA:798,204,204,204,
+ABC-Ontology-2023-cbc-substructure,cbc,cerebellar commissure,#CCCCCC,1172.4,MBA:744,204,204,204,
+ABC-Ontology-2023-arb-substructure,arb,arbor vitae,#CCCCCC,1188.4,MBA:728,204,204,204,
+ABC-Ontology-2023-scwm-structure,scwm-unassigned,"supra-callosal cerebral white matter, unassigned",#CCCCCC,1189.3,MBA:484682512,204,204,204,
+ABC-Ontology-2023-scwm-substructure,scwm-unassigned,"supra-callosal cerebral white matter, unassigned",#CCCCCC,1189.4,MBA:484682512,204,204,204,
+ABC-Ontology-2023-cst-substructure,cst-unassigned,"corticospinal tract, unassigned",#CCCCCC,1200.4,MBA:784,204,204,204,
+ABC-Ontology-2023-rust-substructure,rust-unassigned,"rubrospinal tract, unassigned",#CCCCCC,1230.4,MBA:863,204,204,204,
+ABC-Ontology-2023-VL-structure,VL-unassigned,"lateral ventricle, unassigned",#AAAAAA,1293.3,MBA:81,170,170,170,
+ABC-Ontology-2023-VL-substructure,VL-unassigned,"lateral ventricle, unassigned",#AAAAAA,1293.4,MBA:81,170,170,170,
+ABC-Ontology-2023-SEZ-substructure,SEZ,subependymal zone,#AAAAAA,1295.4,MBA:98,170,170,170,
+ABC-Ontology-2023-chpl-substructure,chpl,choroid plexus,#AAAAAA,1296.4,MBA:108,170,170,170,
+ABC-Ontology-2023-V3-structure,V3-unassigned,"third ventricle, unassigned",#AAAAAA,1299.3,MBA:129,170,170,170,
+ABC-Ontology-2023-V3-substructure,V3-unassigned,"third ventricle, unassigned",#AAAAAA,1299.4,MBA:129,170,170,170,
+ABC-Ontology-2023-AQ-structure,AQ,cerebral aqueduct,#AAAAAA,1300.3,MBA:140,170,170,170,
+ABC-Ontology-2023-AQ-substructure,AQ,cerebral aqueduct,#AAAAAA,1300.4,MBA:140,170,170,170,
+ABC-Ontology-2023-V4-structure,V4-unassigned,"fourth ventricle, unassigned",#AAAAAA,1301.3,MBA:145,170,170,170,
+ABC-Ontology-2023-V4-substructure,V4-unassigned,"fourth ventricle, unassigned",#AAAAAA,1301.4,MBA:145,170,170,170,
+ABC-Ontology-2023-V4r-substructure,V4r,lateral recess,#AAAAAA,1302.4,MBA:153,170,170,170,
+ABC-Ontology-2023-c-structure,c,"central canal, spinal cord/medulla",#AAAAAA,1303.3,MBA:164,170,170,170,
+ABC-Ontology-2023-c-substructure,c,"central canal, spinal cord/medulla",#AAAAAA,1303.4,MBA:164,170,170,170,
