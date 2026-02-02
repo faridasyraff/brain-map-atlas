@@ -5,6 +5,8 @@ import Atlas from "../pages/Atlas/Atlas.jsx";
 import Data from "../pages/Data/Data.jsx";
 import "./styles.css";
 import AIprompt from "../pages/AI prompt/AI prompt.jsx";
+import TwoDBrain from "../pages/2D-brain/2Dbrain.jsx";
+
 
 function App() {
   return (
@@ -15,6 +17,7 @@ function App() {
           <Route path="/atlas" element={<Atlas />} />
           <Route path="/data" element={<Data />} />
           <Route path="/ai-prompt" element={<AIprompt />} />
+          <Route path="/2D-brain" element={<TwoDBrain />} />
         </Route>
       </Routes>
     </Router>
