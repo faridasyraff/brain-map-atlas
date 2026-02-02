@@ -1,0 +1,139 @@
+.brain-2d-container {
+  display: flex;
+  height: calc(100vh - 60px);
+  background: #1a1a1a;
+}
+
+.brain-main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.brain-main-content h1 {
+  color: #4a9eff;
+  margin-bottom: 20px;
+}
+
+.brain-controls {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.slice-slider {
+  width: 300px;
+}
+
+.slice-label {
+  color: #ccc;
+  font-size: 14px;
+}
+
+.region-info {
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.brain-canvas {
+  border: 2px solid #333;
+  cursor: crosshair;
+  max-width: 100%;
+  display: block;
+}
+
+/* Description Panel */
+.brain-description-panel {
+  position: fixed;
+  right: -400px;
+  top: 60px;
+  width: 400px;
+  height: calc(100vh - 60px);
+  background: #2a2a2a;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+  transition: right 0.3s ease;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.brain-description-panel.open {
+  right: 0;
+}
+
+.brain-panel-header {
+  padding: 20px;
+  background: #333;
+  border-bottom: 2px solid #444;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brain-panel-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: #4a9eff;
+}
+
+.brain-region-id {
+  font-size: 12px;
+  color: #888;
+}
+
+.brain-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #444;
+  border: none;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.brain-close-btn:hover {
+  background: #555;
+}
+
+.brain-panel-content {
+  padding: 20px;
+}
+
+.brain-info-section {
+  margin-bottom: 20px;
+}
+
+.brain-info-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #4a9eff;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+}
+
+.brain-info-section p {
+  margin: 5px 0;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.brain-info-section a {
+  color: #4a9eff;
+  text-decoration: none;
+}
+
+.brain-info-section a:hover {
+  text-decoration: underline;
+}
+
+.brain-loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
