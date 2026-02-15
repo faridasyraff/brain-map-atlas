@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './2Dbrain.css';
 
 function TwoDBrain() {
+  const navigate = useNavigate();
+  
   const [slices, setSlices] = useState({
     sagittal: 570,   // Middle of Z-axis (1140/2) - was axial
     coronal: 660,    // Middle of X-axis (1320/2) - was sagittal
@@ -450,7 +453,29 @@ function TwoDBrain() {
   return (
     <div className="brain-2d-container">
       <div className="brain-main-content">
-        <h1>3-Plane Brain Atlas Viewer</h1>
+        <div className="brain-header">
+          <h1>3-Plane Brain Atlas Viewer</h1>
+          <div className="brain-view-buttons">
+            <button 
+              className="view-nav-btn"
+              onClick={() => navigate('/sagittal')}
+            >
+              Sagittal View
+            </button>
+            <button 
+              className="view-nav-btn"
+              onClick={() => navigate('/coronal')}
+            >
+              Coronal View
+            </button>
+            <button 
+              className="view-nav-btn"
+              onClick={() => navigate('/transverse')}
+            >
+              Transverse View
+            </button>
+          </div>
+        </div>
         
         <div className="brain-views-grid">
           {/* Sagittal View (was Axial) - Rotated 180 degrees */}
@@ -569,13 +594,13 @@ function TwoDBrain() {
               <div className="brain-info-section">
                 <h3>External Resources</h3>
                 <p>
-                  
+                  <a
                     href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                  
+                  >
                     View in Allen Brain Atlas →
-                  
+                  </a>
                 </p>
               </div>
             </>
