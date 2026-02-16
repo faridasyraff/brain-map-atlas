@@ -9,6 +9,7 @@ function Navbar() {
       <ul className="nav-links">
         <li><Link to="/">Home</Link></li>
         <li><Link to="/atlas">Atlas</Link></li>
+        <li><Link to="/atlas-2d">2D Atlas (MVP)</Link></li>
         <li><Link to="/data">Query Data</Link></li>
         <li><Link to="/ai-prompt">AI Prompt</Link></li>
         <li><Link to="/2D-brain">2D Brain</Link></li>
