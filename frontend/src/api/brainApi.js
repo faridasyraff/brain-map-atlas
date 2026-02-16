@@ -71,6 +71,20 @@ export const brainApi = {
   },
 
   /**
+   * Get ancestor chain for a region (root → ... → selected region)
+   */
+  async getAncestors(mbaId) {
+    try {
+      const response = await fetch(`${API_BASE}/regions/${mbaId}/ancestors`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching ancestors:', error);
+      return [];
+    }
+  },
+
+  /**
    * Check API health
    */
   async health() {
