@@ -1,9 +1,5 @@
-import OpenAI from "openai"
-import {REGION_LIST} from "../RegionList/regionList.js";
-
-const client = new OpenAI(
-    {apiKey: process.env.OPENAI_KEY}
-)
+import OpenAI from "openai";
+import { REGION_LIST } from "../RegionList/regionList.js";
 
 const SYSTEM_PROMPT = `
 You map neuroscience questions to Allen Brain Atlas regions.
@@ -19,6 +15,10 @@ You are not a medical expert.
 `;
 
 export async function mapQuestionToRegions(question = "what brain area is associated with pain?") {
+
+    const client = new OpenAI();
+
+
     const response = await client.responses.create({
         model: "gpt-4.1-mini",
         input: [
