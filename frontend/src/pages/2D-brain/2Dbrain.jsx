@@ -24,6 +24,7 @@ function TwoDBrain() {
   const [regionInfo, setRegionInfo] = useState('Click a brain region');
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [ancestors, setAncestors] = useState([]);
   const [regionMap, setRegionMap] = useState({});
   
   // Separate refs for each view
@@ -148,6 +149,21 @@ function TwoDBrain() {
   useEffect(() => {
     loadSliceImages('transverse', slices.transverse);
   }, [slices.transverse]);
+
+  // Fetch ancestors when region is selected
+  useEffect(() => {
+    if (selectedRegion && selectedRegion.id) {
+      fetch(`http://127.0.0.1:8000/regions/${selectedRegion.id}/ancestors`)
+        .then(r => r.ok ? r.json() : [])
+        .then(setAncestors)
+        .catch(err => {
+          console.error('Error fetching ancestors:', err);
+          setAncestors([]);
+        });
+    } else {
+      setAncestors([]);
+    }
+  }, [selectedRegion?.id]);
 
   // Helper functions
   const pixelToAnnotationId = (r, g, b) => {
@@ -681,6 +697,22 @@ function TwoDBrain() {
         <div className="brain-panel-content">
           {selectedRegion ? (
             <>
+              {ancestors.length > 0 && (
+                <div className="brain-info-section">
+                  <h3>Hierarchy</h3>
+                  <div className="brain-breadcrumb">
+                    {ancestors.map((ancestor, idx) => (
+                      <React.Fragment key={ancestor.mba_id}>
+                        <span className={idx === ancestors.length - 1 ? 'breadcrumb-active' : ''}>
+                          {ancestor.acronym || ancestor.name}
+                        </span>
+                        {idx < ancestors.length - 1 && <span className="breadcrumb-sep"> > </span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="brain-info-section">
                 <h3>Basic Information</h3>
                 <p><strong>Region:</strong> {selectedRegion.name}</p>

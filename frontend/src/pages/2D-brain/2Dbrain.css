@@ -233,6 +233,26 @@
   font-style: italic;
 }
 
+.brain-breadcrumb {
+  padding: 10px;
+  background: #333;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.brain-breadcrumb .breadcrumb-active {
+  color: #4a9eff;
+  font-weight: bold;
+}
+
+.brain-breadcrumb .breadcrumb-sep {
+  color: #666;
+  margin: 0 4px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1400px) {
   .brain-views-grid {

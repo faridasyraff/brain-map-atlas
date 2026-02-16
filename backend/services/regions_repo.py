@@ -80,3 +80,64 @@ def search_regions(query: str, limit: int = 20) -> list[dict]:
         return [dict(row) for row in rows]
     finally:
         conn.close()
+
+
+def get_ancestors(mba_id: int) -> list[dict]:
+    """
+    Return ancestor chain from root to the selected region (inclusive).
+    Raises ValueError if a cycle is detected.
+    """
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        chain: list[dict] = []
+        visited: set[int] = set()
+        current_id: Optional[int] = mba_id
+
+        while current_id is not None:
+            if current_id in visited:
+                raise ValueError(f"Cycle detected at mba_id={current_id}")
+            visited.add(current_id)
+
+            cursor.execute(
+                """SELECT mba_id, acronym, name, parent_mba_id
+                   FROM brain_regions
+                   WHERE mba_id = ?""",
+                (current_id,)
+            )
+            row = cursor.fetchone()
+            if row is None:
+                break
+
+            region = dict(row)
+            chain.append(region)
+            current_id = region.get("parent_mba_id")
+
+        chain.reverse()
+        return chain
+    finally:
+        conn.close()
+
+
+def get_children(mba_id: int) -> list[dict]:
+    """
+    Return immediate children for the given mba_id.
+    Sorted by graph_order when present, otherwise by name.
+    """
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT mba_id, acronym, name, parent_mba_id
+               FROM brain_regions
+               WHERE parent_mba_id = ?
+               ORDER BY
+                 CASE WHEN graph_order IS NULL THEN 1 ELSE 0 END,
+                 graph_order ASC,
+                 name ASC""",
+            (mba_id,)
+        )
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
