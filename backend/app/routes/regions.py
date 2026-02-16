@@ -6,6 +6,8 @@ from backend.services.regions_repo import (
     get_region_by_rgb,
     search_regions,
     get_region_by_annotation,
+    get_ancestors,
+    get_children,
 )
 
 router = APIRouter(prefix="/regions", tags=["regions"])
@@ -22,6 +24,33 @@ async def get_region(mba_id: int):
     if region is None:
         raise HTTPException(status_code=404, detail=f"Region MBA:{mba_id} not found")
     return region
+
+
+@router.get("/{mba_id}/ancestors")
+async def get_region_ancestors(mba_id: int):
+    """
+    Get ancestor chain from root to selected region.
+    """
+    region = get_region_by_id(mba_id)
+    if region is None:
+        raise HTTPException(status_code=404, detail=f"Region MBA:{mba_id} not found")
+
+    try:
+        return get_ancestors(mba_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/{mba_id}/children")
+async def get_region_children(mba_id: int):
+    """
+    Get immediate children for selected region.
+    """
+    region = get_region_by_id(mba_id)
+    if region is None:
+        raise HTTPException(status_code=404, detail=f"Region MBA:{mba_id} not found")
+
+    return get_children(mba_id)
 
 
 @router.get("/by_rgb/lookup")
