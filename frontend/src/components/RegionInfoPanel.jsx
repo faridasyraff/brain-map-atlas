@@ -2,9 +2,21 @@
  * Region Info Panel Component
  * Displays selected region details in a right sidebar
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { brainApi } from '../api/brainApi.js';
 
 const RegionInfoPanel = ({ region, pixelRGB, pixelCoords, sliceIndex, isVisible, onClose }) => {
+  const [ancestors, setAncestors] = useState([]);
+
+  // Fetch ancestors when region changes
+  useEffect(() => {
+    if (region && region.mba_id) {
+      brainApi.getAncestors(region.mba_id).then(setAncestors);
+    } else {
+      setAncestors([]);
+    }
+  }, [region?.mba_id]);
+
   if (!isVisible) return null;
 
   // Handle background
@@ -66,6 +78,22 @@ const RegionInfoPanel = ({ region, pixelRGB, pixelCoords, sliceIndex, isVisible,
 
       <div style={styles.content}>
         <section style={styles.section}>
+          <h3 style={styles.sectionTitle}>Hierarchy</h3>
+          {ancestors.length > 0 && (
+            <div style={styles.breadcrumb}>
+              {ancestors.map((ancestor, idx) => (
+                <React.Fragment key={ancestor.mba_id}>
+                  <span style={idx === ancestors.length - 1 ? styles.breadcrumbActive : styles.breadcrumbItem}>
+                    {ancestor.acronym || ancestor.name}
+                  </span>
+                  {idx < ancestors.length - 1 && <span style={styles.breadcrumbSeparator}> > </span>}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section style={styles.section}>
           <h3 style={styles.sectionTitle}>Basic Info</h3>
           <p style={styles.infoLine}>
             <strong>MBA ID:</strong> {region.mba_id}
@@ -95,16 +123,6 @@ const RegionInfoPanel = ({ region, pixelRGB, pixelCoords, sliceIndex, isVisible,
               backgroundColor: `rgb(${region.color_r}, ${region.color_g}, ${region.color_b})`
             }}
           />
-        </section>
-
-        <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Hierarchy</h3>
-          <p style={styles.infoLine}>
-            <strong>Parent ID:</strong> {region.parent_mba_id || 'Root'}
-          </p>
-          <p style={styles.infoLine}>
-            <strong>Parent:</strong> {region.parent_identifier || 'None'}
-          </p>
         </section>
 
         <section style={styles.section}>
@@ -223,6 +241,26 @@ const styles = {
     color: '#999',
     fontStyle: 'italic',
     marginTop: '8px'
+  },
+  breadcrumb: {
+    fontSize: '12px',
+    color: '#333',
+    lineHeight: '1.6',
+    padding: '8px',
+    backgroundColor: '#f0f0f0',
+    borderRadius: '4px',
+    wordBreak: 'break-word'
+  },
+  breadcrumbItem: {
+    color: '#666'
+  },
+  breadcrumbActive: {
+    color: '#2c3e50',
+    fontWeight: 'bold'
+  },
+  breadcrumbSeparator: {
+    color: '#999',
+    margin: '0 4px'
   }
 };
 
