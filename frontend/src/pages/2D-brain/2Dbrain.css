@@ -12,44 +12,129 @@
 
 .brain-main-content h1 {
   color: #4a9eff;
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 28px;
+}
+
+/* Three-panel grid layout */
+.brain-views-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 25px;
   margin-bottom: 20px;
 }
 
+.brain-view-panel {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 15px;
+  border: 2px solid #333;
+}
+
+.brain-view-header {
+  margin-bottom: 15px;
+}
+
+.brain-view-header h2 {
+  color: #4a9eff;
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  text-align: center;
+}
+
 .brain-controls {
-  margin-bottom: 20px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 15px;
 }
 
 .slice-slider {
-  width: 300px;
+  width: 250px;
+  height: 6px;
+  border-radius: 5px;
+  background: #444;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slice-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a9eff;
+  cursor: pointer;
+}
+
+.slice-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a9eff;
+  cursor: pointer;
+  border: none;
 }
 
 .slice-label {
   color: #ccc;
   font-size: 14px;
-}
-
-.region-info {
-  color: #fff;
-  font-size: 18px;
-  margin-bottom: 20px;
+  min-width: 40px;
+  text-align: center;
+  font-weight: bold;
 }
 
 .brain-canvas {
-  border: 2px solid #333;
+  border: 2px solid #444;
   cursor: crosshair;
   max-width: 100%;
   display: block;
+  margin: 0 auto;
+  background: #000;
+  border-radius: 4px;
+}
+
+.brain-canvas:hover {
+  border-color: #4a9eff;
+}
+
+/* Anatomical direction labels */
+.brain-view-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 0 20px;
+  font-size: 12px;
+  color: #888;
+  font-weight: bold;
+}
+
+.label-left,
+.label-right {
+  background: #333;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.region-info-main {
+  color: #fff;
+  font-size: 20px;
+  text-align: center;
+  margin-top: 20px;
+  padding: 15px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border: 2px solid #4a9eff;
 }
 
 /* Description Panel */
 .brain-description-panel {
   position: fixed;
-  right: -400px;
+  right: -450px;
   top: 60px;
-  width: 400px;
+  width: 450px;
   height: calc(100vh - 60px);
   background: #2a2a2a;
   box-shadow: -2px 0 10px rgba(0,0,0,0.5);
@@ -75,6 +160,7 @@
   margin: 0 0 10px 0;
   font-size: 20px;
   color: #4a9eff;
+  padding-right: 40px;
 }
 
 .brain-region-id {
@@ -93,8 +179,9 @@
   height: 30px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
+  transition: background 0.2s;
 }
 
 .brain-close-btn:hover {
@@ -106,26 +193,33 @@
 }
 
 .brain-info-section {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .brain-info-section h3 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-size: 16px;
   color: #4a9eff;
   border-bottom: 1px solid #444;
-  padding-bottom: 5px;
+  padding-bottom: 8px;
 }
 
 .brain-info-section p {
-  margin: 5px 0;
+  margin: 8px 0;
   line-height: 1.6;
   color: #ccc;
+  font-size: 14px;
+}
+
+.brain-info-section strong {
+  color: #fff;
 }
 
 .brain-info-section a {
   color: #4a9eff;
   text-decoration: none;
+  display: inline-block;
+  margin-top: 5px;
 }
 
 .brain-info-section a:hover {
@@ -136,4 +230,54 @@
   text-align: center;
   padding: 40px;
   color: #888;
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .brain-views-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .brain-description-panel {
+    width: 350px;
+    right: -350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .brain-main-content {
+    padding: 10px;
+  }
+  
+  .brain-views-grid {
+    gap: 15px;
+  }
+  
+  .slice-slider {
+    width: 150px;
+  }
+  
+  .brain-description-panel {
+    width: 100%;
+    right: -100%;
+  }
+}
+
+/* Scrollbar styling */
+.brain-description-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.brain-description-panel::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.brain-description-panel::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+.brain-description-panel::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
