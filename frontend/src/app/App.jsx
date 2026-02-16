@@ -7,6 +7,9 @@ import "./styles.css";
 import AIprompt from "../pages/AI prompt/AI prompt.jsx";
 import TwoDBrain from "../pages/2D-brain/2Dbrain.jsx";
 import Atlas2D from "../pages/Atlas2D.jsx";
+import SagittalView from "../components/SagittalView.jsx";
+import CoronalView from "../components/CoronalView.jsx";
+import TransverseView from "../components/TransverseView.jsx";
 
 
 function App() {
@@ -20,6 +23,9 @@ function App() {
           <Route path="/data" element={<Data />} />
           <Route path="/ai-prompt" element={<AIprompt />} />
           <Route path="/2D-brain" element={<TwoDBrain />} />
+          <Route path="/sagittal" element={<SagittalView />} />
+          <Route path="/coronal" element={<CoronalView />} />
+          <Route path="/transverse" element={<TransverseView />} />
         </Route>
       </Routes>
     </Router>
