@@ -4,7 +4,11 @@ import './2Dbrain.css';
 
 function TwoDBrain() {
   const navigate = useNavigate();
-  
+  const [question, setQuestion] = useState("");
+  const [aiResults, setAiResults] = useState(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+
   const [slices, setSlices] = useState({
     sagittal: 570,   // Middle of Z-axis (1140/2) - was axial
     coronal: 660,    // Middle of X-axis (1320/2) - was sagittal
@@ -449,34 +453,133 @@ function TwoDBrain() {
       [view]: parseInt(value)
     }));
   };
+  const findRegionInView = async (regionId, view) => {
+    for (let i = 0; i <= maxSlices[view]; i += 10) {
+      loadSliceImages(view, i);
+
+      await new Promise(r => setTimeout(r, 50));
+
+      const labelData = labelDataRefs[view].current;
+      if (!labelData) continue;
+
+      for (let j = 0; j < labelData.data.length; j += 4) {
+        const id = pixelToAnnotationId(
+            labelData.data[j],
+            labelData.data[j + 1],
+            labelData.data[j + 2]
+        );
+
+        if (id === regionId) {
+          return i;
+        }
+      }
+    }
+    return null;
+  };
+
+  const handleAskAI = async () => {
+    if (!question.trim()) return;
+
+    setIsLoadingAI(true);
+    setAiResults(null);
+
+    try {
+      const response = await fetch("http://localhost:5001/api/ask-ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ question })
+      });
+
+      const data = await response.json();
+      setAiResults(data);
+
+      if (data.matched_regions?.length > 0) {
+
+        const topRegion = data.matched_regions[0].region_id;
+        const updatedSlices = {};
+
+        for (const view of ["sagittal", "coronal", "transverse"]) {
+          const sliceIndex = await findRegionInView(topRegion, view);
+          if (sliceIndex !== null) {
+            updatedSlices[view] = sliceIndex;
+          }
+        }
+
+        setSlices(prev => ({
+          ...prev,
+          ...updatedSlices
+        }));
+
+        const regionName = regionMap[topRegion] || "Unknown region";
+
+        setSelectedRegion({
+          name: regionName,
+          id: topRegion,
+          view: "AI",
+          slice: "-"
+        });
+
+        setRegionInfo(`AI suggests: ${regionName}`);
+        setIsPanelOpen(true);
+
+        setTimeout(() => {
+          Object.keys(updatedSlices).forEach(view => {
+            highlightRegion(topRegion, view);
+          });
+        }, 300);
+      }
+
+
+    } catch (err) {
+      console.error("AI request failed:", err);
+    }
+
+    setIsLoadingAI(false);
+  };
+
 
   return (
     <div className="brain-2d-container">
       <div className="brain-main-content">
         <div className="brain-header">
           <h1>3-Plane Brain Atlas Viewer</h1>
+          <div className="brain-ai-search">
+            <input
+                type="text"
+                placeholder="Ask a neuroscience question..."
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                className="ai-input"
+            />
+            <button onClick={handleAskAI} disabled={isLoadingAI}>
+              {isLoadingAI ? "Thinking..." : "Ask AI"}
+            </button>
+          </div>
+
           <div className="brain-view-buttons">
-            <button 
-              className="view-nav-btn"
-              onClick={() => navigate('/sagittal')}
+            <button
+                className="view-nav-btn"
+                onClick={() => navigate('/sagittal')}
             >
               Sagittal View
             </button>
-            <button 
-              className="view-nav-btn"
-              onClick={() => navigate('/coronal')}
+            <button
+                className="view-nav-btn"
+                onClick={() => navigate('/coronal')}
             >
               Coronal View
             </button>
-            <button 
-              className="view-nav-btn"
-              onClick={() => navigate('/transverse')}
+            <button
+                className="view-nav-btn"
+                onClick={() => navigate('/transverse')}
             >
               Transverse View
             </button>
           </div>
         </div>
-        
+
         <div className="brain-views-grid">
           {/* Sagittal View (was Axial) - Rotated 180 degrees */}
           <div className="brain-view-panel">
@@ -484,7 +587,7 @@ function TwoDBrain() {
               <h2>Sagittal</h2>
               <div className="brain-controls">
                 <input
-                  type="range"
+                    type="range"
                   className="slice-slider"
                   min="0"
                   max={maxSlices.sagittal}
@@ -589,6 +692,22 @@ function TwoDBrain() {
               <div className="brain-info-section">
                 <h3>Description</h3>
                 <p>This is the <strong>{selectedRegion.name}</strong> region of the mouse brain.</p>
+                {aiResults && (
+                    <div className="brain-info-section">
+                      <h3>AI Results</h3>
+                      {aiResults.matched_regions.map((r, i) => (
+                          <div key={i}>
+                            <p>
+                              <strong>ID:</strong> {r.region_id}<br />
+                              <strong>Confidence:</strong> {(r.confidence * 100).toFixed(1)}%<br />
+                              <strong>Reason:</strong> {r.reason}
+                            </p>
+                          </div>
+                      ))}
+                      <p><em>{aiResults.uncertainty_note}</em></p>
+                    </div>
+                )}
+
               </div>
               
               <div className="brain-info-section">
