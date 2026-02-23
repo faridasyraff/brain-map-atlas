@@ -7,6 +7,8 @@ function TwoDBrain() {
   const [question, setQuestion] = useState("");
   const [aiResults, setAiResults] = useState(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [regionSearch, setRegionSearch] = useState("");
+
 
 
   const [slices, setSlices] = useState({
@@ -212,9 +214,62 @@ function TwoDBrain() {
         rotated.data[destIdx + 3] = imageData.data[srcIdx + 3];
       }
     }
-    
     return rotated;
   };
+  const findRegionIdByName = (query) => {
+    const lower = query.toLowerCase();
+
+    for (const [id, name] of Object.entries(regionMap)) {
+      if (name.toLowerCase().includes(lower)) {
+        return parseInt(id);
+      }
+    }
+
+    return null;
+  };
+  const handleRegionSearch = async () => {
+    if (!regionSearch.trim()) return;
+
+    const regionId = findRegionIdByName(regionSearch);
+
+    if (!regionId) {
+      setRegionInfo("Region not found.");
+      return;
+    }
+
+    const updatedSlices = {};
+
+    for (const view of ["sagittal", "coronal", "transverse"]) {
+      const sliceIndex = await findRegionInView(regionId, view);
+      if (sliceIndex !== null) {
+        updatedSlices[view] = sliceIndex;
+      }
+    }
+
+    setSlices(prev => ({
+      ...prev,
+      ...updatedSlices
+    }));
+
+    const regionName = regionMap[regionId];
+
+    setSelectedRegion({
+      name: regionName,
+      id: regionId,
+      view: "Search",
+      slice: "-"
+    });
+
+    setRegionInfo(`Search result: ${regionName}`);
+    setIsPanelOpen(true);
+
+    setTimeout(() => {
+      Object.keys(updatedSlices).forEach(view => {
+        highlightRegion(regionId, view);
+      });
+    }, 300);
+  };
+
 
   const redraw = (view) => {
     const canvas = canvasRefs[view].current;
@@ -562,6 +617,19 @@ function TwoDBrain() {
         <div className="brain-header">
           <h1>3-Plane Brain Atlas Viewer</h1>
           <div className="brain-ai-search">
+            <div className="brain-region-search">
+              <input
+                  type="text"
+                  placeholder="Search region by name..."
+                  value={regionSearch}
+                  onChange={(e) => setRegionSearch(e.target.value)}
+                  className="ai-input"
+              />
+              <button onClick={handleRegionSearch}>
+                Search
+              </button>
+            </div>
+
             <input
                 type="text"
                 placeholder="Ask a neuroscience question..."
