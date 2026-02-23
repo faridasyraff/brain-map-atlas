@@ -16,6 +16,8 @@ function TwoDBrain() {
     { label: "Group A - health", value: "https://capstone.ssdd.dev/brainatlas-be/health" }
   ];
 
+  const dragStateRef = useRef({ isDragging: false, view: null, startY: null, startSlice: null });
+
 
   useEffect(() => {
     const saved = localStorage.getItem("aiEndpoint");
@@ -534,6 +536,57 @@ function TwoDBrain() {
       });
     }, 200);
   };
+  const handleTouchStart = (e, view) => {
+    console.log("handle touch start")
+    e.preventDefault();
+    const touch = e.touches[0];
+    dragStateRef.current = {
+      isDragging: true,
+      view,
+      startY: touch.clientY,
+      startX: touch.clientX,
+      startSlice: slices[view],
+    };
+  };
+
+  const handleTouchMove = (e, view) => {
+    console.log("handle touch move")
+    e.preventDefault();
+    const drag = dragStateRef.current;
+    if (!drag.isDragging || drag.view !== view) return;
+
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - drag.startY;
+
+    // Sensitivity: how many pixels of drag = 1 slice change
+    const sensitivity = 0.5;
+    const sliceDelta = Math.round(deltaY * sensitivity);
+
+    const newSlice = Math.min(
+        Math.max(drag.startSlice - sliceDelta, 0),
+        maxSlices[view]
+    );
+
+    setSlices(prev => ({ ...prev, [view]: newSlice }));
+  };
+
+  const handleTouchEnd = (e, view) => {
+    console.log("handle touch end")
+    const drag = dragStateRef.current;
+    const touch = e.changedTouches[0];
+    const deltaX = Math.abs(touch.clientX - drag.startX);
+    const deltaY = Math.abs(touch.clientY - drag.startY);
+
+    // If barely moved, treat as a tap (click to identify region)
+    if (deltaX < 5 && deltaY < 5) {
+      handleCanvasClick(
+          { clientX: touch.clientX, clientY: touch.clientY },
+          view
+      );
+    }
+
+    dragStateRef.current.isDragging = false;
+  };
 
   const handleSliceChange = (view, value) => {
     setSlices(prev => ({
@@ -722,6 +775,9 @@ function TwoDBrain() {
               ref={canvasRefs.sagittal}
               className="brain-canvas"
               onClick={(e) => handleCanvasClick(e, 'sagittal')}
+              onTouchStart={(e) => handleTouchStart(e, 'sagittal')}
+              onTouchMove={(e) => handleTouchMove(e, 'sagittal')}
+              onTouchEnd={(e) => handleTouchEnd(e, 'sagittal')}
             />
             <div className="brain-view-labels">
               <span className="label-left">L</span>
@@ -750,6 +806,9 @@ function TwoDBrain() {
               ref={canvasRefs.coronal}
               className="brain-canvas"
               onClick={(e) => handleCanvasClick(e, 'coronal')}
+              onTouchStart={(e) => handleTouchStart(e, 'coronal')}
+              onTouchMove={(e) => handleTouchMove(e, 'coronal')}
+              onTouchEnd={(e) => handleTouchEnd(e, 'coronal')}
             />
             <div className="brain-view-labels">
               <span className="label-left">P</span>
@@ -778,6 +837,9 @@ function TwoDBrain() {
               ref={canvasRefs.transverse}
               className="brain-canvas"
               onClick={(e) => handleCanvasClick(e, 'transverse')}
+              onTouchStart={(e) => handleTouchStart(e, 'transverse')}
+              onTouchMove={(e) => handleTouchMove(e, 'transverse')}
+              onTouchEnd={(e) => handleTouchEnd(e, 'transverse')}
             />
             <div className="brain-view-labels">
               <span className="label-left">R</span>
