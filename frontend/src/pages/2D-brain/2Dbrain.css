@@ -98,6 +98,7 @@
 
 .brain-canvas:hover {
   border-color: #4a9eff;
+  touch-action: none;
 }
 
 /* Anatomical direction labels */
