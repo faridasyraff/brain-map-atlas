@@ -9,6 +9,7 @@ function TwoDBrain() {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [regionSearch, setRegionSearch] = useState("");
   const [aiEndpoint, setAiEndpoint] = useState("/api/ask-ai");
+  const [errorMessage, setErrorMessage] = useState(null);
   const AI_ENDPOINTS = [
     { label: "ChatGPT", value: "/api/ask-ai" },
     { label: "Group A - api list", value: "https://capstone.ssdd.dev/brainatlas-be/api/list" },
@@ -578,6 +579,10 @@ function TwoDBrain() {
         },
         body: JSON.stringify({ question })
       });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errText}`);
+      }
 
       const data = await response.json();
       setAiResults(data);
@@ -621,6 +626,7 @@ function TwoDBrain() {
 
     } catch (err) {
       console.error("AI request failed:", err);
+      setErrorMessage(err.message || "Unknown error occurred.");
     }
 
     setIsLoadingAI(false);
@@ -858,6 +864,17 @@ function TwoDBrain() {
           )}
         </div>
       </div>
+      {errorMessage && (
+          <div className="error-overlay">
+            <div className="error-popup">
+              <h3>⚠ API Error</h3>
+              <p>{errorMessage}</p>
+              <button onClick={() => setErrorMessage(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+      )}
     </div>
   );
 }
