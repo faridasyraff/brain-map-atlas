@@ -26,6 +26,7 @@ function TwoDBrain() {
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [ancestors, setAncestors] = useState([]);
   const [regionMap, setRegionMap] = useState({});
+  const [regionsData, setRegionsData] = useState({});
   
   // Separate refs for each view
   const canvasRefs = {
@@ -86,19 +87,35 @@ function TwoDBrain() {
         const headers = parseCSVLine(lines[0]);
         const idCol = headers.indexOf('identifier');
         const nameCol = headers.indexOf('name');
+        const acronymCol = headers.indexOf('acronym');
+        const parentCol = headers.indexOf('parent_identifier');
 
         const map = {};
+        const dataMap = {};
+        
         for (let i = 1; i < lines.length; i++) {
           const row = parseCSVLine(lines[i]);
           const identifier = row[idCol];
           const name = row[nameCol];
+          const acronym = row[acronymCol];
+          const parentIdentifier = row[parentCol];
 
           if (!identifier) continue;
           const numericId = parseInt(identifier.split(':')[1]);
           map[numericId] = name;
+          
+          // Store full region data
+          dataMap[identifier] = {
+            mba_id: numericId,
+            identifier: identifier,
+            name: name,
+            acronym: acronym,
+            parent_identifier: parentIdentifier || null
+          };
         }
 
         setRegionMap(map);
+        setRegionsData(dataMap);
         console.log('Loaded', Object.keys(map).length, 'regions');
       })
       .catch(err => console.error('Error loading CSV:', err));
@@ -152,18 +169,39 @@ function TwoDBrain() {
 
   // Fetch ancestors when region is selected
   useEffect(() => {
-    if (selectedRegion && selectedRegion.id) {
-      fetch(`http://127.0.0.1:8000/regions/${selectedRegion.id}/ancestors`)
-        .then(r => r.ok ? r.json() : [])
-        .then(setAncestors)
-        .catch(err => {
-          console.error('Error fetching ancestors:', err);
-          setAncestors([]);
-        });
+    if (selectedRegion && selectedRegion.mba_id && Object.keys(regionsData).length > 0) {
+      // Build ancestor chain from CSV data
+      const buildAncestors = (mbaId) => {
+        const chain = [];
+        const identifier = `MBA:${mbaId}`;
+        let current = regionsData[identifier];
+        const visited = new Set();
+        
+        while (current && !visited.has(current.identifier)) {
+          visited.add(current.identifier);
+          chain.unshift({
+            mba_id: current.mba_id,
+            name: current.name,
+            acronym: current.acronym
+          });
+          
+          if (current.parent_identifier) {
+            current = regionsData[current.parent_identifier];
+          } else {
+            break;
+          }
+        }
+        
+        return chain;
+      };
+      
+      const ancestorChain = buildAncestors(selectedRegion.mba_id);
+      setAncestors(ancestorChain);
+      console.log('Built ancestor chain:', ancestorChain.map(a => a.acronym || a.name).join(' > '));
     } else {
       setAncestors([]);
     }
-  }, [selectedRegion?.id]);
+  }, [selectedRegion?.mba_id, regionsData]);
 
   // Helper functions
   const pixelToAnnotationId = (r, g, b) => {
@@ -412,13 +450,61 @@ function TwoDBrain() {
     const b = labelData.data[i + 2];
 
     const annotationId = pixelToAnnotationId(r, g, b);
-    const name = regionMap[annotationId] || 'Unknown region';
-
-    setRegionInfo(name);
-    setSelectedRegion({ name, id: annotationId, view, slice: slices[view] });
-    setIsPanelOpen(true);
-
-    console.log('Clicked:', name, annotationId, `in ${view} view at (${x}, ${y})`);
+    
+    // Look up region in local data first
+    const mbaId = annotationId; // Try using annotation_id as MBA ID first
+    const regionName = regionMap[mbaId];
+    const regionIdentifier = `MBA:${mbaId}`;
+    const localRegionData = regionsData[regionIdentifier];
+    
+    if (localRegionData) {
+      // Found in local CSV data
+      setRegionInfo(localRegionData.name);
+      setSelectedRegion({ 
+        ...localRegionData, 
+        view, 
+        slice: slices[view] 
+      });
+      setIsPanelOpen(true);
+      console.log('Found region:', localRegionData.name, 'MBA ID:', localRegionData.mba_id);
+    } else {
+      // Fallback: try backend lookup
+      setRegionInfo('Loading...');
+      setIsPanelOpen(true);
+      
+      console.log(`Clicked pixel RGB(${r}, ${g}, ${b}) -> annotation_id: ${annotationId}`);
+      
+      // Try annotation_id lookup first, then fall back to RGB lookup
+      fetch(`http://127.0.0.1:8000/regions/by_annotation/${annotationId}`)
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          // If annotation lookup fails, try RGB lookup
+          console.log(`Annotation ID ${annotationId} not found, trying RGB lookup...`);
+          return fetch(`http://127.0.0.1:8000/regions/by_rgb/lookup?r=${r}&g=${g}&b=${b}`)
+            .then(r2 => r2.ok ? r2.json() : null);
+        })
+        .then(regionData => {
+          if (regionData) {
+            setRegionInfo(regionData.name);
+            setSelectedRegion({ ...regionData, view, slice: slices[view] });
+            console.log('Found region from backend:', regionData.name, 'MBA ID:', regionData.mba_id);
+          } else {
+            // Final fallback: use regionMap
+            const fallbackName = regionName || 'Unknown region';
+            setRegionInfo(fallbackName);
+            setSelectedRegion({ name: fallbackName, mba_id: mbaId, annotation_id: annotationId, view, slice: slices[view] });
+            console.log('Region not found, using fallback:', fallbackName);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching region:', err);
+          const fallbackName = regionName || 'Unknown region';
+          setRegionInfo(fallbackName);
+          setSelectedRegion({ name: fallbackName, mba_id: mbaId, annotation_id: annotationId, view, slice: slices[view] });
+        });
+    }
 
     // Calculate new slice positions based on the 3D coordinate system
     const newSlices = { ...slices };
@@ -691,7 +777,7 @@ function TwoDBrain() {
           <button className="brain-close-btn" onClick={() => setIsPanelOpen(false)}>×</button>
           <h2>{selectedRegion?.name || 'Select a region'}</h2>
           <div className="brain-region-id">
-            {selectedRegion ? `ID: ${selectedRegion.id}` : ''}
+            {selectedRegion ? `MBA ID: ${selectedRegion.mba_id || selectedRegion.id}` : ''}
           </div>
         </div>
         <div className="brain-panel-content">
@@ -716,7 +802,9 @@ function TwoDBrain() {
               <div className="brain-info-section">
                 <h3>Basic Information</h3>
                 <p><strong>Region:</strong> {selectedRegion.name}</p>
-                <p><strong>Annotation ID:</strong> {selectedRegion.id}</p>
+                {selectedRegion.mba_id && <p><strong>MBA ID:</strong> {selectedRegion.mba_id}</p>}
+                {selectedRegion.acronym && <p><strong>Acronym:</strong> {selectedRegion.acronym}</p>}
+                <p><strong>Annotation ID:</strong> {selectedRegion.annotation_id || 'N/A'}</p>
                 <p><strong>View:</strong> {selectedRegion.view}</p>
                 <p><strong>Slice:</strong> {selectedRegion.slice}</p>
               </div>
@@ -746,7 +834,7 @@ function TwoDBrain() {
                 <h3>External Resources</h3>
                 <p>
                   <a
-                    href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
+                    href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.mba_id || selectedRegion.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

@@ -30,7 +30,7 @@ def get_cached_result(q: str) -> Optional[list[dict]]:
         cursor = conn.cursor()
         cursor.execute(
             """SELECT id, result_json, expires_at FROM search_cache 
-               WHERE cache_key = ?""",
+               WHERE cache_key = %s""",
             (key,)
         )
         row = cursor.fetchone()
@@ -45,7 +45,7 @@ def get_cached_result(q: str) -> Optional[list[dict]]:
         
         # Increment hit count
         cursor.execute(
-            "UPDATE search_cache SET hit_count = hit_count + 1 WHERE id = ?",
+            "UPDATE search_cache SET hit_count = hit_count + 1 WHERE id = %s",
             (row["id"],)
         )
         conn.commit()
@@ -73,7 +73,7 @@ def cache_result(q: str, result: list[dict], ttl_days: int = 7) -> None:
         cursor.execute(
             """INSERT INTO search_cache 
                (cache_key, query_text, normalized_query, result_json, hit_count, expires_at)
-               VALUES (?, ?, ?, ?, 0, ?)
+               VALUES (%s, %s, %s, %s, 0, %s)
                ON CONFLICT(cache_key) DO UPDATE SET
                    result_json = excluded.result_json,
                    expires_at = excluded.expires_at,

@@ -13,7 +13,7 @@ def get_region_by_id(mba_id: int) -> Optional[dict]:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM brain_regions WHERE mba_id = ?",
+            "SELECT * FROM brain_regions WHERE mba_id = %s",
             (mba_id,)
         )
         row = cursor.fetchone()
@@ -32,7 +32,7 @@ def get_region_by_rgb(r: int, g: int, b: int) -> Optional[dict]:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM brain_regions WHERE color_r = ? AND color_g = ? AND color_b = ?",
+            "SELECT * FROM brain_regions WHERE color_r = %s AND color_g = %s AND color_b = %s",
             (r, g, b)
         )
         row = cursor.fetchone()
@@ -50,7 +50,7 @@ def get_region_by_annotation(annotation_id: int) -> Optional[dict]:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM brain_regions WHERE annotation_id = ?",
+            "SELECT * FROM brain_regions WHERE annotation_id = %s",
             (annotation_id,)
         )
         row = cursor.fetchone()
@@ -71,9 +71,9 @@ def search_regions(query: str, limit: int = 20) -> list[dict]:
         q = f"%{query}%"
         cursor.execute(
             """SELECT * FROM brain_regions 
-               WHERE acronym LIKE ? OR name LIKE ?
+               WHERE acronym LIKE %s OR name LIKE %s
                ORDER BY graph_order ASC
-               LIMIT ?""",
+               LIMIT %s""",
             (q, q, limit)
         )
         rows = cursor.fetchall()
@@ -102,7 +102,7 @@ def get_ancestors(mba_id: int) -> list[dict]:
             cursor.execute(
                 """SELECT mba_id, acronym, name, parent_mba_id
                    FROM brain_regions
-                   WHERE mba_id = ?""",
+                   WHERE mba_id = %s""",
                 (current_id,)
             )
             row = cursor.fetchone()
@@ -130,7 +130,7 @@ def get_children(mba_id: int) -> list[dict]:
         cursor.execute(
             """SELECT mba_id, acronym, name, parent_mba_id
                FROM brain_regions
-               WHERE parent_mba_id = ?
+               WHERE parent_mba_id = %s
                ORDER BY
                  CASE WHEN graph_order IS NULL THEN 1 ELSE 0 END,
                  graph_order ASC,
