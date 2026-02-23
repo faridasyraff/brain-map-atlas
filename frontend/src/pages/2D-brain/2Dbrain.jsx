@@ -8,6 +8,23 @@ function TwoDBrain() {
   const [aiResults, setAiResults] = useState(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [regionSearch, setRegionSearch] = useState("");
+  const [aiEndpoint, setAiEndpoint] = useState("/api/ask-ai");
+  const [errorMessage, setErrorMessage] = useState(null);
+  const AI_ENDPOINTS = [
+    { label: "ChatGPT", value: "/api/ask-ai" },
+    { label: "Group A - api list", value: "https://capstone.ssdd.dev/brainatlas-be/api/list" },
+    { label: "Group A - health", value: "https://capstone.ssdd.dev/brainatlas-be/health" }
+  ];
+
+
+  useEffect(() => {
+    const saved = localStorage.getItem("aiEndpoint");
+    if (saved) setAiEndpoint(saved);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("aiEndpoint", aiEndpoint);
+  }, [aiEndpoint]);
 
 
 
@@ -555,13 +572,17 @@ function TwoDBrain() {
     setAiResults(null);
 
     try {
-      const response = await fetch("http://localhost:5001/api/ask-ai", {
+      const response = await fetch(`http://localhost:5001${aiEndpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ question })
       });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errText}`);
+      }
 
       const data = await response.json();
       setAiResults(data);
@@ -605,6 +626,7 @@ function TwoDBrain() {
 
     } catch (err) {
       console.error("AI request failed:", err);
+      setErrorMessage(err.message || "Unknown error occurred.");
     }
 
     setIsLoadingAI(false);
@@ -642,6 +664,20 @@ function TwoDBrain() {
             </button>
           </div>
 
+          <div className="brain-ai-endpoint-selector">
+            <label style={{marginRight: "8px"}}>AI Mode:</label>
+            <select
+                value={aiEndpoint}
+                onChange={(e) => setAiEndpoint(e.target.value)}
+            >
+              {AI_ENDPOINTS.map((ep) => (
+                  <option key={ep.value} value={ep.value}>
+                    {ep.label}
+                  </option>
+              ))}
+            </select>
+          </div>
+
           <div className="brain-view-buttons">
             <button
                 className="view-nav-btn"
@@ -672,10 +708,10 @@ function TwoDBrain() {
               <div className="brain-controls">
                 <input
                     type="range"
-                  className="slice-slider"
-                  min="0"
-                  max={maxSlices.sagittal}
-                  value={slices.sagittal}
+                    className="slice-slider"
+                    min="0"
+                    max={maxSlices.sagittal}
+                    value={slices.sagittal}
                   step="1"
                   onChange={(e) => handleSliceChange('sagittal', e.target.value)}
                 />
@@ -828,6 +864,17 @@ function TwoDBrain() {
           )}
         </div>
       </div>
+      {errorMessage && (
+          <div className="error-overlay">
+            <div className="error-popup">
+              <h3>⚠ API Error</h3>
+              <p>{errorMessage}</p>
+              <button onClick={() => setErrorMessage(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+      )}
     </div>
   );
 }
