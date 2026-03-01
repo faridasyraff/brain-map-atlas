@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import WordCloud from "react-d3-cloud";
 import './2Dbrain.css';
 
 function TwoDBrain() {
@@ -19,6 +20,8 @@ function TwoDBrain() {
   const dragStateRef = useRef({ isDragging: false, view: null, startY: null, startSlice: null });
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [wordCloudData, setWordCloudData] = useState(null);
+  const [isLoadingCloud, setIsLoadingCloud] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("aiEndpoint");
@@ -236,6 +239,34 @@ function TwoDBrain() {
     }
     return rotated;
   };
+  // wordcloud imple
+  const generateWordCloud = async (regionName) => {
+    setIsLoadingCloud(true);
+    setWordCloudData(null);
+    try {
+      const response = await fetch("http://localhost:5001/api/region-keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ regionName })
+      });
+
+      const data = await response.json();
+
+      if (!data.keywords || data.keywords.length === 0) {
+        throw new Error("No keywords returned.");
+      }
+
+      const cleaned = data.keywords
+          .filter(k => k && typeof k.text === "string" && typeof k.value === "number")
+          .map(k => ({ text: k.text, value: Number(k.value) }));
+
+      setWordCloudData(cleaned);
+    } catch (err) {
+      console.error("Word cloud failed:", err);
+      setWordCloudData(null);
+    }
+    setIsLoadingCloud(false);
+  };
   const findRegionIdByName = (query) => {
     const lower = query.toLowerCase();
 
@@ -281,6 +312,7 @@ function TwoDBrain() {
     });
 
     setRegionInfo(`Search result: ${regionName}`);
+    generateWordCloud(regionName);
     setIsPanelOpen(true);
 
     setTimeout(() => {
@@ -503,6 +535,7 @@ function TwoDBrain() {
 
     setRegionInfo(name);
     setSelectedRegion({ name, id: annotationId, view, slice: slices[view] });
+    generateWordCloud(name);
     setIsPanelOpen(true);
 
     console.log('Clicked:', name, annotationId, `in ${view} view at (${x}, ${y})`);
@@ -681,6 +714,7 @@ function TwoDBrain() {
         });
 
         setRegionInfo(`AI suggests: ${regionName}`);
+        generateWordCloud(regionName);
         setIsPanelOpen(true);
 
         setTimeout(() => {
@@ -862,7 +896,7 @@ function TwoDBrain() {
               )}
             </div>
             <button
-                onClick={() => setIsPanelOpen(false)}
+                onClick={() => { setIsPanelOpen(false); setWordCloudData(null); }}
                 className="text-gray-500 hover:text-white text-xl leading-none transition-colors"
             >
               ×
@@ -872,66 +906,95 @@ function TwoDBrain() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {selectedRegion ? (
                 <>
-                {ancestors.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Hierarchy</h3>
-                      <div className="flex flex-wrap gap-1 text-xs text-gray-300">
-                        {ancestors.map((ancestor, idx) => (
-                            <React.Fragment key={ancestor.mba_id}>
+                  {ancestors.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Hierarchy</h3>
+                        <div className="flex flex-wrap gap-1 text-xs text-gray-300">
+                          {ancestors.map((ancestor, idx) => (
+                              <React.Fragment key={ancestor.mba_id}>
                       <span className={idx === ancestors.length - 1 ? 'text-blue-400 font-medium' : ''}>
                         {ancestor.acronym || ancestor.name}
                       </span>
-                              {idx < ancestors.length - 1 && <span className="text-gray-600">›</span>}
-                            </React.Fragment>
-                        ))}
+                                {idx < ancestors.length - 1 && <span className="text-gray-600">›</span>}
+                              </React.Fragment>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                )}
+                  )}
 
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Basic Information</h3>
-                  <div className="bg-gray-800 rounded-lg p-3 space-y-1 text-sm">
-                    <p><span className="text-gray-400">Region:</span> <span className="text-white">{selectedRegion.name}</span></p>
-                    <p><span className="text-gray-400">ID:</span> <span className="text-white">{selectedRegion.id}</span></p>
-                    <p><span className="text-gray-400">View:</span> <span className="text-white">{selectedRegion.view}</span></p>
-                    <p><span className="text-gray-400">Slice:</span> <span className="text-white">{selectedRegion.slice}</span></p>
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Basic
+                      Information</h3>
+                    <div className="bg-gray-800 rounded-lg p-3 space-y-1 text-sm">
+                      <p><span className="text-gray-400">Region:</span> <span
+                          className="text-white">{selectedRegion.name}</span></p>
+                      <p><span className="text-gray-400">ID:</span> <span
+                          className="text-white">{selectedRegion.id}</span></p>
+                      <p><span className="text-gray-400">View:</span> <span
+                          className="text-white">{selectedRegion.view}</span></p>
+                      <p><span className="text-gray-400">Slice:</span> <span
+                          className="text-white">{selectedRegion.slice}</span></p>
+                    </div>
                   </div>
-                </div>
 
-                {aiResults && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">AI Results</h3>
-                      <div className="space-y-2">
-                        {aiResults.matched_regions.map((r, i) => (
-                            <div key={i} className="bg-gray-800 rounded-lg p-3 text-sm space-y-1">
-                              <p><span className="text-gray-400">ID:</span> <span className="text-white">{r.region_id}</span></p>
-                              <p><span className="text-gray-400">Confidence:</span> <span className="text-green-400">{(r.confidence * 100).toFixed(1)}%</span></p>
-                              <p><span className="text-gray-400">Reason:</span> <span className="text-gray-300">{r.reason}</span></p>
-                            </div>
-                        ))}
-                        {aiResults.uncertainty_note && (
-                            <p className="text-xs text-gray-500 italic">{aiResults.uncertainty_note}</p>
-                        )}
+                  {aiResults && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">AI
+                          Results</h3>
+                        <div className="space-y-2">
+                          {aiResults.matched_regions.map((r, i) => (
+                              <div key={i} className="bg-gray-800 rounded-lg p-3 text-sm space-y-1">
+                                <p><span className="text-gray-400">ID:</span> <span
+                                    className="text-white">{r.region_id}</span></p>
+                                <p><span className="text-gray-400">Confidence:</span> <span
+                                    className="text-green-400">{(r.confidence * 100).toFixed(1)}%</span></p>
+                                <p><span className="text-gray-400">Reason:</span> <span
+                                    className="text-gray-300">{r.reason}</span></p>
+                              </div>
+                          ))}
+                          {aiResults.uncertainty_note && (
+                              <p className="text-xs text-gray-500 italic">{aiResults.uncertainty_note}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                )}
+                  )}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                      Word Cloud
+                    </h3>
+                    {isLoadingCloud && (
+                        <p className="text-gray-500 text-sm">Generating...</p>
+                    )}
+                    {wordCloudData && wordCloudData.length > 0 && (
+                        <div className="bg-gray-800 rounded-lg overflow-hidden">
+                          <WordCloud
+                              data={wordCloudData}
+                              width={280}
+                              height={180}
+                              fontSize={(word) => Math.log2(word.value) * 10}
+                              rotate={(word) => (word.value % 2 === 0 ? 0 : -90)}
+                              padding={2}
+                          />
+                        </div>
+                    )}
+                  </div>
 
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">External
-                    Resources</h3>
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">External
+                      Resources</h3>
 
-                  href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 text-sm underline underline-offset-2 transition-colors"
-                  <a>
-                  View in Allen Brain Atlas →
-                </a>
-                </div>
-              </>
-              ) : (
-              <div className="text-gray-500 text-sm text-center mt-8">Click on a brain region to see details</div>
-              )}
+                    href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 text-sm underline underline-offset-2 transition-colors"
+                    <a>
+                      View in Allen Brain Atlas →
+                    </a>
+                  </div>
+                </>
+            ) : (
+                <div className="text-gray-500 text-sm text-center mt-8">Click on a brain region to see details</div>
+            )}
           </div>
         </div>
 
