@@ -939,23 +939,63 @@ function TwoDBrain() {
 
                   {aiResults && (
                       <div>
-                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">AI
-                          Results</h3>
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                          AI Matched Regions
+                        </h3>
                         <div className="space-y-2">
-                          {aiResults.matched_regions.map((r, i) => (
-                              <div key={i} className="bg-gray-800 rounded-lg p-3 text-sm space-y-1">
-                                <p><span className="text-gray-400">ID:</span> <span
-                                    className="text-white">{r.region_id}</span></p>
-                                <p><span className="text-gray-400">Confidence:</span> <span
-                                    className="text-green-400">{(r.confidence * 100).toFixed(1)}%</span></p>
-                                <p><span className="text-gray-400">Reason:</span> <span
-                                    className="text-gray-300">{r.reason}</span></p>
-                              </div>
-                          ))}
-                          {aiResults.uncertainty_note && (
-                              <p className="text-xs text-gray-500 italic">{aiResults.uncertainty_note}</p>
-                          )}
+                          {aiResults.matched_regions.map((r, i) => {
+                            const name = regionMap[r.region_id] || "Unknown region";
+                            const isActive = selectedRegion?.id === r.region_id;
+                            return (
+                                <button
+                                    key={i}
+                                    onClick={async () => {
+                                      setSelectedRegion({ name, id: r.region_id, view: "AI", slice: "-" });
+                                      setRegionInfo(`AI suggests: ${name}`);
+                                      generateWordCloud(name);
+
+                                      const updatedSlices = {};
+                                      for (const view of ["sagittal", "coronal", "transverse"]) {
+                                        const sliceIndex = await findRegionInView(r.region_id, view);
+                                        if (sliceIndex !== null) {
+                                          updatedSlices[view] = sliceIndex;
+                                        }
+                                      }
+
+                                      setSlices(prev => ({ ...prev, ...updatedSlices }));
+
+                                      setTimeout(() => {
+                                        Object.keys(canvasRefs).forEach(v => {
+                                          if (labelDataRefs[v].current) {
+                                            highlightRegion(r.region_id, v);
+                                          }
+                                        });
+                                      }, 300);
+                                    }}
+                                    className={`w-full text-left rounded-lg p-3 text-sm transition-colors border ${
+                                        isActive
+                                            ? 'bg-blue-900/40 border-blue-600'
+                                            : 'bg-gray-800 border-gray-700 hover:border-gray-500'
+                                    }`}
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-white font-medium">{name}</span>
+                                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                                        r.confidence > 0.75 ? 'bg-green-900 text-green-400' :
+                                            r.confidence > 0.4  ? 'bg-yellow-900 text-yellow-400' :
+                                                'bg-red-900 text-red-400'
+                                    }`}>
+                {(r.confidence * 100).toFixed(0)}%
+              </span>
+                                  </div>
+                                  <p className="text-gray-400 text-xs leading-relaxed">{r.reason}</p>
+                                </button>
+                            );
+                          })}
                         </div>
+                        {aiResults.uncertainty_note && (
+                            <p className="text-xs text-gray-500 italic mt-2">{aiResults.uncertainty_note}</p>
+                        )}
                       </div>
                   )}
                   <div>
