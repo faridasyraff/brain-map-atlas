@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/SingleView.css';
 
 function SagittalView() {
+  const navigate = useNavigate();
   const [slice, setSlice] = useState(570); // Middle of Z-axis
   const [maxSlice] = useState(1139); // Z-axis: 1140 slices (0-1139)
   const [regionInfo, setRegionInfo] = useState('Click a brain region');
@@ -259,101 +261,95 @@ function SagittalView() {
   };
 
   return (
-    <div className="single-view-container">
-      <div className="single-view-content">
-        <div className="single-view-header">
-          <button 
-            className="back-btn"
-            onClick={() => window.location.href = '/2D-brain'}
-          >
-            ← Back to 3-Plane View
-          </button>
-          <h1>Sagittal View</h1>
-        </div>
-        
-        <div className="single-view-panel">
-          <div className="view-controls">
+      <div className="flex h-screen bg-gray-950 text-white overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden">
+
+          <div className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center gap-4">
+            <button
+                onClick={() => navigate('/2D-brain')}
+                className="text-gray-400 hover:text-white text-sm border border-gray-700 hover:border-gray-500 px-3 py-2 rounded-md transition-colors"
+            >
+              ← Back to 3-Plane View
+            </button>
+            <h1 className="text-xl font-bold text-white">Sagittal View</h1>
+          </div>
+
+          <div className="bg-gray-900/50 border-b border-gray-800 px-6 py-2">
+            <span className="text-sm text-blue-400 font-medium">{regionInfo}</span>
+          </div>
+
+          <div className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-4">
+            <span className="text-xs text-gray-400 w-8">0</span>
             <input
-              type="range"
-              className="slice-slider-large"
-              min="0"
-              max={maxSlice}
-              value={slice}
-              step="1"
-              onChange={(e) => setSlice(parseInt(e.target.value))}
+                type="range"
+                min="0"
+                max={maxSlice}
+                value={slice}
+                step="1"
+                onChange={(e) => setSlice(parseInt(e.target.value))}
+                className="flex-1 accent-blue-500"
             />
-            <div className="brain-icon-container">
-              <div className="brain-icon-wrapper">
-                <img src="/images/brain-icon2.png" alt="brain" className="brain-slice-icon" />
-                <div
-                  className="brain-slice-indicator-sagittal"
-                  style={{ left: `${((slice / maxSlice) * 70) + 15}%` }}
-                />
-              </div>
-              <span className="slice-label-large">{slice} / {maxSlice}</span>
-            </div>
+            <span className="text-xs text-gray-400 w-8 text-right">{maxSlice}</span>
+            <span className="text-sm text-white font-medium w-20 text-right">Slice: {slice}</span>
           </div>
-          
-          <div className="canvas-wrapper">
+
+          <div className="relative flex-1 flex items-center justify-center bg-black overflow-hidden">
             <canvas
-              ref={canvasRef}
-              className="brain-canvas-large"
-              onClick={handleCanvasClick}
+                ref={canvasRef}
+                className="max-w-full max-h-full object-contain cursor-crosshair"
+                onClick={handleCanvasClick}
             />
-            <div className="canvas-labels">
-              <span className="label-left">L</span>
-              <span className="label-right">R</span>
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-4">
+              <span className="text-sm text-gray-500 font-bold">L</span>
+              <span className="text-sm text-gray-500 font-bold">R</span>
             </div>
           </div>
         </div>
 
-        <h2 className="region-info-display">{regionInfo}</h2>
-      </div>
+        <div className={`bg-gray-900 border-l border-gray-800 w-80 flex flex-col transition-all duration-300 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full absolute right-0 h-full'}`}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+            <div>
+              <h2 className="font-semibold text-white text-sm">{selectedRegion?.name || 'Select a region'}</h2>
+              {selectedRegion && <span className="text-xs text-gray-500">ID: {selectedRegion.id}</span>}
+            </div>
+            <button
+                onClick={() => setIsPanelOpen(false)}
+                className="text-gray-500 hover:text-white text-xl leading-none transition-colors"
+            >
+              ×
+            </button>
+          </div>
 
-      {/* Description Panel */}
-      <div className={`info-panel ${isPanelOpen ? 'open' : ''}`}>
-        <div className="panel-header">
-          <button className="close-btn" onClick={() => setIsPanelOpen(false)}>×</button>
-          <h2>{selectedRegion?.name || 'Select a region'}</h2>
-          <div className="region-id">
-            {selectedRegion ? `ID: ${selectedRegion.id}` : ''}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {selectedRegion ? (
+                <>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Basic Information</h3>
+                  <div className="bg-gray-800 rounded-lg p-3 space-y-1 text-sm">
+                    <p><span className="text-gray-400">Region:</span> <span className="text-white">{selectedRegion.name}</span></p>
+                    <p><span className="text-gray-400">ID:</span> <span className="text-white">{selectedRegion.id}</span></p>
+                    <p><span className="text-gray-400">View:</span> <span className="text-white">Sagittal</span></p>
+                    <p><span className="text-gray-400">Slice:</span> <span className="text-white">{selectedRegion.slice}</span></p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">External Resources</h3>
+
+                  href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 text-sm underline underline-offset-2 transition-colors"
+                  <a>
+                  View in Allen Brain Atlas →
+                </a>
+                </div>
+              </>
+              ) : (
+              <div className="text-gray-500 text-sm text-center mt-8">Click on a brain region to see details</div>
+              )}
           </div>
         </div>
-        <div className="panel-content">
-          {selectedRegion ? (
-            <>
-              <div className="info-section">
-                <h3>Basic Information</h3>
-                <p><strong>Region:</strong> {selectedRegion.name}</p>
-                <p><strong>Annotation ID:</strong> {selectedRegion.id}</p>
-                <p><strong>View:</strong> Sagittal</p>
-                <p><strong>Slice:</strong> {selectedRegion.slice}</p>
-              </div>
-              
-              <div className="info-section">
-                <h3>Description</h3>
-                <p>This is the <strong>{selectedRegion.name}</strong> region of the mouse brain.</p>
-              </div>
-              
-              <div className="info-section">
-                <h3>External Resources</h3>
-                <p>
-                  <a
-                    href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View in Allen Brain Atlas →
-                  </a>
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="loading">Click on a brain region to see details</div>
-          )}
-        </div>
       </div>
-    </div>
   );
 }
 
