@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Brain } from "lucide-react";
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +13,12 @@ function Navbar() {
 
     return (
         <nav className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center justify-between relative z-50">
-            <h2 className="text-white font-bold text-lg tracking-tight">Brain Atlas</h2>
+
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Brain className="w-6 h-6 text-blue-400" />
+                <h2 className="text-white font-bold text-lg tracking-tight">Brain Atlas</h2>
+            </Link>
 
             {/* Desktop Links */}
             <ul className="hidden md:flex items-center gap-1">
