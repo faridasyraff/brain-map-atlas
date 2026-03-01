@@ -17,7 +17,8 @@ function TwoDBrain() {
   ];
 
   const dragStateRef = useRef({ isDragging: false, view: null, startY: null, startSlice: null });
-
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("aiEndpoint");
@@ -287,6 +288,18 @@ function TwoDBrain() {
         highlightRegion(regionId, view);
       });
     }, 300);
+  };
+  const getSuggestions = (query) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const lower = query.toLowerCase();
+    const matches = Object.entries(regionMap)
+        .filter(([, name]) => name.toLowerCase().includes(lower))
+        .slice(0, 8) // limit to 8 suggestions
+        .map(([id, name]) => ({ id: parseInt(id), name }));
+    setSuggestions(matches);
   };
 
 
@@ -692,17 +705,60 @@ function TwoDBrain() {
         <div className="brain-header">
           <h1>3-Plane Brain Atlas Viewer</h1>
           <div className="brain-ai-search">
-            <div className="brain-region-search">
+            <div className="brain-region-search" style={{position: 'relative'}}>
               <input
                   type="text"
-                  placeholder="Search region by name..."
+                  placeholder="search"
                   value={regionSearch}
-                  onChange={(e) => setRegionSearch(e.target.value)}
+                  onChange={(e) => {
+                    setRegionSearch(e.target.value);
+                    getSuggestions(e.target.value);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   className="ai-input"
               />
-              <button onClick={handleRegionSearch}>
-                Search
-              </button>
+              <button onClick={handleRegionSearch}>Search</button>
+
+              {showSuggestions && suggestions.length > 0 && (
+                  <ul style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: '#1e1e2e',
+                    border: '1px solid #444',
+                    borderRadius: '6px',
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: '4px 0',
+                    zIndex: 1000,
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                  }}>
+                    {suggestions.map((s) => (
+                        <li
+                            key={s.id}
+                            onMouseDown={() => {   // onMouseDown fires before onBlur
+                              setRegionSearch(s.name);
+                              setSuggestions([]);
+                              setShowSuggestions(false);
+                              setTimeout(() => handleRegionSearch(), 0);
+                            }}
+                            style={{
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              color: '#ccc',
+                              fontSize: '0.85rem',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#2e2e3e'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          {s.name}
+                        </li>
+                    ))}
+                  </ul>
+              )}
             </div>
 
             <input
