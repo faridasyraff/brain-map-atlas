@@ -11,7 +11,7 @@ function TwoDBrain() {
   const [aiEndpoint, setAiEndpoint] = useState("/api/ask-ai");
   const [errorMessage, setErrorMessage] = useState(null);
   const AI_ENDPOINTS = [
-    { label: "ChatGPT", value: "/api/ask-ai" },
+    { label: "OpenAI", value: "/api/ask-ai" },
     { label: "Group A - api list", value: "https://capstone.ssdd.dev/brainatlas-be/api/list" },
     { label: "Group A - health", value: "https://capstone.ssdd.dev/brainatlas-be/health" }
   ];
@@ -638,7 +638,8 @@ function TwoDBrain() {
     setAiResults(null);
 
     try {
-      const response = await fetch(`http://localhost:5001${aiEndpoint}`, {
+      const url = aiEndpoint.startsWith("http") ? aiEndpoint : `http://localhost:5001${aiEndpoint}`;
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -700,300 +701,256 @@ function TwoDBrain() {
 
 
   return (
-    <div className="brain-2d-container">
-      <div className="brain-main-content">
-        <div className="brain-header">
-          <h1>3-Plane Brain Atlas Viewer</h1>
-          <div className="brain-ai-search">
-            <div className="brain-region-search" style={{position: 'relative'}}>
+      <div className="flex h-screen bg-gray-950 text-white overflow-hidden">
+
+        {/* Main Content */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+
+          {/* Header */}
+          <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+            <h1 className="text-xl font-bold text-white mb-3">3-Plane Brain Atlas Viewer</h1>
+
+            <div className="flex flex-wrap items-center gap-3">
+
+              {/* Region Search */}
+              <div className="relative">
+                <div className="flex gap-2">
+                  <input
+                      type="text"
+                      placeholder="Search brain region..."
+                      value={regionSearch}
+                      onChange={(e) => {
+                        setRegionSearch(e.target.value);
+                        getSuggestions(e.target.value);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                      className="bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-md px-3 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                      onClick={handleRegionSearch}
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded-md transition-colors"
+                  >
+                    Search
+                  </button>
+                </div>
+
+                {showSuggestions && suggestions.length > 0 && (
+                    <ul className="absolute top-full left-0 mt-1 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-xl z-50 max-h-52 overflow-y-auto">
+                      {suggestions.map((s) => (
+                          <li
+                              key={s.id}
+                              onMouseDown={() => {
+                                setRegionSearch(s.name);
+                                setSuggestions([]);
+                                setShowSuggestions(false);
+                                setTimeout(() => handleRegionSearch(), 0);
+                              }}
+                              className="px-3 py-2 text-sm text-gray-300 cursor-pointer hover:bg-gray-700 transition-colors"
+                          >
+                            {s.name}
+                          </li>
+                      ))}
+                    </ul>
+                )}
+              </div>
+
+              {/* AI Question */}
               <input
                   type="text"
-                  placeholder="search"
-                  value={regionSearch}
-                  onChange={(e) => {
-                    setRegionSearch(e.target.value);
-                    getSuggestions(e.target.value);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                  className="ai-input"
+                  placeholder="Ask a neuroscience question..."
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-md px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
-              <button onClick={handleRegionSearch}>Search</button>
+              <button
+                  onClick={handleAskAI}
+                  disabled={isLoadingAI}
+                  className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm px-4 py-2 rounded-md transition-colors"
+              >
+                {isLoadingAI ? "Thinking..." : "Ask AI"}
+              </button>
 
-              {showSuggestions && suggestions.length > 0 && (
-                  <ul style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: '#1e1e2e',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    listStyle: 'none',
-                    margin: 0,
-                    padding: '4px 0',
-                    zIndex: 1000,
-                    maxHeight: '220px',
-                    overflowY: 'auto',
-                  }}>
-                    {suggestions.map((s) => (
-                        <li
-                            key={s.id}
-                            onMouseDown={() => {   // onMouseDown fires before onBlur
-                              setRegionSearch(s.name);
-                              setSuggestions([]);
-                              setShowSuggestions(false);
-                              setTimeout(() => handleRegionSearch(), 0);
-                            }}
-                            style={{
-                              padding: '8px 12px',
-                              cursor: 'pointer',
-                              color: '#ccc',
-                              fontSize: '0.85rem',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#2e2e3e'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          {s.name}
-                        </li>
-                    ))}
-                  </ul>
-              )}
-            </div>
+              {/* AI Mode Selector */}
+              <div className="flex items-center gap-2">
+                <label className="text-gray-400 text-sm">AI Mode:</label>
+                <select
+                    value={aiEndpoint}
+                    onChange={(e) => setAiEndpoint(e.target.value)}
+                    className="bg-gray-800 border border-gray-700 text-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  {AI_ENDPOINTS.map((ep) => (
+                      <option key={ep.value} value={ep.value}>{ep.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            <input
-                type="text"
-                placeholder="Ask a neuroscience question..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                className="ai-input"
-            />
-            <button onClick={handleAskAI} disabled={isLoadingAI}>
-              {isLoadingAI ? "Thinking..." : "Ask AI"}
-            </button>
-          </div>
-
-          <div className="brain-ai-endpoint-selector">
-            <label style={{marginRight: "8px"}}>AI Mode:</label>
-            <select
-                value={aiEndpoint}
-                onChange={(e) => setAiEndpoint(e.target.value)}
-            >
-              {AI_ENDPOINTS.map((ep) => (
-                  <option key={ep.value} value={ep.value}>
-                    {ep.label}
-                  </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="brain-view-buttons">
-            <button
-                className="view-nav-btn"
-                onClick={() => navigate('/sagittal')}
-            >
-              Sagittal View
-            </button>
-            <button
-                className="view-nav-btn"
-                onClick={() => navigate('/coronal')}
-            >
-              Coronal View
-            </button>
-            <button
-                className="view-nav-btn"
-                onClick={() => navigate('/transverse')}
-            >
-              Transverse View
-            </button>
-          </div>
-        </div>
-
-        <div className="brain-views-grid">
-          {/* Sagittal View (was Axial) - Rotated 180 degrees */}
-          <div className="brain-view-panel">
-            <div className="brain-view-header">
-              <h2>Sagittal</h2>
-              <div className="brain-controls">
-                <input
-                    type="range"
-                    className="slice-slider"
-                    min="0"
-                    max={maxSlices.sagittal}
-                    value={slices.sagittal}
-                  step="1"
-                  onChange={(e) => handleSliceChange('sagittal', e.target.value)}
-                />
-                <span className="slice-label">{slices.sagittal}</span>
+              {/* View Nav Buttons */}
+              <div className="flex gap-2 ml-auto">
+                {['sagittal', 'coronal', 'transverse'].map((v) => (
+                    <button
+                        key={v}
+                        onClick={() => navigate(`/${v}`)}
+                        className="border border-gray-600 hover:border-blue-500 hover:text-blue-400 text-gray-300 text-sm px-3 py-2 rounded-md transition-colors capitalize"
+                    >
+                      {v}
+                    </button>
+                ))}
               </div>
             </div>
-            <canvas
-              ref={canvasRefs.sagittal}
-              className="brain-canvas"
-              onClick={(e) => handleCanvasClick(e, 'sagittal')}
-              onTouchStart={(e) => handleTouchStart(e, 'sagittal')}
-              onTouchMove={(e) => handleTouchMove(e, 'sagittal')}
-              onTouchEnd={(e) => handleTouchEnd(e, 'sagittal')}
-            />
-            <div className="brain-view-labels">
-              <span className="label-left">L</span>
-              <span className="label-right">R</span>
-            </div>
           </div>
 
-          {/* Coronal View (was Sagittal) - Rotated 90 degrees clockwise */}
-          <div className="brain-view-panel">
-            <div className="brain-view-header">
-              <h2>Coronal</h2>
-              <div className="brain-controls">
-                <input
-                  type="range"
-                  className="slice-slider"
-                  min="0"
-                  max={maxSlices.coronal}
-                  value={slices.coronal}
-                  step="1"
-                  onChange={(e) => handleSliceChange('coronal', e.target.value)}
-                />
-                <span className="slice-label">{slices.coronal}</span>
-              </div>
-            </div>
-            <canvas
-              ref={canvasRefs.coronal}
-              className="brain-canvas"
-              onClick={(e) => handleCanvasClick(e, 'coronal')}
-              onTouchStart={(e) => handleTouchStart(e, 'coronal')}
-              onTouchMove={(e) => handleTouchMove(e, 'coronal')}
-              onTouchEnd={(e) => handleTouchEnd(e, 'coronal')}
-            />
-            <div className="brain-view-labels">
-              <span className="label-left">P</span>
-              <span className="label-right">A</span>
-            </div>
+          {/* Region Info Bar */}
+          <div className="bg-gray-900/50 border-b border-gray-800 px-6 py-2">
+            <span className="text-sm text-blue-400 font-medium">{regionInfo}</span>
           </div>
 
-          {/* Transverse View (was Coronal) - Rotated 90 degrees clockwise */}
-          <div className="brain-view-panel">
-            <div className="brain-view-header">
-              <h2>Transverse</h2>
-              <div className="brain-controls">
-                <input
-                  type="range"
-                  className="slice-slider"
-                  min="0"
-                  max={maxSlices.transverse}
-                  value={slices.transverse}
-                  step="1"
-                  onChange={(e) => handleSliceChange('transverse', e.target.value)}
-                />
-                <span className="slice-label">{slices.transverse}</span>
-              </div>
-            </div>
-            <canvas
-              ref={canvasRefs.transverse}
-              className="brain-canvas"
-              onClick={(e) => handleCanvasClick(e, 'transverse')}
-              onTouchStart={(e) => handleTouchStart(e, 'transverse')}
-              onTouchMove={(e) => handleTouchMove(e, 'transverse')}
-              onTouchEnd={(e) => handleTouchEnd(e, 'transverse')}
-            />
-            <div className="brain-view-labels">
-              <span className="label-left">R</span>
-              <span className="label-right">L</span>
-            </div>
-          </div>
-        </div>
+          {/* Brain Views Grid */}
+          <div className="flex-1 grid grid-cols-3 gap-4 p-4 overflow-hidden">
+            {['sagittal', 'coronal', 'transverse'].map((view) => (
+                <div key={view} className="bg-gray-900 border border-gray-800 rounded-xl flex flex-col overflow-hidden">
 
-        <h2 className="region-info-main">{regionInfo}</h2>
-      </div>
+                  {/* View Header */}
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+                    <h2 className="text-sm font-semibold text-gray-200 capitalize">{view}</h2>
+                    <div className="flex items-center gap-2">
+                      <input
+                          type="range"
+                          min="0"
+                          max={maxSlices[view]}
+                          value={slices[view]}
+                          step="1"
+                          onChange={(e) => handleSliceChange(view, e.target.value)}
+                          className="w-28 accent-blue-500"
+                      />
+                      <span className="text-xs text-gray-400 w-10 text-right">{slices[view]}</span>
+                    </div>
+                  </div>
 
-      {/* Description Panel */}
-      <div className={`brain-description-panel ${isPanelOpen ? 'open' : ''}`}>
-        <div className="brain-panel-header">
-          <button className="brain-close-btn" onClick={() => setIsPanelOpen(false)}>×</button>
-          <h2>{selectedRegion?.name || 'Select a region'}</h2>
-          <div className="brain-region-id">
-            {selectedRegion ? `ID: ${selectedRegion.id}` : ''}
-          </div>
-        </div>
-        <div className="brain-panel-content">
-          {selectedRegion ? (
-            <>
-              {ancestors.length > 0 && (
-                <div className="brain-info-section">
-                  <h3>Hierarchy</h3>
-                  <div className="brain-breadcrumb">
-                    {ancestors.map((ancestor, idx) => (
-                      <React.Fragment key={ancestor.mba_id}>
-                        <span className={idx === ancestors.length - 1 ? 'breadcrumb-active' : ''}>
-                          {ancestor.acronym || ancestor.name}
-                        </span>
-                        {idx < ancestors.length - 1 && <span className="breadcrumb-sep"> > </span>}
-                      </React.Fragment>
-                    ))}
+                  {/* Canvas */}
+                  <div className="relative flex-1 flex items-center justify-center bg-black overflow-hidden">
+                    <canvas
+                        ref={canvasRefs[view]}
+                        className="max-w-full max-h-full object-contain cursor-crosshair"
+                        onClick={(e) => handleCanvasClick(e, view)}
+                        onTouchStart={(e) => handleTouchStart(e, view)}
+                        onTouchMove={(e) => handleTouchMove(e, view)}
+                        onTouchEnd={(e) => handleTouchEnd(e, view)}
+                    />
+                    {/* Orientation Labels */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-2">
+                <span className="text-xs text-gray-500 font-bold">
+                  {view === 'sagittal' ? 'L' : view === 'coronal' ? 'P' : 'R'}
+                </span>
+                      <span className="text-xs text-gray-500 font-bold">
+                  {view === 'sagittal' ? 'R' : view === 'coronal' ? 'A' : 'L'}
+                </span>
+                    </div>
                   </div>
                 </div>
-              )}
+            ))}
+          </div>
+        </div>
 
-              <div className="brain-info-section">
-                <h3>Basic Information</h3>
-                <p><strong>Region:</strong> {selectedRegion.name}</p>
-                <p><strong>Annotation ID:</strong> {selectedRegion.id}</p>
-                <p><strong>View:</strong> {selectedRegion.view}</p>
-                <p><strong>Slice:</strong> {selectedRegion.slice}</p>
-              </div>
-              
-              <div className="brain-info-section">
-                <h3>Description</h3>
-                <p>This is the <strong>{selectedRegion.name}</strong> region of the mouse brain.</p>
-                {aiResults && (
-                    <div className="brain-info-section">
-                      <h3>AI Results</h3>
-                      {aiResults.matched_regions.map((r, i) => (
-                          <div key={i}>
-                            <p>
-                              <strong>ID:</strong> {r.region_id}<br />
-                              <strong>Confidence:</strong> {(r.confidence * 100).toFixed(1)}%<br />
-                              <strong>Reason:</strong> {r.reason}
-                            </p>
-                          </div>
-                      ))}
-                      <p><em>{aiResults.uncertainty_note}</em></p>
+        {/* Side Panel */}
+        <div className={`bg-gray-900 border-l border-gray-800 w-80 flex flex-col transition-all duration-300 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full absolute right-0 h-full'}`}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+            <div>
+              <h2 className="font-semibold text-white text-sm">{selectedRegion?.name || 'Select a region'}</h2>
+              {selectedRegion && (
+                  <span className="text-xs text-gray-500">ID: {selectedRegion.id}</span>
+              )}
+            </div>
+            <button
+                onClick={() => setIsPanelOpen(false)}
+                className="text-gray-500 hover:text-white text-xl leading-none transition-colors"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {selectedRegion ? (
+                <>
+                {ancestors.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Hierarchy</h3>
+                      <div className="flex flex-wrap gap-1 text-xs text-gray-300">
+                        {ancestors.map((ancestor, idx) => (
+                            <React.Fragment key={ancestor.mba_id}>
+                      <span className={idx === ancestors.length - 1 ? 'text-blue-400 font-medium' : ''}>
+                        {ancestor.acronym || ancestor.name}
+                      </span>
+                              {idx < ancestors.length - 1 && <span className="text-gray-600">›</span>}
+                            </React.Fragment>
+                        ))}
+                      </div>
                     </div>
                 )}
 
-              </div>
-              
-              <div className="brain-info-section">
-                <h3>External Resources</h3>
-                <p>
-                  <a
-                    href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View in Allen Brain Atlas →
-                  </a>
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="brain-loading">Click on a brain region to see details</div>
-          )}
-        </div>
-      </div>
-      {errorMessage && (
-          <div className="error-overlay">
-            <div className="error-popup">
-              <h3>⚠ API Error</h3>
-              <p>{errorMessage}</p>
-              <button onClick={() => setErrorMessage(null)}>
-                Close
-              </button>
-            </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Basic Information</h3>
+                  <div className="bg-gray-800 rounded-lg p-3 space-y-1 text-sm">
+                    <p><span className="text-gray-400">Region:</span> <span className="text-white">{selectedRegion.name}</span></p>
+                    <p><span className="text-gray-400">ID:</span> <span className="text-white">{selectedRegion.id}</span></p>
+                    <p><span className="text-gray-400">View:</span> <span className="text-white">{selectedRegion.view}</span></p>
+                    <p><span className="text-gray-400">Slice:</span> <span className="text-white">{selectedRegion.slice}</span></p>
+                  </div>
+                </div>
+
+                {aiResults && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">AI Results</h3>
+                      <div className="space-y-2">
+                        {aiResults.matched_regions.map((r, i) => (
+                            <div key={i} className="bg-gray-800 rounded-lg p-3 text-sm space-y-1">
+                              <p><span className="text-gray-400">ID:</span> <span className="text-white">{r.region_id}</span></p>
+                              <p><span className="text-gray-400">Confidence:</span> <span className="text-green-400">{(r.confidence * 100).toFixed(1)}%</span></p>
+                              <p><span className="text-gray-400">Reason:</span> <span className="text-gray-300">{r.reason}</span></p>
+                            </div>
+                        ))}
+                        {aiResults.uncertainty_note && (
+                            <p className="text-xs text-gray-500 italic">{aiResults.uncertainty_note}</p>
+                        )}
+                      </div>
+                    </div>
+                )}
+
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">External
+                    Resources</h3>
+
+                  href={`https://atlas.brain-map.org/atlas?atlas=602630314#atlas=${selectedRegion.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 text-sm underline underline-offset-2 transition-colors"
+                  <a>
+                  View in Allen Brain Atlas →
+                </a>
+                </div>
+              </>
+              ) : (
+              <div className="text-gray-500 text-sm text-center mt-8">Click on a brain region to see details</div>
+              )}
           </div>
-      )}
-    </div>
+        </div>
+
+        {/* Error Popup */}
+        {errorMessage && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-gray-900 border border-red-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+                <h3 className="text-red-400 font-semibold mb-2">⚠ API Error</h3>
+                <p className="text-gray-300 text-sm mb-4">{errorMessage}</p>
+                <button
+                    onClick={() => setErrorMessage(null)}
+                    className="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-md transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+        )}
+      </div>
   );
 }
 
