@@ -1,0 +1,10 @@
+# Core atlas dependencies (already in your environment)
+pandas
+numpy
+matplotlib
+SimpleITK
+abc_atlas_access
+
+# Web framework
+flask
+flask-cors
