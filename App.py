@@ -38,7 +38,7 @@ from abc_atlas_access.abc_atlas_cache.abc_project_cache import AbcProjectCache
 # ── Load atlas data once ──────────────────────────────────────────────────────
 print("Loading ABC Atlas data … this may take a moment.")
 
-DOWNLOAD_BASE = Path('../../data/abc_atlas')   # ← adjust to your data path
+DOWNLOAD_BASE = Path(__file__).parent / 'data' / 'abc_atlas'
 abc_cache = AbcProjectCache.from_cache_dir(DOWNLOAD_BASE)
 
 def load_arr(name):
@@ -582,4 +582,5 @@ def chat():
 
 if __name__ == '__main__':
     print("\nOpen your browser at: http://localhost:5000\n")
+
     app.run(debug=False, port=5000)
