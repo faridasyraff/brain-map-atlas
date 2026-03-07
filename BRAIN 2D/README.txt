@@ -1,7 +1,6 @@
+DOWNLOAD ALL THE FILES IN THIS FOLDER
 DOWNLOAD OLLAMA must use gemma3::4b
 CREATE A FILE CALLED .env in the same directory you in and put this in the file -> "OPENAI_API_KEY="your_openai_api_key_here""
-From the github these are the files you take App.py/brain_regions_kb.json/index.html => all these file are in the first page of the github in:
-https://github.com/faridasyraff/brain-map-atlas
 on the main folder directory
 run these on terminal
 pip install openai
