@@ -23,8 +23,10 @@ Endpoints
        Returns RGBA mask using the official atlas color for that level.
 """
 
-import io, base64, json as _json
+import io, base64, json as _json, logging, traceback
+from datetime import datetime
 import numpy as np
+from scipy.ndimage import binary_erosion
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -35,11 +37,110 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from abc_atlas_access.abc_atlas_cache.abc_project_cache import AbcProjectCache
 
+# ── Logging setup ─────────────────────────────────────────────────────────────
+def _setup_logger():
+    log_dir = Path(__file__).parent / 'logs'
+    log_dir.mkdir(exist_ok=True)
+    now = datetime.now()
+    today = f'{now.month}-{now.day}-{now.year}'  # e.g. 3-16-2026
+    log_file = log_dir / f'{today}.log'
+
+    class AtlasFormatter(logging.Formatter):
+        def format(self, record):
+            _n    = datetime.now()
+            now   = f'{_n.month}-{_n.day}-{_n.year} {_n.strftime("%H:%M:%S")}'
+            level = f'[{record.levelname}]'
+            src   = Path(record.pathname).name
+            return f'{level}, {now} {src}, {record.getMessage()}'
+
+    handler = logging.FileHandler(log_file, encoding='utf-8')
+    handler.setFormatter(AtlasFormatter())
+
+    logger = logging.getLogger('atlas')
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    # Also echo to console at WARNING+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.WARNING)
+    ch.setFormatter(AtlasFormatter())
+    logger.addHandler(ch)
+    return logger
+
+log = _setup_logger()
+log.info('Atlas backend starting up')
+
+# ── Rapid-click / spam tracker ────────────────────────────────────────────────
+# Fires a WARNING if the same parcellation_index or group name is requested
+# more than _RAPID_THRESHOLD times within _RAPID_WINDOW seconds.
+import time as _time
+_RAPID_WINDOW    = 2.0   # seconds
+_RAPID_THRESHOLD = 3     # hits within window before warning
+
+_rapid_lookup = {}   # pidx  → [timestamps]
+_rapid_group  = {}   # label → [timestamps]
+
+def _check_rapid(tracker, key, label, kind):
+    now = _time.monotonic()
+    hits = tracker.setdefault(key, [])
+    # Drop timestamps outside the window
+    hits[:] = [t for t in hits if now - t < _RAPID_WINDOW]
+    hits.append(now)
+    if len(hits) >= _RAPID_THRESHOLD:
+        log.warning(
+            f'Rapid {kind} clicks detected — "{label}" '
+            f'requested {len(hits)}x in {_RAPID_WINDOW}s'
+        )
+
 # ── Load atlas data once ──────────────────────────────────────────────────────
 print("Loading ABC Atlas data … this may take a moment.")
 
 DOWNLOAD_BASE = Path(__file__).parent / 'data' / 'abc_atlas'
+DOWNLOAD_BASE.mkdir(parents=True, exist_ok=True)
+
 abc_cache = AbcProjectCache.from_cache_dir(DOWNLOAD_BASE)
+
+# ── Pre-flight: download any missing files ────────────────────────────────────
+# All files live under Allen-CCF-2020 directory.
+# Image volumes (~400 MB total) and metadata CSVs are checked individually.
+
+_IMAGE_VOLUMES = [
+    'annotation_10',
+    'average_template_10',
+    'annotation_boundary_10',
+]
+
+_METADATA_FILES = [
+    'parcellation_to_parcellation_term_membership_name',
+    'parcellation_to_parcellation_term_membership_acronym',
+    'parcellation_to_parcellation_term_membership_color',
+    'parcellation_to_parcellation_term_membership',
+    'parcellation_term',
+]
+
+print("\n── Checking required data files ─────────────────────────────────────────")
+for vol in _IMAGE_VOLUMES:
+    try:
+        fpath = abc_cache.get_file_path(directory='Allen-CCF-2020', file_name=vol)
+        if Path(fpath).exists():
+            print(f"  ✓ {vol}")
+        else:
+            print(f"  ↓ Downloading {vol} …")
+            abc_cache.get_file_path(directory='Allen-CCF-2020', file_name=vol)
+    except Exception as e:
+        print(f"  ✗ {vol} — {e}")
+
+for meta in _METADATA_FILES:
+    try:
+        fpath = abc_cache.get_file_path(directory='Allen-CCF-2020', file_name=meta)
+        if Path(fpath).exists():
+            print(f"  ✓ {meta}")
+        else:
+            print(f"  ↓ Downloading {meta} …")
+            abc_cache.get_metadata_dataframe(directory='Allen-CCF-2020', file_name=meta)
+    except Exception as e:
+        print(f"  ✗ {meta} — {e}")
+
+print("── Data check complete ───────────────────────────────────────────────────\n")
 
 def load_arr(name):
     f = abc_cache.get_file_path(directory='Allen-CCF-2020', file_name=name)
@@ -48,6 +149,11 @@ def load_arr(name):
 annotation_array = load_arr('annotation_10')   # (1320, 800, 1140)
 template_array   = load_arr('average_template_10')
 boundary_array   = load_arr('annotation_boundary_10')
+
+# Pre-compute which parcellation indices actually have voxels — used to flag
+# "no highlight available" regions in search results.
+_indices_with_voxels = set(np.unique(annotation_array).tolist())
+print(f"Unique parcellation indices with voxels: {len(_indices_with_voxels)}")
 
 # ── Lookup table: parcellation_index → names ──────────────────────────────────
 name_df = abc_cache.get_metadata_dataframe(
@@ -66,7 +172,146 @@ except Exception as e:
     acronym_df = None
     print(f"Warning: could not load acronym table: {e}")
 
-# ── Color pivot tables: parcellation_index → per-level hex & RGB ──────────────
+# ── ABC Atlas Term Tree ────────────────────────────────────────────────────────
+# From the official docs:
+#
+# parcellation_term.csv
+#   label, acronym, name, identifier, parent_identifier, ...
+#   — defines all named anatomical terms and their parent→child hierarchy
+#   — identifier = "MBA:997", parent_identifier = "MBA:8"
+#
+# parcellation_to_parcellation_term_membership.csv
+#   parcellation_index, parcellation_term_label, parcellation_term_set_label, ...
+#   — directly maps each parcellation_index to every term it belongs to
+#   — parcellation_term_label matches parcellation_term.label
+#
+# Pipeline:
+#   1. Build term tree from parcellation_term.csv (identifier → children)
+#   2. Build term_label → set of parcellation_indices from membership CSV
+#   3. _collect_leaf_indices(term_id) walks the tree and unions all indices
+
+try:
+    # Load parcellation_term.csv
+    term_df = abc_cache.get_metadata_dataframe(
+        directory='Allen-CCF-2020',
+        file_name='parcellation_term')
+    print(f"parcellation_term: {term_df.shape}  cols: {list(term_df.columns)}")
+
+    # Load the direct membership mapping
+    membership_df = abc_cache.get_metadata_dataframe(
+        directory='Allen-CCF-2020',
+        file_name='parcellation_to_parcellation_term_membership')
+    print(f"membership: {membership_df.shape}  cols: {list(membership_df.columns)}")
+
+    # Build term_label → set of parcellation_indices
+    _term_label_to_indices = {}
+    for _, row in membership_df.iterrows():
+        pidx   = int(row['parcellation_index'])
+        tlabel = str(row['parcellation_term_label']).strip()
+        _term_label_to_indices.setdefault(tlabel, set()).add(pidx)
+    print(f"term_label→indices: {len(_term_label_to_indices)} terms mapped")
+
+    # Use ONLY AllenCCF-Ontology-2017 rows — they have proper parent_identifier links.
+    # ABC-Ontology-2023 rows share identifiers but have no parent_identifier so they
+    # would break the tree structure.
+    allen_rows = term_df[term_df['label'].str.startswith('AllenCCF-Ontology-2017')].copy()
+
+    # Build identifier → label so we can resolve parent_identifier → parent label
+    _id_to_label = {}
+    for _, row in allen_rows.iterrows():
+        tid = str(row.get('identifier') or '').strip()
+        if tid:
+            _id_to_label[tid] = str(row['label']).strip()
+
+    # Build label → node (label is unique and matches membership CSV)
+    _term_nodes = {}
+    for _, row in allen_rows.iterrows():
+        label = str(row['label']).strip()
+        tid   = str(row.get('identifier') or '').strip()
+        pid   = str(row.get('parent_identifier') or '').strip()
+        _term_nodes[label] = {
+            'label':        label,
+            'id':           tid,
+            'acronym':      str(row.get('acronym') or '').strip(),
+            'name':         str(row.get('name')    or '').strip(),
+            'parent_label': _id_to_label.get(pid, ''),
+            'children':     [],
+        }
+
+    # Wire parent → children using labels
+    for label, node in _term_nodes.items():
+        plabel = node['parent_label']
+        if plabel and plabel in _term_nodes:
+            _term_nodes[plabel]['children'].append(label)
+
+    # Lookups: name.lower() → label,  acronym.lower() → label
+    _name_to_term_id = {}
+    _acro_to_term_id = {}
+    for label, node in _term_nodes.items():
+        if node['name']:
+            _name_to_term_id[node['name'].lower()] = label
+        if node['acronym']:
+            _acro_to_term_id[node['acronym'].lower()] = label
+
+    # Also build struct_id → RGB lookup for direct colorize from annotation volume
+    # annotation_array voxel values are numeric Allen structure IDs (e.g. 997, 567)
+    # parcellation_term.csv identifier = "MBA:997" → strip prefix → int → RGB
+    _struct_id_to_rgb = {}  # int struct_id → (r, g, b)
+    for _, row in allen_rows.iterrows():
+        tid = str(row.get('identifier') or '').strip()
+        if not tid.startswith('MBA:'):
+            continue
+        try:
+            sid = int(tid.replace('MBA:', ''))
+            r   = int(row.get('red',   0) or 0)
+            g   = int(row.get('green', 0) or 0)
+            b   = int(row.get('blue',  0) or 0)
+            _struct_id_to_rgb[sid] = (r, g, b)
+        except (ValueError, TypeError):
+            continue
+    print(f"struct_id→RGB lookup: {len(_struct_id_to_rgb)} entries")
+
+except Exception as e:
+    term_df               = None
+    membership_df         = None
+    _term_nodes           = {}
+    _term_label_to_indices = {}
+    _name_to_term_id      = {}
+    _acro_to_term_id      = {}
+    _struct_id_to_rgb     = {}
+    print(f"Warning: could not build term tree: {e}")
+
+
+def _collect_leaf_indices(term_label, visited=None):
+    """
+    Walk the ABC term tree from term_label downward, collecting all
+    parcellation_indices that are members of any descendant term.
+    term_label is the AllenCCF-Ontology-2017-xxx label string.
+    """
+    if visited is None:
+        visited = set()
+    if term_label in visited:
+        return set()
+    visited.add(term_label)
+
+    node = _term_nodes.get(term_label)
+    if not node:
+        return set()
+
+    indices = set()
+
+    # Add parcellation_indices directly associated with this term's label
+    if term_label in _term_label_to_indices:
+        indices.update(_term_label_to_indices[term_label])
+
+    # Recurse into children
+    for child_label in node['children']:
+        indices.update(_collect_leaf_indices(child_label, visited))
+
+    return indices
+
+
+
 # color_df columns: organ_color, category_color, division_color,
 #                   structure_color, substructure_color  (hex strings)
 color_df = abc_cache.get_metadata_dataframe(
@@ -74,8 +319,6 @@ color_df = abc_cache.get_metadata_dataframe(
     file_name='parcellation_to_parcellation_term_membership_color')
 color_df.set_index('parcellation_index', inplace=True)
 
-# Pre-build RGB channel arrays for fast vectorized colorization
-# channels[c][level_col] gives an array of uint8 values indexed by parcellation_index
 LEVEL_COLS = {
     'organ':        'organ_color',
     'category':     'category_color',
@@ -92,7 +335,10 @@ def hex_to_rgb_cols(col_series):
     b = hexvals.str[4:6].apply(lambda h: int(h, 16) if isinstance(h, str) and len(h)==6 else 0).astype(np.uint8)
     return r, g, b
 
-# Build channels dict: channels['red']['organ_color'] = Series indexed by parcellation_index
+# Build channels exactly as the Allen CCFv3 docs show:
+# channels['red'] is a DataFrame indexed by parcellation_index,
+# columns = [organ_color, category_color, division_color, structure_color, substructure_color]
+# This mirrors the docs: channels[c].loc[zslice.flat[:], '%s_color' % term_set]
 channels = {}
 for ch in ['red', 'green', 'blue']:
     channels[ch] = {}
@@ -103,6 +349,39 @@ for level, col in LEVEL_COLS.items():
     channels['green'][col] = g
     channels['blue'][col]  = b
 
+# ── Pre-build LUT from parcellation_to_parcellation_term_membership_color ────
+# This is exactly what the Allen CCFv3 docs use for colorize():
+#   channels[c].loc[zslice.flat[:], 'structure_color']
+# color_df is indexed by parcellation_index (same values as annotation_array voxels).
+# We build a dense numpy array _color_lut_structure[parcellation_index] = (r,g,b)
+# using the 'structure_color' column — this gives the clean region-level coloring
+# shown in the docs (big green cortex, pink thalamus, red brainstem etc.).
+
+def _build_lut_from_color_df(col_name):
+    max_idx = int(color_df.index.max()) + 1
+    lut = np.zeros((max_idx, 3), dtype=np.uint8)
+    hex_series = color_df[col_name].str.lstrip('#')
+    for pidx, hexval in hex_series.items():
+        i = int(pidx)
+        if 0 <= i < max_idx and isinstance(hexval, str) and len(hexval) == 6:
+            try:
+                lut[i, 0] = int(hexval[0:2], 16)
+                lut[i, 1] = int(hexval[2:4], 16)
+                lut[i, 2] = int(hexval[4:6], 16)
+            except ValueError:
+                pass
+    return lut, max_idx
+
+_color_lut_structure,    _MAX_PIDX = _build_lut_from_color_df('structure_color')
+_color_lut_substructure, _         = _build_lut_from_color_df('substructure_color')
+_color_lut_division,     _         = _build_lut_from_color_df('division_color')
+
+# Default LUT used by colorize() — structure level matches the docs visually
+_color_lut = _color_lut_structure
+_MAX_STRUCT_ID = _MAX_PIDX
+
+print(f"Color LUT built from color_df structure_color: "
+      f"{np.any(_color_lut > 0, axis=1).sum()} colored parcellations")
 print("Color tables loaded.")
 
 # Also store the raw hex for highlight use
@@ -154,48 +433,47 @@ def world_coords(view, idx, col, row):
     elif view == 'transverse': return row, idx, col
     return 0, 0, 0
 
-# ── Colorize a 2-D annotation slice using the official atlas colors ────────────
-def colorize(annot_slice, level):
+# ── Colorize a 2-D annotation slice using the official color table ───────────
+def colorize(annot_slice, level='structure'):
     """
-    Implements the colorize() function from Note1.pdf.
-    annot_slice: 2D array of parcellation_index values
-    level: one of organ / category / division / structure / substructure
-    Returns: (rows, cols, 3) uint8 RGB array
+    Fast numpy LUT colorize using parcellation_to_parcellation_term_membership_color.
+    annot_slice voxels ARE parcellation_index values (same index as color_df).
+    Uses structure_color by default — matches the clean Allen CCFv3 doc colorization
+    (big uniform regions: green cortex, pink thalamus, red brainstem, etc.).
     """
-    col = LEVEL_COLS[level]
-    sshape = annot_slice.shape
-    colorized = np.zeros((sshape[0], sshape[1], 3), dtype=np.uint8)
-    flat = annot_slice.flat[:]
-    for i, c in enumerate(['red', 'green', 'blue']):
-        temp = np.zeros(sshape[0] * sshape[1], dtype=np.uint8)
-        # vectorized lookup: channels[c][col] is a Series indexed by parcellation_index
-        ch_series = channels[c][col]
-        # reindex to flat voxel values; fill missing with 0
-        temp[:] = ch_series.reindex(flat, fill_value=0).values
-        colorized[:, :, i] = temp.reshape(sshape)
-    return colorized
+    lut_map = {
+        'structure':    _color_lut_structure,
+        'substructure': _color_lut_substructure,
+        'division':     _color_lut_division,
+    }
+    lut  = lut_map.get(level, _color_lut_structure)
+    maxn = lut.shape[0]
+    flat = annot_slice.ravel().astype(np.int64)
+    flat = np.where((flat >= 0) & (flat < maxn), flat, 0)
+    return lut[flat].reshape(annot_slice.shape[0], annot_slice.shape[1], 3)
 
 # ── Render a slice to base64 PNG ──────────────────────────────────────────────
 def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=10, fh=8):
-    # Returns (b64_string, pixel_width, pixel_height)
     fig, ax = plt.subplots(figsize=(fw, fh), dpi=100)
+    ax.imshow(tmpl, cmap='Greys_r', origin='upper')
 
+    # ── Color mode: overlay official atlas region colors ──────────────────────
     if colorize_level and colorize_level != 'off':
-        colored = colorize(annot, colorize_level)
-        ax.imshow(colored, origin='upper')
-        ax.imshow(bnd, cmap='Greys',
-                  alpha=np.clip(bnd.astype(float) / 225, 0, 1),
-                  origin='upper')
-    else:
-        ax.imshow(tmpl, cmap='Greys_r', origin='upper')
-        ax.imshow(bnd, cmap='Greys',
-                  alpha=np.clip(bnd.astype(float) / 225, 0, 1),
-                  origin='upper')
+        rgb = colorize(annot, colorize_level)          # (H, W, 3) uint8
+        rgba = np.concatenate(
+            [rgb, np.where(annot[:, :, None] > 0,
+                           np.full((*annot.shape, 1), 178, dtype=np.uint8),   # alpha ~70%
+                           np.zeros((*annot.shape, 1), dtype=np.uint8))],
+            axis=2)                                    # (H, W, 4) RGBA
+        ax.imshow(rgba, origin='upper', interpolation='nearest')
 
+    ax.imshow(bnd, cmap='Greys',
+              alpha=np.clip(bnd.astype(float) / 225, 0, 1),
+              origin='upper')
     ax.axis('off')
     plt.tight_layout(pad=0)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, facecolor='black')
     plt.close(fig)
     buf.seek(0)
     raw = buf.read()
@@ -208,9 +486,34 @@ def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=10, fh=8):
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    tb = traceback.format_exc()
+    log.error(f'Unhandled exception on {request.method} {request.path} — {e}\n{tb}')
+    return jsonify({'error': str(e)}), 500
+
+@app.errorhandler(404)
+def handle_404(e):
+    log.warning(f'404 {request.method} {request.path}')
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(405)
+def handle_405(e):
+    log.warning(f'405 Method Not Allowed {request.method} {request.path}')
+    return jsonify({'error': 'Method not allowed'}), 405
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
+
+@app.route('/api/log_warning', methods=['POST'])
+def log_warning():
+    data  = request.get_json(force=True)
+    kind  = str(data.get('kind',  'click'))
+    label = str(data.get('label', '?'))
+    count = int(data.get('count', 0))
+    log.warning(f'Rapid {kind} — "{label}" blocked after {count} rapid requests')
+    return jsonify({'ok': True})
 
 @app.route('/api/slice')
 def get_slice():
@@ -226,10 +529,14 @@ def get_slice():
         return jsonify({'error': 'invalid idx'}), 400
     idx = max(0, min(idx, max_idx))
 
-    tmpl, bnd, annot = get_slices(view, idx)
-    fw, fh = VIEW_CFG[view]['figsize']
-    img_b64, render_w, render_h = render_to_b64(tmpl, bnd, annot, colorize_level, fw, fh)
-    _render_size_cache[(view, idx)] = (render_w, render_h)  # cache for highlight endpoint
+    try:
+        tmpl, bnd, annot = get_slices(view, idx)
+        fw, fh = VIEW_CFG[view]['figsize']
+        img_b64, render_w, render_h = render_to_b64(tmpl, bnd, annot, colorize_level, fw, fh)
+        _render_size_cache[(view, idx)] = (render_w, render_h)  # cache for highlight endpoint
+    except Exception as e:
+        log.error(f'slice render failed — view={view} idx={idx} colorize={colorize_level} — {e}\n{traceback.format_exc()}')
+        return jsonify({'error': str(e)}), 500
 
     rows, cols = tmpl.shape
     return jsonify({
@@ -282,6 +589,7 @@ def lookup():
 
     try:
         r = name_df.loc[parcellation_index]
+        hier = ['organ','category','division','structure','substructure']
         result = {**base, **colors,
             'organ':        str(r.get('organ',        '—')),
             'category':     str(r.get('category',     '—')),
@@ -292,12 +600,31 @@ def lookup():
         # Add acronyms if available
         if acronym_df is not None and parcellation_index in acronym_df.index:
             a = acronym_df.loc[parcellation_index]
-            for f in ['organ','category','division','structure','substructure']:
+            for f in hier:
                 result[f + '_acronym'] = str(a.get(f, ''))
+
+        # matched_label / matched_acronym = most specific non-empty level
+        matched_name  = '—'
+        matched_acro  = '—'
+        for f in reversed(hier):
+            v = result.get(f, '—')
+            if v and v != '—':
+                matched_name = v
+                matched_acro = result.get(f + '_acronym', '—') or '—'
+                break
+        result['matched_label']   = matched_name
+        result['matched_acronym'] = matched_acro
+
+        _check_rapid(_rapid_lookup, parcellation_index, matched_name, 'lookup')
+        log.info(f'lookup ok — pidx={parcellation_index} name={matched_name}')
         return jsonify(result)
     except KeyError:
+        log.warning(f'lookup — no region for parcellation_index={parcellation_index}')
         return jsonify({**base, **colors,
                         'error': f'No region for index {parcellation_index}'})
+    except Exception as e:
+        log.error(f'lookup exception — {e}\n{traceback.format_exc()}')
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/highlight', methods=['POST'])
@@ -317,27 +644,371 @@ def highlight():
     _, _, annot = get_slices(view, idx)
     rows, cols = annot.shape
 
-    hex_color = get_hex_for_index(target, level).lstrip('#')
-    try:
-        r = int(hex_color[0:2], 16)
-        g = int(hex_color[2:4], 16)
-        b = int(hex_color[4:6], 16)
-    except Exception:
-        r, g, b = 0, 212, 255
+    # In color mode, use purple so highlight stands out over the colorized atlas
+    color_mode = bool(data.get('color_mode', False))
+    if color_mode:
+        r, g, b = 108, 52, 196  # muted dark purple
+    else:
+        hex_color = get_hex_for_index(target, level).lstrip('#')
+        try:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+        except Exception:
+            r, g, b = 0, 212, 255
 
-    # Build a raw RGBA mask at annotation resolution — fully transparent except
-    # where the target region is. The frontend canvas stretches this over the image.
+    # Build RGBA mask: muted dark fill + thick black outline
+    region = (annot == target)
+
+    from scipy.ndimage import binary_dilation, binary_erosion
+    struct3 = np.ones((3, 3), dtype=bool)
+    struct5 = np.ones((5, 5), dtype=bool)
+    dilated = binary_dilation(region, structure=struct5, iterations=2)
+    eroded  = binary_erosion(region,  structure=struct3, iterations=1)
+    outline = dilated & ~eroded   # thick band around region boundary
+
     mask = np.zeros((rows, cols, 4), dtype=np.uint8)
-    mask[annot == target] = [r, g, b, 180]
+    # Muted dark fill — alpha 180, darkened color
+    mask[region]  = [r, g, b, 180]
+    # Thick black outline
+    mask[outline] = [10, 10, 10, 230]
+
+    img = Image.fromarray(mask, 'RGBA')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    used_color = 'a020f0' if color_mode else hex_color
+    return jsonify({'mask': f'data:image/png;base64,{base64.b64encode(buf.read()).decode()}',
+                    'color': f'#{used_color}'})
+
+
+
+
+@app.route('/api/resolve_acronyms', methods=['POST'])
+def resolve_acronyms():
+    """
+    POST { acronyms: [...] }
+    Resolves a list of acronyms to parcellation_indices in one shot.
+    Used for Allen-tree container nodes (e.g. Cerebrum) not in name_df.
+    """
+    data = request.get_json(force=True)
+    acros = {str(a).lower().strip() for a in (data.get('acronyms') or [])}
+    if not acros:
+        return jsonify({'parcellation_indices': [], 'count': 0})
+
+    matched = set()
+    hier_cols = ['organ', 'category', 'division', 'structure', 'substructure']
+
+    if acronym_df is not None:
+        for pidx in acronym_df.index:
+            try:
+                a = acronym_df.loc[pidx]
+            except KeyError:
+                continue
+            for col in hier_cols:
+                val = str(a.get(col, '') or '').lower().strip()
+                if val and val in acros:
+                    matched.add(int(pidx))
+                    break
+
+    return jsonify({'parcellation_indices': list(matched), 'count': len(matched)})
+
+
+@app.route('/api/highlight_indices', methods=['POST'])
+def highlight_indices():
+    data = request.get_json(force=True)
+    try:
+        view    = data['view'].lower()
+        idx     = int(data['idx'])
+        indices = [int(i) for i in data['parcellation_indices']]
+    except (KeyError, TypeError, ValueError):
+        return jsonify({'error': 'view, idx, parcellation_indices required'}), 400
+    if view not in VIEW_CFG or not indices:
+        return jsonify({'error': 'invalid input'}), 400
+
+    _, _, annot = get_slices(view, idx)
+    rows, cols = annot.shape
+    member_arr = np.array(sorted(set(indices)), dtype=annot.dtype)
+    in_group   = np.isin(annot, member_arr)
+
+    from scipy.ndimage import binary_dilation, binary_erosion
+    struct3  = np.ones((3, 3), dtype=bool)
+    struct5  = np.ones((5, 5), dtype=bool)
+    dilated  = binary_dilation(in_group, structure=struct5, iterations=2)
+    eroded   = binary_erosion(in_group,  structure=struct3, iterations=1)
+    outline  = dilated & ~eroded
+
+    mask = np.zeros((rows, cols, 4), dtype=np.uint8)
+    mask[in_group] = [108, 52, 196, 180]   # muted dark purple fill
+    mask[outline]  = [10, 10, 10, 230]     # thick black outline
 
     img = Image.fromarray(mask, 'RGBA')
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     buf.seek(0)
     return jsonify({'mask': f'data:image/png;base64,{base64.b64encode(buf.read()).decode()}',
-                    'color': f'#{hex_color}'})
+                    'color': '#6c34c4', 'member_count': len(indices)})
 
 
+@app.route('/api/region_center_indices', methods=['POST'])
+def region_center_indices():
+    data = request.get_json(force=True)
+    try:
+        indices = [int(i) for i in data['parcellation_indices']]
+    except (KeyError, TypeError, ValueError):
+        return jsonify({'error': 'parcellation_indices required'}), 400
+    if not indices:
+        return jsonify({'error': 'empty'}), 400
+
+    member_arr = np.array(sorted(set(indices)), dtype=annotation_array.dtype)
+    voxels = np.argwhere(np.isin(annotation_array, member_arr))
+    if len(voxels) == 0:
+        return jsonify({'error': 'No voxels found'}), 404
+
+    xi = int(np.argmax(np.bincount(voxels[:,0], minlength=annotation_array.shape[0])))
+    yi = int(np.argmax(np.bincount(voxels[:,1], minlength=annotation_array.shape[1])))
+    zi = int(np.argmax(np.bincount(voxels[:,2], minlength=annotation_array.shape[2])))
+    xi = max(0, min(xi, VIEW_CFG['sagittal']['max']))
+    yi = max(0, min(yi, VIEW_CFG['transverse']['max']))
+    zi = max(0, min(zi, VIEW_CFG['coronal']['max']))
+    return jsonify({'xi': xi, 'yi': yi, 'zi': zi,
+                    'voxel_count': int(len(voxels)), 'member_count': len(indices)})
+
+
+@app.route('/api/group_by_term', methods=['POST'])
+def group_by_term():
+    """
+    POST { name, acronym }
+    Looks up the term in parcellation_term.csv tree, collects all leaf
+    parcellation_indices under it, and returns centroid + member count.
+    This is the ground-truth grouping path — works for ANY named term
+    including container nodes like Cerebrum, Vermal regions, Piriform area.
+    """
+    data    = request.get_json(force=True)
+    name    = (data.get('name')    or '').strip()
+    acronym = (data.get('acronym') or '').strip()
+
+    # Find the term label (now _term_nodes is keyed by label)
+    term_label = None
+    if acronym:
+        term_label = _acro_to_term_id.get(acronym.lower())
+    if not term_label and name:
+        term_label = _name_to_term_id.get(name.lower())
+    if not term_label:
+        return jsonify({'error': f'Term not found: {name or acronym}'}), 404
+
+    indices = _collect_leaf_indices(term_label)
+    if not indices:
+        return jsonify({'error': f'No voxels found for {name or acronym}'}), 404
+
+    _check_rapid(_rapid_group, term_label,
+                 _term_nodes[term_label]['name'], 'hierarchy')
+    return jsonify({
+        'term_id':     term_label,
+        'name':        _term_nodes[term_label]['name'],
+        'acronym':     _term_nodes[term_label]['acronym'],
+        'index_count': len(indices),
+        'parcellation_indices': list(indices),
+    })
+
+
+@app.route('/api/highlight_group', methods=['POST'])
+def highlight_group():
+    """
+    POST { view, idx, group_level, group_name }
+    Highlights ALL parcellation indices whose name_df[group_level] == group_name.
+    Renders a semi-transparent purple fill so the underlying template is still
+    readable, then draws bright boundary lines on top of the fill so internal
+    region separations remain clearly visible.
+    """
+    data = request.get_json(force=True)
+    try:
+        view       = data['view'].lower()
+        idx        = int(data['idx'])
+        group_lv   = data['group_level']
+        group_name = data['group_name'].strip()
+    except (KeyError, TypeError, ValueError):
+        return jsonify({'error': 'view, idx, group_level, group_name required'}), 400
+
+    if view not in VIEW_CFG:
+        return jsonify({'error': 'invalid view'}), 400
+    if group_lv not in LEVEL_COLS:
+        return jsonify({'error': f'group_level must be one of {list(LEVEL_COLS)}'}), 400
+
+    col_name = group_lv
+    if col_name not in name_df.columns:
+        return jsonify({'error': f'column {group_lv} not in name table'}), 400
+
+    member_mask    = name_df[col_name].fillna('').str.lower() == group_name.lower()
+    member_indices = set(name_df.index[member_mask].tolist())
+
+    if not member_indices:
+        return jsonify({'error': f'No regions found for {group_lv}={group_name}'}), 404
+
+    _, bnd, annot = get_slices(view, idx)
+    rows, cols = annot.shape
+
+    member_arr = np.array(sorted(member_indices), dtype=annot.dtype)
+    in_group   = np.isin(annot, member_arr)
+
+    from scipy.ndimage import binary_dilation, binary_erosion
+    struct3  = np.ones((3, 3), dtype=bool)
+    struct5  = np.ones((5, 5), dtype=bool)
+    dilated  = binary_dilation(in_group, structure=struct5, iterations=2)
+    eroded   = binary_erosion(in_group,  structure=struct3, iterations=1)
+    outline  = dilated & ~eroded
+
+    mask = np.zeros((rows, cols, 4), dtype=np.uint8)
+    mask[in_group] = [108, 52, 196, 180]   # muted dark purple fill
+    mask[outline]  = [10, 10, 10, 230]     # thick black outline
+
+    img = Image.fromarray(mask, 'RGBA')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+
+    return jsonify({
+        'mask':  f'data:image/png;base64,{base64.b64encode(buf.read()).decode()}',
+        'color': '#6c34c4',
+        'member_count': len(member_indices),
+    })
+
+
+@app.route('/api/debug_name')
+def debug_name():
+    name = request.args.get('q','').strip().lower()
+    result = {}
+    for col in ['organ','category','division','structure','substructure']:
+        if col not in name_df.columns: continue
+        hits = name_df[name_df[col].fillna('').str.lower().str.contains(name, regex=False)]
+        if not hits.empty:
+            result[col] = hits[col].dropna().unique().tolist()[:20]
+    # Also show full rows for exact match
+    exact_rows = []
+    for col in ['organ','category','division','structure','substructure']:
+        if col not in name_df.columns: continue
+        hits = name_df[name_df[col].fillna('').str.lower() == name]
+        for idx, row in hits.iterrows():
+            exact_rows.append({'parcellation_index': int(idx), **{c: str(row.get(c,'')) for c in ['organ','category','division','structure','substructure']}})
+    result['_exact_rows'] = exact_rows[:10]
+    return jsonify(result)
+
+
+@app.route('/api/find_group_level', methods=['POST'])
+def find_group_level():
+    """
+    POST { name }
+    Finds which hierarchy level (organ/category/division/structure/substructure)
+    contains the given name, so the frontend can route to the correct group endpoint.
+    Returns { group_level, group_name, member_count }.
+    """
+    data = request.get_json(force=True)
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'error': 'name required'}), 400
+
+    name_lo = name.lower()
+    hier_cols = ['organ', 'category', 'division', 'structure', 'substructure']
+
+    # For each level, check if name_lo appears as a VALUE in a COARSER column
+    # — meaning rows that BELONG TO this group as children.
+    # e.g. "Piriform area" at structure level: look for rows where structure=="Piriform area"
+    # and count how many distinct substructure values exist under it.
+    for i, lv in enumerate(hier_cols):
+        if lv not in name_df.columns:
+            continue
+        col_vals = name_df[lv].fillna('').str.lower()
+        mask = col_vals == name_lo
+        count = int(mask.sum())
+        if count == 0:
+            continue
+        # Check if there are child rows at the next finer level
+        if count > 1:
+            # Multiple rows share this value → it's already a group at this level
+            actual_name = name_df[lv][mask].iloc[0]
+            return jsonify({'group_level': lv, 'group_name': actual_name, 'member_count': count})
+        # count == 1: could be a leaf OR a parent with children at finer level
+        # Check finer levels for child rows
+        for child_lv in hier_cols[i+1:]:
+            if child_lv not in name_df.columns:
+                continue
+            # Find all rows where parent level == name AND child level is populated
+            child_mask = mask & name_df[child_lv].fillna('').ne('')
+            child_count = int(child_mask.sum())
+            if child_count > 1:
+                actual_name = name_df[lv][mask].iloc[0]
+                return jsonify({'group_level': lv, 'group_name': actual_name, 'member_count': child_count})
+
+    return jsonify({'error': f'"{name}" not found in any hierarchy level'}), 404
+
+
+@app.route('/api/region_center_group', methods=['POST'])
+def region_center_group():
+    """
+    POST { group_level, group_name }
+    Finds the best slice indices to view a whole anatomical group (all member
+    parcellation indices combined).  Returns xi, yi, zi, voxel_count, and the
+    group colour.
+    """
+    data = request.get_json(force=True)
+    try:
+        group_lv   = data['group_level']
+        group_name = data['group_name'].strip()
+    except (KeyError, TypeError, ValueError):
+        return jsonify({'error': 'group_level and group_name required'}), 400
+
+    if group_lv not in LEVEL_COLS:
+        return jsonify({'error': f'group_level must be one of {list(LEVEL_COLS)}'}), 400
+
+    col_name = group_lv
+    if col_name not in name_df.columns:
+        return jsonify({'error': f'column {group_lv} not in name table'}), 400
+
+    col_vals = name_df[col_name].fillna('').str.lower()
+    member_mask = col_vals == group_name.lower()
+    if member_mask.sum() == 0:
+        # Fallback: startswith (handles minor naming differences)
+        name_lo = group_name.lower()
+        member_mask = col_vals.str.startswith(name_lo) | col_vals.str.startswith(name_lo.rstrip('s'))
+    member_indices = set(int(i) for i in name_df.index[member_mask].tolist())
+
+    if not member_indices:
+        return jsonify({'error': f'No regions found for {group_lv}={group_name}'}), 404
+
+    # Find all voxels belonging to any member
+    member_arr = np.array(sorted(member_indices), dtype=annotation_array.dtype)
+    in_group   = np.isin(annotation_array, member_arr)
+    voxels     = np.argwhere(in_group)
+
+    if len(voxels) == 0:
+        return jsonify({'error': 'No voxels found for this group'}), 404
+
+    # Pick the slice with the most group voxels for each view axis
+    xi_counts = np.bincount(voxels[:, 0], minlength=annotation_array.shape[0])
+    yi_counts = np.bincount(voxels[:, 1], minlength=annotation_array.shape[1])
+    zi_counts = np.bincount(voxels[:, 2], minlength=annotation_array.shape[2])
+
+    xi = int(np.argmax(xi_counts))
+    yi = int(np.argmax(yi_counts))
+    zi = int(np.argmax(zi_counts))
+
+    xi = max(0, min(xi, VIEW_CFG['sagittal']['max']))
+    yi = max(0, min(yi, VIEW_CFG['transverse']['max']))
+    zi = max(0, min(zi, VIEW_CFG['coronal']['max']))
+
+    # Representative colour
+    sample_idx = next(iter(member_indices))
+    hex_color  = get_hex_for_index(sample_idx, group_lv)
+
+    return jsonify({
+        'xi': xi, 'yi': yi, 'zi': zi,
+        'voxel_count':   int(len(voxels)),
+        'member_count':  len(member_indices),
+        'group_level':   group_lv,
+        'group_name':    group_name,
+        f'{group_lv}_color': hex_color,
+        'structure_color':   hex_color,
+    })
 
 
 @app.route('/api/region_center', methods=['POST'])
@@ -409,58 +1080,493 @@ def region_center():
 @app.route('/api/search')
 def search():
     """
-    GET /api/search?q=hippocampus&limit=50
-    Case-insensitive substring search across all name hierarchy columns.
-    Returns list of matching regions with parcellation_index and colors.
+    GET /api/search?q=fiber+tracts&limit=50
+
+    Two-tier results:
+      1. GROUP entries  — when the query matches a parent-level column value
+         (organ/category/division) that is NOT the most-specific level for any
+         row.  These represent a whole anatomical group and are highlighted as
+         such.  Returned with is_group=True, group_level, group_name.
+      2. LEAF entries   — rows where the query matches the region's own
+         most-specific label or acronym.  These are individual regions.
+
+    Groups always sort above leaf matches so the intended target appears first.
     """
     q = request.args.get('q', '').strip()
-    if len(q) < 2:
+    if len(q) < 1:
         return jsonify({'results': [], 'query': q})
 
-    limit = min(int(request.args.get('limit', 50)), 200)
+    limit   = min(int(request.args.get('limit', 50)), 200)
     q_lower = q.lower()
 
-    cols_to_search = ['organ', 'category', 'division', 'structure', 'substructure']
-    mask = None
-    for col in cols_to_search:
-        if col in name_df.columns:
-            col_mask = name_df[col].fillna('').str.lower().str.contains(q_lower, regex=False)
-            mask = col_mask if mask is None else (mask | col_mask)
+    import re as _re
+    # Name matching: the region's own label must START with the query.
+    # Acronym matching: must be exact or a prefix.
+    # This mirrors the hierarchy search behaviour — left-to-right matching only.
 
-    if mask is None or mask.sum() == 0:
-        return jsonify({'results': [], 'query': q})
+    def name_matches(text):
+        return text.lower().startswith(q_lower)
 
-    matched = name_df[mask].copy()
-    results = []
-    seen = set()
-    for parc_idx, row in matched.iterrows():
-        if parc_idx in seen:
-            continue
-        seen.add(parc_idx)
+    def acro_matches(acro):
+        a = acro.lower()
+        return a == q_lower or a.startswith(q_lower)
+
+    # Hierarchy coarse→fine
+    hier_cols_asc  = ['organ', 'category', 'division', 'structure', 'substructure']
+    # Hierarchy fine→coarse (for most-specific lookup)
+    hier_cols_desc = list(reversed(hier_cols_asc))
+
+    # ── Pre-build acronym lookup: level → {name.lower(): acronym} ────────────
+    level_acronym = {lv: {} for lv in hier_cols_asc}
+    if acronym_df is not None:
+        for pidx in acronym_df.index:
+            try:
+                a   = acronym_df.loc[pidx]
+                row = name_df.loc[pidx] if pidx in name_df.index else None
+                if row is None:
+                    continue
+                for lv in hier_cols_asc:
+                    nm = str(row.get(lv, '') or '').strip()
+                    ac = str(a.get(lv, '') or '').strip()
+                    if nm and ac:
+                        level_acronym[lv][nm.lower()] = ac
+            except Exception:
+                pass
+
+    # ── PASS 1 — find GROUP matches (parent levels) ───────────────────────────
+    group_candidates = {}   # (level, name_lower) → {name, member_count, sample_idx, color}
+    parent_levels = ['organ', 'category', 'division', 'structure']
+
+    for parc_idx in name_df.index:
         try:
-            struct_color = color_df.loc[parc_idx, 'structure_color']
+            row = name_df.loc[parc_idx]
         except KeyError:
-            struct_color = '#444444'
-        results.append({
-            'parcellation_index': int(parc_idx),
-            'organ':        str(row.get('organ',        '—')),
-            'category':     str(row.get('category',     '—')),
-            'division':     str(row.get('division',     '—')),
-            'structure':    str(row.get('structure',    '—')),
-            'substructure': str(row.get('substructure', '—')),
-            'structure_color': struct_color,
+            continue
+
+        most_spec = None
+        for col in hier_cols_desc:
+            val = str(row.get(col, '') or '').strip()
+            if val and val != '—':
+                most_spec = col
+                break
+        if not most_spec:
+            continue
+
+        for lv in parent_levels:
+            if lv == most_spec:
+                continue
+            val = str(row.get(lv, '') or '').strip()
+            if not val or val == '—':
+                continue
+            acro = level_acronym[lv].get(val.lower(), '')
+            if not name_matches(val) and not acro_matches(acro):
+                continue
+            key = (lv, val.lower())
+            if key not in group_candidates:
+                try:
+                    grp_color = color_df.loc[parc_idx, f'{lv}_color']
+                except KeyError:
+                    grp_color = '#00d4ff'
+                group_candidates[key] = {
+                    'group_level':   lv,
+                    'group_name':    val,
+                    'group_acronym': acro,
+                    'member_count':  0,
+                    'sample_idx':    int(parc_idx),
+                    'structure_color': grp_color,
+                }
+            group_candidates[key]['member_count'] += 1
+
+    # Use term tree for accurate leaf counts where available
+    for key, g in group_candidates.items():
+        term_label = _name_to_term_id.get(g['group_name'].lower())
+        if term_label:
+            indices = _collect_leaf_indices(term_label)
+            real_count = len(indices & _indices_with_voxels)
+            if real_count > 0:
+                g['member_count'] = real_count
+
+    group_results = []
+    for key, g in group_candidates.items():
+        lv, name_lo = key
+        acro = g['group_acronym']
+        # Skip groups with only 1 member — they'll appear as leaves in pass 2
+        if g['member_count'] <= 1:
+            continue
+        if acro.lower() == q_lower or name_lo == q_lower:
+            rank = 0
+        elif acro.lower().startswith(q_lower) or name_lo.startswith(q_lower):
+            rank = 1
+        else:
+            rank = 2
+        group_results.append({
+            'is_group':       True,
+            'group_level':    lv,
+            'group_name':     g['group_name'],
+            'group_acronym':  acro,
+            'member_count':   g['member_count'],
+            'parcellation_index': g['sample_idx'],
+            'structure_color':   g['structure_color'],
+            'matched_label':  g['group_name'],
+            'matched_acronym': acro,
+            'matched_level':  lv,
+            'organ':    '—', 'category': '—', 'division': '—',
+            'structure': '—', 'substructure': '—',
+            '_rank': rank,
         })
-        if len(results) >= limit:
+
+    # Also search the term tree directly for acronym matches (catches CNU, etc.)
+    # that may not appear via name_df column scanning
+    for term_label, node in _term_nodes.items():
+        acro = node['acronym']
+        nm   = node['name']
+        if not acro and not nm:
+            continue
+        if not acro_matches(acro) and not name_matches(nm):
+            continue
+        # Only add if has children (otherwise it's a leaf, handled in pass 2)
+        if not node['children']:
+            continue
+        indices = _collect_leaf_indices(term_label)
+        real_count = len(indices & _indices_with_voxels)
+        if real_count <= 1:
+            continue
+        key = ('term', nm.lower())
+        if any(g['group_name'].lower() == nm.lower() for g in group_results):
+            continue  # already found via name_df
+        try:
+            sample_idx = next(iter(indices & _indices_with_voxels))
+            grp_color  = color_df.loc[sample_idx, 'division_color']
+        except (StopIteration, KeyError):
+            grp_color  = '#00d4ff'
+        if acro.lower() == q_lower or nm.lower() == q_lower:
+            rank = 0
+        elif acro.lower().startswith(q_lower) or nm.lower().startswith(q_lower):
+            rank = 1
+        else:
+            rank = 2
+        group_results.append({
+            'is_group':       True,
+            'group_level':    'term',
+            'group_name':     nm,
+            'group_acronym':  acro,
+            'member_count':   real_count,
+            'parcellation_index': int(sample_idx),
+            'structure_color': grp_color,
+            'matched_label':  nm,
+            'matched_acronym': acro,
+            'matched_level':  'term',
+            'organ':    '—', 'category': '—', 'division': '—',
+            'structure': '—', 'substructure': '—',
+            '_rank': rank,
+        })
+
+    group_results.sort(key=lambda r: (r['_rank'], r['group_name']))
+
+    # ── PASS 2 — find LEAF matches (most-specific level) ─────────────────────
+    leaf_results  = []
+    seen_label    = set()
+
+    for parc_idx in name_df.index:
+        try:
+            row = name_df.loc[parc_idx]
+        except KeyError:
+            continue
+
+        most_specific_col  = None
+        most_specific_name = ''
+        for col in hier_cols_desc:
+            val = str(row.get(col, '') or '').strip()
+            if val and val != '—':
+                most_specific_col  = col
+                most_specific_name = val
+                break
+        if not most_specific_col:
+            continue
+
+        acronyms = {}
+        most_specific_acronym = ''
+        if acronym_df is not None and parc_idx in acronym_df.index:
+            a = acronym_df.loc[parc_idx]
+            for f in hier_cols_asc:
+                acronyms[f + '_acronym'] = str(a.get(f, '') or '')
+            most_specific_acronym = str(a.get(most_specific_col, '') or '').strip()
+
+        name_hit = name_matches(most_specific_name)
+        acro_hit = most_specific_acronym and acro_matches(most_specific_acronym)
+        if not name_hit and not acro_hit:
+            continue
+
+        dedup_key = (most_specific_name.lower(), most_specific_acronym.lower())
+        if dedup_key in seen_label:
+            continue
+        seen_label.add(dedup_key)
+
+        try:
+            struct_color = color_df.loc[parc_idx, f'{most_specific_col}_color']
+        except KeyError:
+            try:
+                struct_color = color_df.loc[parc_idx, 'structure_color']
+            except KeyError:
+                struct_color = '#444444'
+
+        leaf_results.append({
+            'is_group':     False,
+            'no_voxels':    int(parc_idx) not in _indices_with_voxels,
+            'parcellation_index': int(parc_idx),
+            'organ':        str(row.get('organ',        '') or '—'),
+            'category':     str(row.get('category',     '') or '—'),
+            'division':     str(row.get('division',     '') or '—'),
+            'structure':    str(row.get('structure',    '') or '—'),
+            'substructure': str(row.get('substructure', '') or '—'),
+            'structure_color':    struct_color,
+            'matched_label':      most_specific_name,
+            'matched_acronym':    most_specific_acronym,
+            'matched_level':      most_specific_col,
+            **acronyms,
+        })
+
+        if len(leaf_results) >= limit * 3:
             break
 
-    results.sort(key=lambda r: (
-        0 if r['structure'].lower() == q_lower else
-        1 if r['structure'].lower().startswith(q_lower) else
-        2 if q_lower in r['structure'].lower() else 3
-    ))
+    def leaf_sort_key(r):
+        name    = r['matched_label'].lower()
+        acro    = r['matched_acronym'].lower()
+        no_vox  = 1 if r.get('no_voxels') else 0   # 0 = has voxels (sorts first)
+        if acro == q_lower or name == q_lower:          return (no_vox, 0, name)
+        if acro.startswith(q_lower) or name.startswith(q_lower): return (no_vox, 1, name)
+        if q_lower in acro:                              return (no_vox, 2, name)
+        return                                                  (no_vox, 3, name)
 
-    return jsonify({'results': results, 'query': q, 'total': len(results)})
+    leaf_results.sort(key=leaf_sort_key)
 
+    # Groups first, then leaves (has-voxels before no-voxels); trim to limit
+    combined = (group_results + leaf_results)[:limit]
+    return jsonify({'results': combined, 'query': q, 'total': len(combined)})
+
+
+
+
+@app.route('/api/resolve_region', methods=['GET'])
+def resolve_region():
+    """
+    GET /api/resolve_region?name=hippocampus
+
+    Dedicated endpoint for the semantic region parser (chat region cloud).
+    Given a candidate name extracted from AI text, finds the single best
+    matching atlas region — prioritising group matches over leaf matches.
+
+    Priority order:
+      1. Exact group_name match (whole anatomical group → highlight_indices)
+      2. Exact acronym match (group or leaf)
+      3. Exact leaf match on any hierarchy column (structure/substructure/division)
+      4. Term-tree node exact name or acronym match with children (→ group)
+      5. Prefix match on group_name (≥5 chars)
+      6. Prefix match on leaf name (≥5 chars)
+      7. Substring match covering >45% of leaf name (≥5 chars)
+
+    Returns one result object (same schema as /api/search results) or {} if no match.
+    """
+    name = request.args.get('name', '').strip()
+    if len(name) < 2:
+        return jsonify({})
+
+    lo = name.lower()
+
+    # ── Helper: build a group result dict from term-tree node ─────────────────
+    def term_node_result(term_label, node):
+        indices = _collect_leaf_indices(term_label)
+        real_count = len(indices & _indices_with_voxels)
+        if real_count == 0:
+            return None
+        try:
+            sample_idx = next(iter(indices & _indices_with_voxels))
+            grp_color  = color_df.loc[sample_idx, 'division_color']
+        except (StopIteration, KeyError):
+            grp_color  = '#00d4ff'
+        return {
+            'is_group':     True,
+            'group_level':  'term',
+            'group_name':   node['name'],
+            'group_acronym': node['acronym'],
+            'member_count': real_count,
+            'parcellation_index': int(sample_idx),
+            'structure_color': grp_color,
+            'matched_label': node['name'],
+            'matched_acronym': node['acronym'],
+            'matched_level': 'term',
+            'organ': '—', 'category': '—', 'division': '—',
+            'structure': '—', 'substructure': '—',
+            'parcellation_indices': list(indices & _indices_with_voxels),
+        }
+
+    # ── Helper: build a leaf result dict from name_df row ────────────────────
+    def leaf_result(parc_idx):
+        try:
+            row = name_df.loc[parc_idx]
+        except KeyError:
+            return None
+        hier_cols = ['organ','category','division','structure','substructure']
+        most_spec = None
+        most_name = ''
+        for col in reversed(hier_cols):
+            v = str(row.get(col,'') or '').strip()
+            if v and v != '—':
+                most_spec = col; most_name = v; break
+        if not most_spec:
+            return None
+        most_acro = ''
+        if acronym_df is not None and parc_idx in acronym_df.index:
+            most_acro = str(acronym_df.loc[parc_idx].get(most_spec,'') or '').strip()
+        try:
+            struct_color = color_df.loc[parc_idx, f'{most_spec}_color']
+        except KeyError:
+            struct_color = '#444444'
+        return {
+            'is_group': False,
+            'parcellation_index': int(parc_idx),
+            'matched_label': most_name,
+            'matched_acronym': most_acro,
+            'matched_level': most_spec,
+            'structure_color': struct_color,
+            'organ':        str(row.get('organ','') or '—'),
+            'category':     str(row.get('category','') or '—'),
+            'division':     str(row.get('division','') or '—'),
+            'structure':    str(row.get('structure','') or '—'),
+            'substructure': str(row.get('substructure','') or '—'),
+        }
+
+    hier_cols = ['organ','category','division','structure','substructure']
+
+    # ── P1: Exact group match from name_df parent columns ────────────────────
+    for parc_idx in name_df.index:
+        try:
+            row = name_df.loc[parc_idx]
+        except KeyError:
+            continue
+        for lv in ['category','division','structure']:
+            val = str(row.get(lv,'') or '').strip()
+            if val.lower() == lo:
+                # Find all members of this group
+                member_mask = name_df[lv].fillna('').str.lower() == lo
+                member_indices = list(set(name_df.index[member_mask].tolist()) & _indices_with_voxels)
+                if len(member_indices) <= 1:
+                    break
+                try:
+                    grp_color = color_df.loc[parc_idx, f'{lv}_color']
+                except KeyError:
+                    grp_color = '#00d4ff'
+                acro = ''
+                if acronym_df is not None and parc_idx in acronym_df.index:
+                    acro = str(acronym_df.loc[parc_idx].get(lv,'') or '').strip()
+                return jsonify({
+                    'is_group': True,
+                    'group_level': lv,
+                    'group_name': val,
+                    'group_acronym': acro,
+                    'member_count': len(member_indices),
+                    'parcellation_index': int(parc_idx),
+                    'structure_color': grp_color,
+                    'matched_label': val,
+                    'matched_acronym': acro,
+                    'matched_level': lv,
+                    'organ': '—', 'category': '—', 'division': '—',
+                    'structure': '—', 'substructure': '—',
+                })
+
+    # ── P2: Exact acronym match on any leaf column ────────────────────────────
+    if acronym_df is not None:
+        for parc_idx in acronym_df.index:
+            try:
+                a = acronym_df.loc[parc_idx]
+            except KeyError:
+                continue
+            for col in hier_cols:
+                if str(a.get(col,'') or '').strip().lower() == lo:
+                    r = leaf_result(parc_idx)
+                    if r: return jsonify(r)
+
+    # ── P3: Exact leaf name match on most-specific column ────────────────────
+    for parc_idx in name_df.index:
+        try:
+            row = name_df.loc[parc_idx]
+        except KeyError:
+            continue
+        for col in reversed(hier_cols):
+            val = str(row.get(col,'') or '').strip()
+            if val.lower() == lo:
+                r = leaf_result(parc_idx)
+                if r: return jsonify(r)
+                break
+
+    # ── P4: Term-tree exact name or acronym (finds container groups) ──────────
+    term_label = _name_to_term_id.get(lo) or _acro_to_term_id.get(lo)
+    if term_label:
+        node = _term_nodes.get(term_label)
+        if node and node['children']:
+            r = term_node_result(term_label, node)
+            if r: return jsonify(r)
+
+    # ── P5: Prefix match on group names (≥5 chars) ────────────────────────────
+    if len(lo) >= 5:
+        for lv in ['division','structure','category']:
+            if lv not in name_df.columns:
+                continue
+            for val in name_df[lv].dropna().unique():
+                if str(val).lower().startswith(lo):
+                    member_mask = name_df[lv].fillna('').str.lower() == str(val).lower()
+                    member_indices = list(set(name_df.index[member_mask].tolist()) & _indices_with_voxels)
+                    if len(member_indices) <= 1:
+                        continue
+                    sample_idx = member_indices[0]
+                    try:
+                        grp_color = color_df.loc[sample_idx, f'{lv}_color']
+                    except KeyError:
+                        grp_color = '#00d4ff'
+                    return jsonify({
+                        'is_group': True,
+                        'group_level': lv,
+                        'group_name': str(val),
+                        'group_acronym': '',
+                        'member_count': len(member_indices),
+                        'parcellation_index': int(sample_idx),
+                        'structure_color': grp_color,
+                        'matched_label': str(val),
+                        'matched_acronym': '',
+                        'matched_level': lv,
+                        'organ': '—', 'category': '—', 'division': '—',
+                        'structure': '—', 'substructure': '—',
+                    })
+
+    # ── P6: Prefix match on leaf names (≥5 chars) ────────────────────────────
+    if len(lo) >= 5:
+        for parc_idx in name_df.index:
+            try:
+                row = name_df.loc[parc_idx]
+            except KeyError:
+                continue
+            for col in reversed(hier_cols):
+                val = str(row.get(col,'') or '').strip()
+                if val.lower().startswith(lo):
+                    r = leaf_result(parc_idx)
+                    if r: return jsonify(r)
+                    break
+
+    # ── P7: Substring match covering >45% of leaf name ───────────────────────
+    if len(lo) >= 5:
+        for parc_idx in name_df.index:
+            try:
+                row = name_df.loc[parc_idx]
+            except KeyError:
+                continue
+            for col in reversed(hier_cols):
+                val = str(row.get(col,'') or '').strip().lower()
+                if val and lo in val and len(lo)/len(val) > 0.45:
+                    r = leaf_result(parc_idx)
+                    if r: return jsonify(r)
+                    break
+
+    return jsonify({})
 
 @app.route('/api/ontology')
 def get_ontology():
@@ -750,6 +1856,14 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
                     except Exception:
                         pass
                 region_context = '\n'.join(parts)
+            elif region_name:
+                # Region not found in the ABC atlas annotation volume —
+                # still tell GPT the name so it can answer from its own knowledge
+                region_context = (
+                    f"Region name: {region_name}\n"
+                    f"Note: This region is named in the Allen ontology but is not present "
+                    f"as annotated voxels in the CCFv3 annotation volume."
+                )
         except Exception:
             region_context = f"Region: {region_name}"
 
@@ -765,11 +1879,20 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
 
     user_content = question
     if region_context:
-        user_content = (
-            f"The user is currently viewing the following brain region in the Allen CCFv3 atlas:\n"
-            f"{region_context}\n\n"
-            f"Question: {question}"
-        )
+        if 'not present as annotated voxels' in region_context:
+            user_content = (
+                f"The user has selected the following brain region by name. "
+                f"It is listed in the Allen ontology but has no annotated voxels in the CCFv3 volume:\n"
+                f"{region_context}\n\n"
+                f"Please answer the question using your neuroscience knowledge about this region.\n"
+                f"Question: {question}"
+            )
+        else:
+            user_content = (
+                f"The user is currently viewing the following brain region in the Allen CCFv3 atlas:\n"
+                f"{region_context}\n\n"
+                f"Question: {question}"
+            )
 
     response = client.chat.completions.create(
         model='gpt-4o-mini',
