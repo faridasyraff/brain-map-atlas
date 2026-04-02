@@ -338,6 +338,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .ai-provider-badge{font-size:.68rem;padding:1px 5px;border-radius:2px;margin-left:4px;}
 .ai-provider-badge.ollama{background:#2a4a2a;color:#7fc97f;}
 .ai-provider-badge.openai{background:#1a2f4a;color:#74b9f5;}
+.cortexmap-notice{font-size:.72rem;margin-top:6px;padding:4px 8px;border-radius:2px;border-left:2px solid;}
+.cortexmap-notice.warn{background:#2a1f0a;color:#f0a84a;border-color:#f0a84a;}
+.cortexmap-notice.info{background:#0a1a2a;color:#74b9f5;border-color:#74b9f5;}
+.cortexmap-notice.ok  {background:#0a1f0a;color:#7fc97f;border-color:#7fc97f;}
+.pmc-sources{font-size:.7rem;margin-top:6px;padding:4px 8px;background:#0a1020;border-left:2px solid #444a60;border-radius:2px;color:var(--text-dim);}
+.pmc-sources span{display:block;margin-bottom:2px;color:var(--text-dim);letter-spacing:.04em;}
+.pmc-sources a{color:#7ab8f5;text-decoration:none;font-family:var(--mono);}
+.pmc-sources a:hover{color:var(--accent);text-decoration:underline;}
 .chat-panel{display:flex;flex-direction:column;border-top:1px solid var(--border);padding:8px 16px 0;flex:1;min-height:0;}
 .chat-header{font-size:.75rem;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;padding-bottom:6px;flex-shrink:0;display:flex;align-items:center;gap:6px;}
 .chat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
@@ -1888,6 +1896,7 @@ Promise.all(Object.keys(views).map(v=>loadSlice(v))).then(()=>{
           region_name: _currentRegion?._unavailable
             ? _currentRegion.structure   // unavailable: send name only, no parcellation lookup
             : (_currentRegion?.structure || ''),
+          region_acronym: _currentRegion?.acronym || _currentRegion?.structure_acronym || '',
           parcellation_index: _currentRegion?._unavailable ? '' : (_currentRegion?.parcellation_index || ''),
           ai_provider: _aiProvider,
         })
@@ -1904,6 +1913,38 @@ Promise.all(Object.keys(views).map(v=>loadSlice(v))).then(()=>{
       const d = document.createElement('div');
       d.className = 'chat-msg bot';
       d.innerHTML = badge + answer.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+
+      // Show CortexMap status notice beneath the answer (Ollama only)
+      if (_aiProvider !== 'openai' && data.cortexmap_notice) {
+        const statusClass = {
+          // ⚠ warn (amber) — something went wrong, using local KB
+          unreachable:      'warn',
+          summaries_error:  'warn',
+          error:            'warn',
+          // ℹ info (blue) — pipeline running or region not known yet
+          region_not_found: 'info',
+          no_summaries:     'info',
+          generating:       'info',
+          // ✓ ok (green) — CortexMap enrichment succeeded
+          enriched:         'ok',
+        }[data.cortexmap_status] || 'info';
+        const notice = document.createElement('div');
+        notice.className = `cortexmap-notice ${statusClass}`;
+        notice.textContent = data.cortexmap_notice;
+        d.appendChild(notice);
+      }
+
+      // Show PMC source links if CortexMap returned any
+      if (data.pmc_sources && data.pmc_sources.length > 0) {
+        const srcDiv = document.createElement('div');
+        srcDiv.className = 'pmc-sources';
+        srcDiv.innerHTML = '<span>📄 PubMed Sources (CortexMap):</span>' +
+          data.pmc_sources.map(pid =>
+            `<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/${pid}/" target="_blank" rel="noopener">${pid} ↗</a>`
+          ).join('');
+        d.appendChild(srcDiv);
+      }
+
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
 
