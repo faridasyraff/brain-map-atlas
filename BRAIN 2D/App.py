@@ -1639,11 +1639,135 @@ def get_ontology():
 
 # ── Brain Atlas RAG Chatbot ───────────────────────────────────────────────────
 import json as _json, shutil as _shutil, threading as _threading
+import urllib.request as _urllib_req
+import urllib.error   as _urllib_err
 
 _chat_ready   = False
 _vectorstore  = None
 _chat_llm     = None
 _kb_documents = []   # raw docs for exact-match fallback
+
+# ── CortexMap API integration ─────────────────────────────────────────────────
+# Live deployed orchestrator.  Override via CORTEXMAP_URL env var if needed.
+import os as _os_rag
+_CORTEXMAP_BASE = _os_rag.environ.get(
+    'CORTEXMAP_URL', 'https://capstone.ssdd.dev'
+).rstrip('/')
+
+def _cortexmap_fetch(path, method='GET', body=None, timeout=8):
+    """
+    HTTP wrapper for the CortexMap orch REST API.
+    Returns (data, error_msg).
+    Sends browser-like headers to pass CORS checks on the server.
+    """
+    url = f"{_CORTEXMAP_BASE}{path}"
+    try:
+        data_bytes = _json.dumps(body).encode('utf-8') if body is not None else None
+        req = _urllib_req.Request(
+            url,
+            data=data_bytes,
+            headers={
+                'Accept':       'application/json, text/plain, */*',
+                'Content-Type': 'application/json',
+                'Origin':       'https://capstone.ssdd.dev',
+                'Referer':      'https://capstone.ssdd.dev/',
+                'User-Agent':   'Mozilla/5.0 (compatible; BrainAtlasClient/1.0)',
+            },
+            method=method,
+        )
+        with _urllib_req.urlopen(req, timeout=timeout) as resp:
+            return _json.loads(resp.read().decode('utf-8')), ''
+    except _urllib_err.HTTPError as e:
+        if e.code == 404:
+            msg = f"CortexMap 404 at {url} — endpoint may not be deployed yet"
+        else:
+            msg = f"CortexMap HTTP {e.code} at {url}"
+        print(f"[CortexMap] \u26a0 {msg}")
+        log.warning(msg)
+        return None, msg
+    except _urllib_err.URLError as e:
+        msg = f"CortexMap unreachable at {_CORTEXMAP_BASE} — {e.reason}"
+        print(f"[CortexMap] \u2717 {msg}")
+        log.warning(msg)
+        return None, msg
+    except Exception as e:
+        msg = f"CortexMap fetch error for {url} — {e}"
+        print(f"[CortexMap] \u2717 {msg}")
+        log.warning(msg)
+        return None, msg
+
+
+def _cortexmap_find_region_id(region_name, region_acronym=''):
+    """
+    Find a CortexMap region UUID using POST /orch/api/search (ReverseSearch).
+
+    The ReverseSearch endpoint searches across region names, acronyms, AND
+    summary text with relevance ranking — it handles name mismatches between
+    the Allen Atlas and CortexMap's naming (e.g. "CA1" → "Field CA1",
+    "Primary motor area, layer 5" vs "Primary motor area, Layer 5").
+
+    We try two queries and take the highest-ranked result:
+      1. Full structure name  (e.g. "Lateral visual area, layer 6a")
+      2. Acronym if available (e.g. "VISl6a") — acronym is more precise
+
+    Returns (region_id, error_msg).
+    """
+    best_id   = None
+    best_rank = -1.0
+
+    queries = [q for q in [region_name.strip(), region_acronym.strip()] if q]
+
+    for query in queries:
+        data, err = _cortexmap_fetch('/orch/api/search', method='POST', body={'query': query})
+        if err:
+            return None, err
+        if not data:
+            continue
+        results = data.get('results', [])
+        for r in results:
+            rank = float(r.get('rank', 0))
+            rid  = r.get('region_id') or r.get('regionId')
+            name = r.get('name', '')
+            if rid and rank > best_rank:
+                best_rank = rank
+                best_id   = rid
+                print(f"[CortexMap] \u2139 ReverseSearch '{query}' → '{name}' rank={rank:.2f} id={rid}")
+            # Exact name or acronym match overrides rank — stop immediately
+            if (name.lower() == region_name.lower() or
+                    (region_acronym and r.get('acronym', '').lower() == region_acronym.lower())):
+                print(f"[CortexMap] \u2139 Exact match: '{query}' → '{name}' id={rid}")
+                return rid, ''
+
+    return best_id, ''
+
+def _cortexmap_get_summaries(region_id):
+    """
+    GET /orch/api/regions/{id}/summaries
+    Returns (summary_text, pmc_ids, error_msg).
+    - summary_text: clean text with [chunk:uuid] markers stripped, for Ollama context
+    - pmc_ids: deduplicated list of PMC IDs, returned separately for frontend link rendering
+    """
+    import re as _re
+    data, err = _cortexmap_fetch(f'/orch/api/regions/{region_id}/summaries')
+    if not data:
+        return '', [], err
+    summaries = data.get('summaries', [])
+    text_parts = []
+    all_pmc_ids = []
+    seen_pmc = set()
+    for s in summaries:
+        text = s.get('summary', '')
+        if text:
+            # Strip internal [chunk:uuid] markers — CortexMap internal refs, not useful to Ollama
+            text = _re.sub(r'\[chunk:[a-f0-9\-]+\]', '', text).strip()
+            text_parts.append(text)
+        # Collect deduplicated PMC IDs
+        for src in s.get('sources', []):
+            pid = src.get('pmc_id')
+            if pid and pid not in seen_pmc:
+                seen_pmc.add(pid)
+                all_pmc_ids.append(pid)
+    return '\n\n'.join(text_parts), all_pmc_ids, ''
 
 def _rag_init():
     global _chat_ready, _vectorstore, _chat_llm, _kb_documents
@@ -1725,49 +1849,111 @@ def _rag_init():
 
 _threading.Thread(target=_rag_init, daemon=True).start()
 
-def _rag_answer(question, region_name='', parcellation_index=''):
-    # Look up the currently selected region in the knowledge base by name or parcellation index
+def _rag_answer(question, region_name='', parcellation_index='', region_acronym=''):
+    """
+    CortexMap-first RAG.
+    Returns (answer_text, cortexmap_status, pmc_ids).
+    pmc_ids is a list of PMC IDs to display as clickable links in the frontend.
+    """
+    cortexmap_summary = ''
+    cortexmap_status  = 'local_only'
+    pmc_ids           = []
+
+    if region_name:
+        try:
+            # Step 1: Find region UUID
+            region_id, fetch_err = _cortexmap_find_region_id(region_name, region_acronym)
+
+            if fetch_err:
+                print(f"[CortexMap] \u2717 Could not reach CortexMap — {fetch_err}")
+                print(f"[CortexMap]   Falling back to local knowledge base for '{region_name}'.")
+                log.warning(f"CortexMap unreachable for '{region_name}': {fetch_err}")
+                cortexmap_status = 'unreachable'
+
+            elif not region_id:
+                print(f"[CortexMap] \u2139 '{region_name}' not found in /orch/api/regions.")
+                print(f"[CortexMap]   Falling back to local knowledge base.")
+                log.info(f"CortexMap: '{region_name}' not found in regions list")
+                cortexmap_status = 'region_not_found'
+
+            else:
+                # Step 2: Fetch summaries
+                print(f"[CortexMap] \u2139 Found UUID {region_id} for '{region_name}' — fetching summaries...")
+                cortexmap_summary, pmc_ids, sum_err = _cortexmap_get_summaries(region_id)
+
+                if sum_err:
+                    print(f"[CortexMap] \u2717 Could not fetch summaries for '{region_name}' — {sum_err}")
+                    print(f"[CortexMap]   Falling back to local knowledge base.")
+                    log.warning(f"CortexMap summaries fetch failed for '{region_name}': {sum_err}")
+                    cortexmap_status = 'summaries_error'
+
+                elif cortexmap_summary:
+                    print(f"[CortexMap] \u2713 Summaries loaded for '{region_name}' (id={region_id}) — enriching RAG context.")
+                    log.info(f"CortexMap: summaries loaded for '{region_name}' (id={region_id})")
+                    cortexmap_status = 'enriched'
+
+                else:
+                    print(f"[CortexMap] \u2139 No summaries yet for '{region_name}' — pipeline may still be generating.")
+                    print(f"[CortexMap]   Falling back to local knowledge base.")
+                    log.info(f"CortexMap: '{region_name}' has no summaries yet")
+                    cortexmap_status = 'generating'
+
+        except Exception as _e:
+            print(f"[CortexMap] \u2717 Unexpected error for '{region_name}': {_e}")
+            print(f"[CortexMap]   Falling back to local knowledge base.")
+            log.warning(f"CortexMap exception for '{region_name}': {_e}")
+            cortexmap_status = 'error'
+
+    # Step 3: Local KB fallback
     selected_doc = None
     if region_name:
         rn = region_name.lower().strip()
         for doc in _kb_documents:
-            kb_name = doc.metadata.get('structure','').lower()
-            kb_acro = doc.metadata.get('acronym','').lower()
-            kb_pidx = doc.metadata.get('parcellation_index','')
+            kb_name = doc.metadata.get('structure', '').lower()
+            kb_acro = doc.metadata.get('acronym', '').lower()
+            kb_pidx = doc.metadata.get('parcellation_index', '')
             if kb_name == rn or kb_acro == rn or (parcellation_index and kb_pidx == str(parcellation_index)):
                 selected_doc = doc.page_content
                 break
 
-    # If the selected region is NOT in the knowledge base, refuse immediately
-    if region_name and not selected_doc:
-        return (f"I don't have any information about '{region_name}' yet. "
-                f"To add it, open brain_regions_kb.json, add an entry with "
-                f"\"structure\": \"{region_name}\", fill in the fields, then restart the app.")
-
-    # Build context from the selected region doc only
-    context_parts = []
-    if selected_doc:
-        context_parts.append(selected_doc)
-
-    if not context_parts:
-        return "No region is currently selected. Click a region in the atlas first, then ask your question."
-
-    context = '\n\n'.join(context_parts)
-
-    prompt = (
-        "You are a brain atlas assistant. Answer ONLY using the context below.\n"
-        "Do NOT use your own knowledge. Do NOT guess or infer anything not in the context.\n\n"
-        f"Region context:\n{context}\n\n"
-        f"Question: {question}\n"
-        "Answer:"
-    )
-    return _chat_llm.invoke(prompt)
+    # Build context:
+    # — CortexMap summary available → use ONLY CortexMap (ignore local KB)
+    # — CortexMap unavailable/empty → use ONLY local KB
+    if cortexmap_summary:
+        context = f"=== Research Summaries (CortexMap) ===\n{cortexmap_summary}"
+        prompt = (
+            "You are a brain atlas assistant. Answer ONLY using the research summary below.\n"
+            "Do NOT use your own knowledge. Do NOT guess or infer anything not in the summary.\n\n"
+            f"Research summary:\n{context}\n\n"
+            f"Question: {question}\n"
+            "Answer:"
+        )
+    elif selected_doc:
+        context = f"=== Local Knowledge Base ===\n{selected_doc}"
+        prompt = (
+            "You are a brain atlas assistant. Answer ONLY using the context below.\n"
+            "Do NOT use your own knowledge. Do NOT guess or infer anything not in the context.\n\n"
+            f"Region context:\n{context}\n\n"
+            f"Question: {question}\n"
+            "Answer:"
+        )
+    else:
+        if region_name:
+            return (
+                f"I don't have any information about '{region_name}' yet. "
+                f"CortexMap has been notified to generate a summary — try again shortly. "
+                f"To add it locally now, open brain_regions_kb.json, add an entry with "
+                f"\"structure\": \"{region_name}\", fill in the fields, then restart the app."
+            ), cortexmap_status, []
+        return "No region is currently selected. Click a region in the atlas first, then ask your question.", cortexmap_status, []
+    return _chat_llm.invoke(prompt), cortexmap_status, pmc_ids
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
     data               = request.get_json(force=True)
     question           = (data.get('message') or '').strip()
     region_name        = (data.get('region_name') or '').strip()
+    region_acronym     = (data.get('region_acronym') or '').strip()
     parcellation_index = str(data.get('parcellation_index') or '').strip()
     ai_provider        = (data.get('ai_provider') or 'ollama').strip().lower()
 
@@ -1786,8 +1972,28 @@ def chat():
     if not _chat_ready:
         return jsonify({'answer': 'Still building the knowledge base — please wait a moment and try again.'})
     try:
-        answer = _rag_answer(question, region_name, parcellation_index)
-        return jsonify({'answer': answer, 'provider': 'ollama'})
+        answer, cortexmap_status, pmc_ids = _rag_answer(question, region_name, parcellation_index, region_acronym)
+
+        # Build a human-readable notice about which data source was used
+        _notices = {
+            'enriched':         None,   # all good — no notice needed
+            'local_only':       None,   # normal local-only path — no notice needed
+            'unreachable':      '⚠ CortexMap could not be reached (network error or route not deployed yet). Ollama is answering from the local knowledge base only.',
+            'region_not_found': 'ℹ This region was not found in CortexMap. Ollama is answering from the local knowledge base.',
+            'generating':       '⏳ CortexMap is fetching papers and generating summaries for this region (auto-queued). Try again in a moment — Ollama is using the local knowledge base for now.',
+            'summaries_error':  '⚠ CortexMap summaries could not be fetched. Ollama is answering from the local knowledge base only.',
+            'no_summaries':     'ℹ CortexMap has no summaries for this region yet. Ollama is answering from the local knowledge base.',
+            'error':            '⚠ CortexMap returned an unexpected error. Ollama is answering from the local knowledge base only.',
+        }
+        notice = _notices.get(cortexmap_status)
+
+        return jsonify({
+            'answer':            answer,
+            'provider':          'ollama',
+            'cortexmap_status':  cortexmap_status,
+            'cortexmap_notice':  notice,        # None when CortexMap worked fine
+            'pmc_sources':       pmc_ids,       # list of PMC IDs for frontend link rendering
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
