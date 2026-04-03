@@ -13,6 +13,8 @@ info:
     - Muhammad Farid Asyraf Mohd Shahimi
 
     **Client:** Dr. Yongsoo Kim, Ph.D — Department of Neuroscience, Penn State College of Medicine
+
+    **Total Endpoints:** 18
   version: 1.0.0
   contact:
     name: Group 216
@@ -37,14 +39,22 @@ tags:
     description: AI-powered brain region question answering
   - name: Ontology
     description: Allen Brain Atlas ontology tree
+  - name: Debug
+    description: Developer debug utilities
 
 paths:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # VISUALIZATION
+  # ─────────────────────────────────────────────────────────────────────────
 
   /:
     get:
       tags: [Visualization]
-      summary: Serve frontend
-      description: Returns the main index.html single-page application.
+      summary: Serve frontend application
+      description: |
+        Returns the main index.html single-page application. This is the
+        entry point for the browser-based atlas interface.
       responses:
         '200':
           description: HTML page served successfully
@@ -52,11 +62,15 @@ paths:
   /api/slice:
     get:
       tags: [Visualization]
-      summary: Get a rendered brain atlas slice
+      summary: Get a rendered brain atlas slice image
       description: |
         Renders a 2D cross-section of the Allen CCFv3 brain atlas volume
-        as a base64-encoded PNG image. Supports three orthogonal views and
-        optional colour overlays using the official Allen Brain Atlas colour table.
+        as a base64-encoded PNG image. Supports three orthogonal views
+        (sagittal, coronal, transverse) and optional colour overlays using
+        the official Allen Brain Atlas colour table.
+
+        The slice index is clamped to the valid range for the selected view
+        so out-of-range values never cause errors.
       parameters:
         - name: view
           in: query
@@ -71,7 +85,7 @@ paths:
           required: false
           schema:
             type: integer
-          description: Slice index along the selected axis. Defaults to the midpoint.
+          description: Slice index along the selected axis. Defaults to midpoint.
         - name: colorize
           in: query
           required: false
@@ -90,7 +104,7 @@ paths:
                 properties:
                   image:
                     type: string
-                    description: Base64-encoded PNG image with data URI prefix
+                    description: Base64-encoded PNG with data URI prefix
                     example: "data:image/png;base64,iVBORw0KGgo..."
                   view:
                     type: string
@@ -100,10 +114,10 @@ paths:
                     example: 660
                   rows:
                     type: integer
-                    description: Height of the atlas array in voxels
+                    description: Atlas array height in voxels
                   cols:
                     type: integer
-                    description: Width of the atlas array in voxels
+                    description: Atlas array width in voxels
                   render_w:
                     type: integer
                     description: Rendered PNG width in pixels
@@ -117,15 +131,60 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/log_warning:
+    post:
+      tags: [Visualization]
+      summary: Log a rapid-click warning from the frontend
+      description: |
+        Called by the frontend when its client-side rapid-click spam detector
+        fires. Writes a WARNING entry to the server log file so developers
+        can monitor excessive click patterns.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  description: Type of rapid event
+                  example: click
+                label:
+                  type: string
+                  description: Region or group name that was rapidly clicked
+                  example: Caudoputamen
+                count:
+                  type: integer
+                  description: Number of rapid requests detected
+                  example: 5
+      responses:
+        '200':
+          description: Warning logged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # REGION LOOKUP
+  # ─────────────────────────────────────────────────────────────────────────
+
   /api/lookup:
     post:
       tags: [Region Lookup]
-      summary: Look up brain region at a pixel coordinate
+      summary: Look up brain region at a clicked pixel coordinate
       description: |
-        Given a pixel position (col, row) on a rendered slice image,
-        returns the brain region at that location including its name at all
-        hierarchy levels, official colours, and acronyms.
-        This is the core endpoint called every time a user clicks the atlas.
+        Given a pixel position (col, row) on a rendered slice image, returns
+        the brain region at that location including its name at all hierarchy
+        levels (organ → category → division → structure → substructure),
+        official atlas colours, acronyms, and 3D world coordinates (xi, yi, zi).
+
+        This is the core endpoint called every time a user clicks on the atlas.
       requestBody:
         required: true
         content:
@@ -164,14 +223,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # HIGHLIGHT
+  # ─────────────────────────────────────────────────────────────────────────
+
   /api/highlight:
     post:
       tags: [Highlight]
       summary: Generate a highlight mask for a single region
       description: |
         Returns an RGBA PNG mask that highlights a specific brain region
-        with a coloured fill and thick black outline. The mask is designed
-        to be overlaid on top of the rendered slice image in the browser.
+        with a coloured semi-transparent fill and thick black outline.
+        The mask is overlaid on top of the rendered slice image in the browser.
+
+        In colour mode (color_mode=true) a fixed purple colour is used so
+        the highlight stands out over the colourized atlas overlay.
       requestBody:
         required: true
         content:
@@ -187,17 +253,17 @@ paths:
                   type: integer
                 parcellation_index:
                   type: integer
-                  description: The parcellation index of the region to highlight
+                  description: Parcellation index of the region to highlight
                   example: 662
                 level:
                   type: string
                   enum: [organ, category, division, structure, substructure]
                   default: structure
-                  description: Hierarchy level to use for colour selection
+                  description: Hierarchy level for colour selection
                 color_mode:
                   type: boolean
                   default: false
-                  description: If true, uses purple highlight regardless of region colour
+                  description: If true uses purple regardless of region colour
       responses:
         '200':
           description: Highlight mask generated successfully
@@ -227,7 +293,8 @@ paths:
       description: |
         Returns an RGBA PNG mask highlighting all regions whose parcellation
         indices are in the provided list. Used when a search returns multiple
-        matching regions that should all be highlighted at once.
+        matching regions that should all be highlighted simultaneously.
+        All highlighted regions use the same muted dark purple colour.
       requestBody:
         required: true
         content:
@@ -263,8 +330,13 @@ paths:
                     example: "#6c34c4"
                   member_count:
                     type: integer
+                    description: Number of indices that were highlighted
         '400':
           description: Missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/highlight_group:
     post:
@@ -272,8 +344,12 @@ paths:
       summary: Highlight all regions in an anatomical group
       description: |
         Highlights all parcellation indices whose value at a given hierarchy
-        level matches the specified group name. For example, highlighting
-        all regions in the "Striatum" division.
+        level matches the specified group name. For example, passing
+        group_level="division" and group_name="Striatum" highlights every
+        region that belongs to the Striatum division.
+
+        Renders a semi-transparent purple fill with bright boundary lines
+        so internal region separations remain visible.
       requestBody:
         required: true
         content:
@@ -290,33 +366,58 @@ paths:
                 group_level:
                   type: string
                   enum: [organ, category, division, structure, substructure]
+                  description: Which hierarchy column to match against
                 group_name:
                   type: string
+                  description: Name of the group to highlight
                   example: Striatum
       responses:
         '200':
           description: Group highlight mask generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mask:
+                    type: string
+                    description: Base64-encoded RGBA PNG mask
+                  color:
+                    type: string
+                    example: "#6c34c4"
+                  member_count:
+                    type: integer
         '400':
           description: Missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: No regions found for the specified group
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # SEARCH
+  # ─────────────────────────────────────────────────────────────────────────
 
   /api/search:
     get:
       tags: [Search]
       summary: Search brain regions by name, acronym, or function
       description: |
-        Two-tier semantic search that returns both GROUP matches (entire
+        Two-tier semantic search returning both GROUP matches (entire
         anatomical groups like "Striatum") and LEAF matches (individual
-        regions like "Caudoputamen"). Groups are ranked above leaves.
-        Supports prefix matching on names and acronyms.
+        regions like "Caudoputamen"). Groups are always ranked above leaves.
+
+        Supports prefix matching on both names and acronyms. Groups with
+        only one member are demoted to leaf results.
       parameters:
         - name: q
           in: query
           required: true
           schema:
             type: string
-          description: Search query — region name, acronym, or functional keyword
+          description: Search query — region name, acronym, or keyword
           example: hippocampus
         - name: limit
           in: query
@@ -343,14 +444,56 @@ paths:
                   total:
                     type: integer
 
+  /api/resolve_region:
+    get:
+      tags: [Search]
+      summary: Find the single best matching region for a name
+      description: |
+        Dedicated endpoint for the semantic region parser used by the AI
+        chatbot. Tries seven matching strategies in priority order:
+          1. Exact group name match
+          2. Exact acronym match
+          3. Exact leaf name match on any hierarchy column
+          4. Term-tree node exact name or acronym match
+          5. Prefix match on group names (≥5 chars)
+          6. Prefix match on leaf names (≥5 chars)
+          7. Substring match covering >45% of leaf name (≥5 chars)
+
+        Returns one result object or an empty object if no match is found.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Region name or acronym to resolve
+          example: hippocampus
+      responses:
+        '200':
+          description: Best matching region found (or empty object if no match)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SearchResult'
+                  - type: object
+                    description: Empty object — no match found
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # NAVIGATION
+  # ─────────────────────────────────────────────────────────────────────────
+
   /api/region_center:
     post:
       tags: [Navigation]
-      summary: Get the best slice indices for viewing a region
+      summary: Get the best slice indices for viewing a single region
       description: |
-        Finds the centroid of a brain region in the 3D annotation volume
-        and returns the slice index for each view (sagittal, coronal, transverse)
-        that contains the most voxels of that region.
+        Finds all voxels of a brain region in the 3D annotation volume and
+        returns the slice index for each view (sagittal, coronal, transverse)
+        that contains the most voxels. This guarantees the highlight will
+        be visible even for elongated structures where the centroid slice
+        may contain very few voxels.
       requestBody:
         required: true
         content:
@@ -383,8 +526,13 @@ paths:
                     description: Best coronal slice index
                   voxel_count:
                     type: integer
+                    description: Total number of voxels in this region
         '400':
-          description: Missing parcellation_index
+          description: parcellation_index field is missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: No voxels found for this parcellation index
 
@@ -393,8 +541,10 @@ paths:
       tags: [Navigation]
       summary: Get the best slice indices for viewing an anatomical group
       description: |
-        Finds the combined centroid of all regions belonging to an anatomical
-        group and returns the best slice indices for each view.
+        Finds the combined voxel distribution of all regions belonging to
+        an anatomical group and returns the best slice indices for each
+        view. Also returns the representative colour for the group and
+        the total voxel count.
       requestBody:
         required: true
         content:
@@ -412,19 +562,106 @@ paths:
       responses:
         '200':
           description: Group centroid found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  xi:
+                    type: integer
+                  yi:
+                    type: integer
+                  zi:
+                    type: integer
+                  voxel_count:
+                    type: integer
+                  member_count:
+                    type: integer
+                  group_level:
+                    type: string
+                  group_name:
+                    type: string
+                  structure_color:
+                    type: string
         '400':
           description: Missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: No regions or voxels found for this group
+
+  /api/region_center_indices:
+    post:
+      tags: [Navigation]
+      summary: Get the best slice indices for a list of parcellation indices
+      description: |
+        Similar to /api/region_center but accepts a list of parcellation
+        indices rather than a single one. Finds all voxels belonging to
+        any of the provided indices and returns the best slice index for
+        each view based on the combined voxel distribution.
+
+        Useful when navigating to a group of regions identified by the
+        term tree or search results.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [parcellation_indices]
+              properties:
+                parcellation_indices:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of parcellation indices to find the center for
+                  example: [662, 382, 549]
+      responses:
+        '200':
+          description: Center indices found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  xi:
+                    type: integer
+                    description: Best sagittal slice index
+                  yi:
+                    type: integer
+                    description: Best transverse slice index
+                  zi:
+                    type: integer
+                    description: Best coronal slice index
+                  voxel_count:
+                    type: integer
+                    description: Total voxels across all provided indices
+                  member_count:
+                    type: integer
+                    description: Number of indices provided
+        '400':
+          description: parcellation_indices field is missing, invalid, or empty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No voxels found for any of the provided indices
 
   /api/group_by_term:
     post:
       tags: [Navigation]
-      summary: Get all parcellation indices under an ontology term
+      summary: Get all parcellation indices under an Allen ontology term
       description: |
-        Uses the Allen CCFv3 term tree to collect all leaf parcellation indices
-        under a named term. Works for container nodes like "Cerebrum" that do
-        not appear as direct parcellation indices in the annotation volume.
+        Uses the Allen CCFv3 term tree (parcellation_term.csv) to collect
+        all leaf parcellation indices under a named term. Works for container
+        nodes like "Cerebrum" or "Vermal regions" that do not appear as
+        direct parcellation indices in the annotation volume but have many
+        child regions beneath them.
+
+        This is the ground-truth grouping path for the Allen ontology.
       requestBody:
         required: true
         content:
@@ -434,13 +671,15 @@ paths:
               properties:
                 name:
                   type: string
+                  description: Term name to look up in the Allen ontology
                   example: Cerebrum
                 acronym:
                   type: string
+                  description: Term acronym (alternative to name)
                   example: CH
       responses:
         '200':
-          description: Term found and indices collected
+          description: Term found and indices collected successfully
           content:
             application/json:
               schema:
@@ -448,27 +687,32 @@ paths:
                 properties:
                   term_id:
                     type: string
+                    description: Allen CCFv3 term label string
                   name:
                     type: string
                   acronym:
                     type: string
                   index_count:
                     type: integer
+                    description: Number of leaf parcellation indices found
                   parcellation_indices:
                     type: array
                     items:
                       type: integer
         '404':
-          description: Term not found or no voxels found
+          description: Term not found in ontology or no voxels found
 
   /api/find_group_level:
     post:
       tags: [Navigation]
       summary: Find which hierarchy level a name belongs to
       description: |
-        Given a region or group name, finds which hierarchy level
-        (organ/category/division/structure/substructure) it belongs to
-        so the frontend can route to the correct group endpoint.
+        Given a region or group name, determines which hierarchy level
+        (organ, category, division, structure, or substructure) it belongs
+        to so the frontend can route to the correct group endpoint.
+
+        Returns the group level, the canonical group name as it appears
+        in the atlas, and the number of member regions.
       requestBody:
         required: true
         content:
@@ -479,10 +723,11 @@ paths:
               properties:
                 name:
                   type: string
+                  description: Region or group name to find
                   example: Striatum
       responses:
         '200':
-          description: Group level found
+          description: Group level found successfully
           content:
             application/json:
               schema:
@@ -490,20 +735,30 @@ paths:
                 properties:
                   group_level:
                     type: string
+                    example: division
                   group_name:
                     type: string
+                    example: Striatum
                   member_count:
                     type: integer
         '400':
-          description: Name field is required
+          description: name field is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Name not found in any hierarchy level
 
   /api/resolve_acronyms:
     post:
       tags: [Navigation]
-      summary: Resolve acronyms to parcellation indices
-      description: Resolves a list of acronyms to their corresponding parcellation indices.
+      summary: Resolve a list of acronyms to parcellation indices
+      description: |
+        Accepts a list of acronym strings and returns the corresponding
+        parcellation indices. Used for Allen tree container nodes
+        (e.g. "Cerebrum", "CNU") that are referenced by acronym in the
+        frontend ontology tree but need integer indices for highlighting.
       requestBody:
         required: true
         content:
@@ -515,6 +770,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  description: List of acronym strings to resolve
                   example: [CP, HPF, CB]
       responses:
         '200':
@@ -528,44 +784,27 @@ paths:
                     type: array
                     items:
                       type: integer
+                    description: Matched parcellation indices
                   count:
                     type: integer
+                    description: Number of indices found
 
-  /api/resolve_region:
-    get:
-      tags: [Search]
-      summary: Find the single best matching region for a name
-      description: |
-        Dedicated endpoint for the semantic region parser used by the chatbot.
-        Tries seven matching strategies in priority order from exact group match
-        down to substring match, returning the single best result.
-      parameters:
-        - name: name
-          in: query
-          required: true
-          schema:
-            type: string
-          example: hippocampus
-      responses:
-        '200':
-          description: Best matching region found (or empty object if no match)
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/SearchResult'
-                  - type: object
-                    description: Empty object if no match found
+  # ─────────────────────────────────────────────────────────────────────────
+  # ONTOLOGY
+  # ─────────────────────────────────────────────────────────────────────────
 
   /api/ontology:
     get:
       tags: [Ontology]
       summary: Get the full Allen Brain Atlas ontology tree
       description: |
-        Fetches the complete Allen CCFv3 mouse brain structure hierarchy tree
-        from the Allen Brain Map API, enriches each node with official atlas
-        colours from the local colour table, and returns the full JSON tree.
-        The result is cached in memory after the first request.
+        Fetches the complete Allen CCFv3 mouse brain structure hierarchy
+        tree from the Allen Brain Map API (api.brain-map.org), enriches
+        each node with the official atlas colour from the local colour
+        table, and returns the full JSON tree.
+
+        The result is cached in memory after the first request so
+        subsequent calls are instant and do not hit the Allen API again.
       responses:
         '200':
           description: Ontology tree returned successfully
@@ -573,20 +812,35 @@ paths:
             application/json:
               schema:
                 type: object
-                description: Full Allen Brain Atlas structure graph JSON
+                description: Full Allen Brain Atlas structure graph JSON with _color fields injected
         '502':
-          description: Failed to fetch ontology from Allen Brain Map API
+          description: Failed to fetch ontology from the Allen Brain Map API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # CHATBOT
+  # ─────────────────────────────────────────────────────────────────────────
 
   /api/chat:
     post:
       tags: [Chatbot]
-      summary: Ask a question about a brain region
+      summary: Ask the AI chatbot a question about a brain region
       description: |
-        AI-powered chatbot endpoint. Routes to either:
-        - **Ollama (local RAG)** — Uses CortexMap for live PubMed summaries,
-          falls back to the local knowledge base (brain_regions_kb.json),
-          runs inference via local Ollama (gemma3:4b model)
-        - **OpenAI GPT** — Uses GPT-4o-mini with region context from atlas data frames
+        AI-powered question answering endpoint. Routes to either:
+
+        **Ollama (local RAG) — default:**
+          1. Searches CortexMap for live PubMed research summaries
+          2. Falls back to local brain_regions_kb.json if CortexMap unavailable
+          3. Runs inference via local Ollama (gemma3:4b model)
+          4. Returns source PMC IDs for frontend link rendering
+
+        **OpenAI GPT:**
+          - Uses GPT-4o-mini with rich region context from atlas data frames
+          - Requires OPENAI_API_KEY in environment or .env file
+          - No RAG — uses GPT's own neuroscience knowledge
       requestBody:
         required: true
         content:
@@ -601,15 +855,15 @@ paths:
                   example: What does the hippocampus do?
                 region_name:
                   type: string
-                  description: Name of the currently selected region (optional)
+                  description: Name of the currently selected region
                   example: Hippocampal formation
                 region_acronym:
                   type: string
-                  description: Acronym of the selected region (optional)
+                  description: Acronym of the selected region
                   example: HPF
                 parcellation_index:
                   type: integer
-                  description: Parcellation index of the selected region (optional)
+                  description: Parcellation index of the selected region
                   example: 382
                 ai_provider:
                   type: string
@@ -626,23 +880,32 @@ paths:
                 properties:
                   answer:
                     type: string
-                    description: The AI-generated answer
+                    description: The AI-generated answer text
                   provider:
                     type: string
                     enum: [ollama, openai]
                   cortexmap_status:
                     type: string
-                    description: Status of CortexMap data enrichment (ollama only)
-                    enum: [enriched, local_only, unreachable, region_not_found, generating, summaries_error, no_summaries, error]
+                    description: Status of CortexMap data enrichment (Ollama only)
+                    enum:
+                      - enriched
+                      - local_only
+                      - unreachable
+                      - region_not_found
+                      - generating
+                      - summaries_error
+                      - no_summaries
+                      - error
                   cortexmap_notice:
                     type: string
                     nullable: true
-                    description: Human-readable notice about data source used
+                    description: Human-readable notice about which data source was used
                   pmc_sources:
                     type: array
                     items:
                       type: string
-                    description: PMC IDs of source papers (for frontend link rendering)
+                    description: PMC IDs of source papers for frontend link rendering
+                    example: ["PMC1234567", "PMC7654321"]
         '400':
           description: Message field is empty or missing
           content:
@@ -650,48 +913,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: Internal server error (AI model failure)
+          description: Internal server error — AI model failure or timeout
 
-  /api/log_warning:
-    post:
-      tags: [Visualization]
-      summary: Log a rapid-click warning from the frontend
+  # ─────────────────────────────────────────────────────────────────────────
+  # DEBUG
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /api/debug_name:
+    get:
+      tags: [Debug]
+      summary: Debug search across name_df columns
       description: |
-        Called by the frontend when its client-side rapid-click detector fires.
-        Writes a warning to the server log file.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                kind:
-                  type: string
-                  example: click
-                label:
-                  type: string
-                  example: Caudoputamen
-                count:
-                  type: integer
-                  example: 5
+        Developer debug endpoint. Searches all hierarchy columns
+        (organ, category, division, structure, substructure) in the
+        name_df metadata table for any value containing the query string.
+
+        Returns up to 20 matching values per column and up to 10 exact
+        match rows with full hierarchy information. Used during development
+        to verify that region names are correctly loaded from the atlas
+        metadata files.
+
+        **Note:** This endpoint is intended for developer use only and
+        is not called by the production frontend.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Partial or full region name to search for
+          example: hippocampus
       responses:
         '200':
-          description: Warning logged successfully
+          description: Search results returned
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  ok:
-                    type: boolean
-                    example: true
+                  organ:
+                    type: array
+                    items:
+                      type: string
+                    description: Matching values found in the organ column
+                  category:
+                    type: array
+                    items:
+                      type: string
+                  division:
+                    type: array
+                    items:
+                      type: string
+                  structure:
+                    type: array
+                    items:
+                      type: string
+                  substructure:
+                    type: array
+                    items:
+                      type: string
+                  _exact_rows:
+                    type: array
+                    description: Up to 10 rows with exact name match
+                    items:
+                      type: object
+                      properties:
+                        parcellation_index:
+                          type: integer
+                        organ:
+                          type: string
+                        category:
+                          type: string
+                        division:
+                          type: string
+                        structure:
+                          type: string
+                        substructure:
+                          type: string
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REUSABLE SCHEMAS
+# ─────────────────────────────────────────────────────────────────────────────
 
 components:
   schemas:
 
     Error:
       type: object
+      description: Standard error response body
       properties:
         error:
           type: string
@@ -705,38 +1014,51 @@ components:
       properties:
         view:
           type: string
+          example: sagittal
         idx:
           type: integer
+          example: 660
         col:
           type: integer
         row:
           type: integer
         xi:
           type: integer
+          description: Atlas x-coordinate (anterior-posterior axis)
         yi:
           type: integer
+          description: Atlas y-coordinate (superior-inferior axis)
         zi:
           type: integer
+          description: Atlas z-coordinate (left-right axis)
         parcellation_index:
           type: integer
+          example: 662
         organ:
           type: string
+          example: brain
         category:
           type: string
+          example: Basic cell groups and regions
         division:
           type: string
+          example: Striatum
         structure:
           type: string
+          example: Caudoputamen
         substructure:
           type: string
+          example: Caudoputamen
         matched_label:
           type: string
           description: Most specific non-empty name at any hierarchy level
+          example: Caudoputamen
         matched_acronym:
           type: string
+          example: CP
         organ_color:
           type: string
-          description: Hex colour for the organ level
+          description: Official Allen Atlas hex colour for the organ level
           example: "#FF6600"
         category_color:
           type: string
@@ -762,6 +1084,7 @@ components:
           type: string
         matched_level:
           type: string
+          description: Which hierarchy level the match was found at
         structure_color:
           type: string
         organ:
@@ -774,15 +1097,18 @@ components:
           type: string
         substructure:
           type: string
+        no_voxels:
+          type: boolean
+          description: True if this region has no annotated voxels in the CCFv3 volume
         group_level:
           type: string
           description: Only present when is_group is true
         group_name:
           type: string
           description: Only present when is_group is true
+        group_acronym:
+          type: string
+          description: Only present when is_group is true
         member_count:
           type: integer
           description: Only present when is_group is true
-        no_voxels:
-          type: boolean
-          description: True if this region has no annotated voxels in the CCFv3 volume
