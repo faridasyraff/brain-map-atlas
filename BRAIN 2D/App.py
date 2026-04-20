@@ -399,6 +399,90 @@ Z_MAX = annotation_array.shape[2] - 1   # 1139
 
 print(f"Atlas loaded. Shape: {annotation_array.shape}  x:0-{X_MAX}  y:0-{Y_MAX}  z:0-{Z_MAX}")
 
+
+# ── 3D mesh auto-downloader ──────────────────────────────────────────────────
+# On startup, ensures ./meshes/ exists and is populated with Allen CCFv3 OBJ
+# files. If the folder is missing or near-empty, downloads them in parallel
+# from Allen's public archive. Skips anything already on disk, so the first
+# launch takes ~2-5 minutes and subsequent launches are instant.
+def _ensure_meshes():
+    import json
+    import urllib.request, urllib.error
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import time
+
+    meshes_dir = Path(__file__).parent / 'meshes'
+    meshes_dir.mkdir(exist_ok=True)
+
+    # Fast path: if we already have a lot of meshes, assume we're done.
+    existing = {p.stem for p in meshes_dir.glob('*.obj') if p.stat().st_size > 0}
+    if len(existing) >= 800:
+        print(f"3D meshes: {len(existing)} already present in {meshes_dir.name}/, skipping download.")
+        return
+
+    # Otherwise, walk the Allen ontology and try to fetch every structure id.
+    # Most ontology nodes have a mesh; some (abstract groupings) return 404.
+    print(f"3D meshes: only {len(existing)} present, fetching from Allen…")
+    try:
+        with urllib.request.urlopen(
+            'http://api.brain-map.org/api/v2/structure_graph_download/1.json', timeout=20) as r:
+            ontology = json.loads(r.read().decode('utf-8'))
+    except Exception as e:
+        print(f"3D meshes: could NOT fetch ontology ({e}). The 3D view will be empty.")
+        return
+
+    ids = []
+    def _collect(n):
+        ids.append(n['id'])
+        for c in n.get('children') or []:
+            _collect(c)
+    _collect(ontology['msg'][0])
+    ids = sorted(set(ids))
+
+    todo = [i for i in ids if str(i) not in existing]
+    if not todo:
+        print(f"3D meshes: {len(existing)} on disk, all ontology IDs covered.")
+        return
+    print(f"3D meshes: {len(existing)} on disk, trying {len(todo)} more…")
+
+    base = ('https://download.alleninstitute.org/informatics-archive/current-release/'
+            'mouse_ccf/annotation/ccf_2017/structure_meshes/')
+    done = [0]; ok = [0]; missing = [0]; started = time.time()
+
+    def _grab(sid):
+        try:
+            req = urllib.request.Request(
+                f'{base}{sid}.obj',
+                headers={'User-Agent': 'brain-atlas-downloader/1.0'})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                data = r.read()
+            (meshes_dir / f'{sid}.obj').write_bytes(data)
+            return True
+        except urllib.error.HTTPError:
+            return False    # 404 is normal for abstract groupings
+        except Exception:
+            return False
+
+    with ThreadPoolExecutor(max_workers=16) as ex:
+        futures = [ex.submit(_grab, i) for i in todo]
+        for fut in as_completed(futures):
+            done[0] += 1
+            if fut.result():
+                ok[0] += 1
+            else:
+                missing[0] += 1
+            if done[0] % 100 == 0 or done[0] == len(todo):
+                rate = done[0] / max(time.time() - started, 0.1)
+                print(f"  3D meshes: {done[0]}/{len(todo)} "
+                      f"(got {ok[0]}, missing {missing[0]}) {rate:.1f}/s")
+
+    total = len(list(meshes_dir.glob('*.obj')))
+    print(f"3D meshes: {total} now on disk in {meshes_dir.name}/.")
+
+
+_ensure_meshes()
+
+
 VIEW_CFG = {
     'sagittal':   {'figsize': (13.2, 8.0),  'max': X_MAX},
     'coronal':    {'figsize': (11.4, 8.0),  'max': Z_MAX},
@@ -505,6 +589,21 @@ def handle_405(e):
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
+
+
+# ── 3D mesh endpoint ──────────────────────────────────────────────────────────
+# Serves CCFv3 structure meshes from the local ./meshes/ folder.
+# The meshes/ folder must contain {structure_id}.obj files (Allen CCFv3 format).
+# The Allen downloader script (download_meshes.py from the 3D viewer project)
+# produces this exact layout.
+@app.route('/meshes/<int:struct_id>.obj')
+def serve_mesh(struct_id):
+    meshes_dir = Path(__file__).parent / 'meshes'
+    fname = f'{struct_id}.obj'
+    if not (meshes_dir / fname).exists():
+        return jsonify({'error': f'mesh {struct_id} not available'}), 404
+    return send_from_directory(meshes_dir, fname, mimetype='text/plain')
+
 
 @app.route('/api/log_warning', methods=['POST'])
 def log_warning():
@@ -1922,7 +2021,11 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
     if cortexmap_summary:
         context = f"=== Research Summaries (CortexMap) ===\n{cortexmap_summary}"
         prompt = (
-            "You are a brain atlas assistant. Answer ONLY using the research summary below.\n"
+            "You are an expert neuroscientist assistant for the Allen MOUSE Brain "
+            "Common Coordinate Framework v3 (CCFv3). Every question is about the "
+            "mouse brain (Mus musculus), never human or any other species. "
+            "Even if the user does not specify, assume mouse.\n\n"
+            "Answer ONLY using the research summary below.\n"
             "Do NOT use your own knowledge. Do NOT guess or infer anything not in the summary.\n\n"
             f"Research summary:\n{context}\n\n"
             f"Question: {question}\n"
@@ -1931,7 +2034,11 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
     elif selected_doc:
         context = f"=== Local Knowledge Base ===\n{selected_doc}"
         prompt = (
-            "You are a brain atlas assistant. Answer ONLY using the context below.\n"
+            "You are an expert neuroscientist assistant for the Allen MOUSE Brain "
+            "Common Coordinate Framework v3 (CCFv3). Every question is about the "
+            "mouse brain (Mus musculus), never human or any other species. "
+            "Even if the user does not specify, assume mouse.\n\n"
+            "Answer ONLY using the context below.\n"
             "Do NOT use your own knowledge. Do NOT guess or infer anything not in the context.\n\n"
             f"Region context:\n{context}\n\n"
             f"Question: {question}\n"
@@ -2075,7 +2182,11 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
 
     system_prompt = (
         "You are an expert neuroscientist and brain atlas assistant specializing in the "
-        "Allen Mouse Brain Common Coordinate Framework v3 (CCFv3). "
+        "Allen MOUSE Brain Common Coordinate Framework v3 (CCFv3). "
+        "EVERY question is about the mouse brain (Mus musculus), never human or any "
+        "other species. Even if the user does not specify a species (e.g. 'list all "
+        "areas connected to Alzheimer'), assume mouse brain and answer about mouse "
+        "neuroanatomy. When naming regions, use the Allen CCFv3 ontology names. "
         "You have deep knowledge of mouse neuroanatomy, brain region functions, "
         "connectivity, cytoarchitecture, and the Allen Brain Atlas data. "
         "Be concise, accurate, and helpful. When discussing a specific brain region, "
