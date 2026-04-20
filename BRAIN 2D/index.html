@@ -12,7 +12,7 @@
   --accent:#00d4ff; --accent2:#6c63ff; --warm:#ff7043; --green:#00e676;
   --text:#b8cce0; --text-dim:#445a72; --text-hi:#e8f4ff;
   --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif;
-  --col-sagittal:#00d4ff; --col-coronal:#b47aff; --col-transverse:#00e676;
+  --col-sagittal:#00d4ff; --col-coronal:#b47aff; --col-transverse:#00e676; --col-three-d:#ffb74a;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:15px;}
 body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:1000;}
@@ -57,22 +57,95 @@ header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:
 .vmode-btn[data-vmode="sagittal"].active{background:var(--col-sagittal);color:#000;}
 .vmode-btn[data-vmode="coronal"].active{background:var(--col-coronal);color:#fff;}
 .vmode-btn[data-vmode="transverse"].active{background:var(--col-transverse);color:#000;}
+.vmode-btn[data-vmode="three-d"].active{background:var(--col-three-d);color:#000;}
 .vmode-icon{font-size:.85rem;line-height:1;}
 
 /* Focus mode */
 .views-area.focus-sagittal    .view-cell[data-view="coronal"],
 .views-area.focus-sagittal    .view-cell[data-view="transverse"],
-.views-area.focus-coronal   .view-cell[data-view="sagittal"],
-.views-area.focus-coronal   .view-cell[data-view="transverse"],
-.views-area.focus-transverse .view-cell[data-view="sagittal"],
-.views-area.focus-transverse .view-cell[data-view="coronal"] {display:none;}
+.views-area.focus-sagittal    .view-cell[data-view="three-d"],
+.views-area.focus-coronal     .view-cell[data-view="sagittal"],
+.views-area.focus-coronal     .view-cell[data-view="transverse"],
+.views-area.focus-coronal     .view-cell[data-view="three-d"],
+.views-area.focus-transverse  .view-cell[data-view="sagittal"],
+.views-area.focus-transverse  .view-cell[data-view="coronal"],
+.views-area.focus-transverse  .view-cell[data-view="three-d"],
+.views-area.focus-three-d     .view-cell[data-view="sagittal"],
+.views-area.focus-three-d     .view-cell[data-view="coronal"],
+.views-area.focus-three-d     .view-cell[data-view="transverse"] {display:none;}
 .views-area.focus-sagittal    .view-cell[data-view="sagittal"],
-.views-area.focus-coronal   .view-cell[data-view="coronal"],
-.views-area.focus-transverse .view-cell[data-view="transverse"] {grid-column:1/-1;grid-row:1/-1;}
+.views-area.focus-coronal     .view-cell[data-view="coronal"],
+.views-area.focus-transverse  .view-cell[data-view="transverse"],
+.views-area.focus-three-d     .view-cell[data-view="three-d"] {grid-column:1/-1;grid-row:1/-1;}
 
 /* Layout */
-.root{display:grid;grid-template-columns:1fr 295px;height:calc(100vh - 48px);}
+.root{position:relative;display:grid;grid-template-columns:1fr;height:calc(100vh - 48px);overflow:hidden;}
 .views-area{display:grid;grid-template-rows:1fr 1fr;grid-template-columns:1fr 1fr;overflow:hidden;}
+
+/* Sidebar is now an overlay that slides in from the right */
+.info-panel{
+  position:absolute;
+  top:0;
+  right:0;
+  bottom:0;
+  width:380px;
+  z-index:50;
+  /* glass-panel look for overlay */
+  background:rgba(11, 16, 22, 0.82);
+  backdrop-filter:blur(14px) saturate(120%);
+  -webkit-backdrop-filter:blur(14px) saturate(120%);
+  border-left:1px solid var(--border);
+  box-shadow:-8px 0 28px rgba(0,0,0,0.35);
+  transition:transform .32s cubic-bezier(.3,.7,.3,1);
+}
+.info-panel.collapsed{
+  transform:translateX(100%);
+  box-shadow:none;
+}
+
+/* Toggle tab — sits pinned to the right edge of the viewport, not the panel,
+   so it stays visible when the panel slides off-screen. It slides left with
+   the panel when open so it sits on the panel's left edge. */
+.panel-toggle{
+  position:absolute;
+  top:60px;
+  right:380px;  /* matches panel width when open; JS keeps this in sync with resizes */
+  width:28px;
+  height:56px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-right:none;
+  border-radius:6px 0 0 6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:var(--text-dim);
+  font-family:var(--mono);
+  font-size:14px;
+  transition:right .32s cubic-bezier(.3,.7,.3,1), color .15s, background .15s, border-color .15s;
+  z-index:60;
+}
+.panel-toggle.no-transition{
+  transition:color .15s, background .15s, border-color .15s;
+}
+.panel-toggle:hover{
+  color:var(--accent);
+  border-color:var(--accent);
+  background:var(--surface2);
+}
+/* When panel is collapsed, dock the toggle against the viewport edge */
+.info-panel.collapsed ~ .panel-toggle{
+  right:0;
+  border-radius:6px 0 0 6px;
+}
+.panel-toggle-icon{
+  display:inline-block;
+  transition:transform .32s cubic-bezier(.3,.7,.3,1);
+  font-size:16px;
+  line-height:1;
+}
+.info-panel.collapsed ~ .panel-toggle .panel-toggle-icon{transform:rotate(180deg);}
 
 /* ── Sidebar resize handle ───────────────────────────────────────────────── */
 .sidebar-resize-handle{
@@ -102,9 +175,10 @@ header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:
 .sidebar-tab{font-size:.82rem;}
 .chat-input-row input{font-size:.85rem;}
 .chat-msg{font-size:.85rem;}
-.view-cell[data-view="sagittal"]{grid-column:1/-1;grid-row:1;}
-.view-cell[data-view="coronal"]{grid-column:1;grid-row:2;}
-.view-cell[data-view="transverse"]{grid-column:2;grid-row:2;}
+.view-cell[data-view="sagittal"]{grid-column:1;grid-row:1;}
+.view-cell[data-view="coronal"]{grid-column:2;grid-row:1;}
+.view-cell[data-view="transverse"]{grid-column:1;grid-row:2;}
+.view-cell[data-view="three-d"]{grid-column:2;grid-row:2;}
 
 /* View cell */
 .view-cell{display:flex;flex-direction:column;border-right:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;position:relative;}
@@ -113,6 +187,7 @@ header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:
 .view-cell[data-view="sagittal"]    .view-tag{color:var(--col-sagittal);   border-color:var(--col-sagittal);   background:rgba(0,212,255,.07);}
 .view-cell[data-view="coronal"]   .view-tag{color:var(--col-coronal);  border-color:var(--col-coronal);  background:rgba(180,122,255,.07);}
 .view-cell[data-view="transverse"] .view-tag{color:var(--col-transverse);border-color:var(--col-transverse);background:rgba(0,230,118,.07);}
+.view-cell[data-view="three-d"]    .view-tag{color:var(--col-three-d);   border-color:var(--col-three-d);   background:rgba(255,183,74,.08);}
 .view-axis-label{font-size:.55rem;color:var(--text-dim);}
 .view-header input[type=range]{-webkit-appearance:none;height:2px;background:var(--border);outline:none;cursor:pointer;flex:1;max-width:160px;}
 .slider-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;width:18px;height:18px;font-size:.8rem;line-height:1;cursor:pointer;padding:0;flex-shrink:0;transition:border-color .15s,color .15s;}
@@ -131,6 +206,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .view-cell[data-view="sagittal"]    .idx-display{color:var(--col-sagittal);}
 .view-cell[data-view="coronal"]   .idx-display{color:var(--col-coronal);}
 .view-cell[data-view="transverse"] .idx-display{color:var(--col-transverse);}
+
+/* ── 3D view cell ─────────────────────────────────────────────────────────── */
+.view-cell[data-view="three-d"] .canvas-wrap{background:#0e1012;cursor:grab;}
+.view-cell[data-view="three-d"] .canvas-wrap:active{cursor:grabbing;}
+#three-canvas{width:100%;height:100%;display:block;}
+.three-status{
+  position:absolute;top:8px;right:8px;z-index:5;pointer-events:none;
+  font-family:var(--mono);font-size:.56rem;color:var(--text-dim);
+  letter-spacing:.12em;text-transform:uppercase;
+  background:rgba(14,16,18,.6);padding:3px 8px;border-radius:3px;
+  backdrop-filter:blur(6px);
+  max-width:calc(100% - 220px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-align:right;
+}
+.three-status .three-status-acro{color:var(--col-three-d);margin-right:6px;}
+.three-toolbar{
+  position:absolute;top:6px;left:6px;z-index:6;display:flex;gap:4px;
+}
+.three-tool-btn{
+  background:rgba(14,16,18,.7);border:1px solid var(--border);
+  color:var(--text-dim);font-family:var(--mono);font-size:.55rem;
+  letter-spacing:.14em;text-transform:uppercase;
+  padding:4px 8px;cursor:pointer;border-radius:3px;
+  backdrop-filter:blur(6px);transition:color .15s,border-color .15s,background .15s;
+}
+.three-tool-btn:hover{color:var(--col-three-d);border-color:var(--col-three-d);background:rgba(255,183,74,.08);}
+.three-tool-btn.active{color:#000;background:var(--col-three-d);border-color:var(--col-three-d);}
 
 /* Canvas wrap */
 .canvas-wrap{flex:1;position:relative;overflow:hidden;cursor:default;background:#000;display:flex;align-items:center;justify-content:center;user-select:none;}
@@ -400,6 +502,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <button class="vmode-btn" data-vmode="sagittal"   style="color:var(--col-sagittal)"><span class="vmode-icon">▬</span>Sagittal</button>
       <button class="vmode-btn" data-vmode="coronal"    style="color:var(--col-coronal)"><span class="vmode-icon">▮</span>Coronal</button>
       <button class="vmode-btn" data-vmode="transverse" style="color:var(--col-transverse)"><span class="vmode-icon">▣</span>Transverse</button>
+      <button class="vmode-btn" data-vmode="three-d"    style="color:var(--col-three-d)"><span class="vmode-icon">◆</span>3D</button>
     </div>
   </div>
 
@@ -487,12 +590,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="coord-strip">Col(Z):<span class="cx">—</span>&nbsp;&nbsp;Row(X):<span class="cy">—</span></div>
     </div>
 
+    <!-- 3D -->
+    <div class="view-cell" data-view="three-d">
+      <div class="view-header">
+        <span class="view-tag">3D</span>
+        <span class="view-axis-label">Allen CCFv3 · mesh</span>
+        <span class="view-axis-label" style="margin-left:auto;font-size:.52rem">drag · scroll · right-drag</span>
+      </div>
+      <div class="canvas-wrap" id="three-wrap">
+        <div class="three-status" id="three-status">
+          <span class="three-status-acro">idle</span>
+          <span class="three-status-name">click a region to load its mesh</span>
+        </div>
+        <div class="three-toolbar">
+          <button class="three-tool-btn" id="three-recenter" title="Recenter the camera on the brain">◎ recenter</button>
+          <button class="three-tool-btn active" id="three-shell-toggle" title="Toggle whole-brain context shell">shell</button>
+        </div>
+        <canvas id="three-canvas"></canvas>
+      </div>
+    </div>
+
   </div><!-- /views-area -->
 
   <!-- ═══════════════════════════════════════════════════
        RIGHT PANEL — tabbed sidebar
        ═══════════════════════════════════════════════════ -->
-  <div class="info-panel" id="info-panel" style="position:relative;">
+  <div class="info-panel collapsed" id="info-panel" style="position:absolute;">
     <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
 
     <!-- ── Tab strip ───────────────────────────────────── -->
@@ -579,7 +702,295 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
     <div id="status-bar">Loading all three views…</div>
   </div><!-- /info-panel -->
+
+  <button class="panel-toggle" id="panel-toggle" title="Toggle side panel" aria-expanded="false">
+    <span class="panel-toggle-icon">›</span>
+  </button>
 </div><!-- /root -->
+
+<!-- ───────────────────────────────────────────────────────────────────
+     3D VIEW MODULE — Three.js, ES module
+     Exposes window.brain3d = { showRegion(id, info), recenter(), toggleShell() }
+     The classic script below calls these when the user clicks a region.
+     ─────────────────────────────────────────────────────────────────── -->
+<script type="importmap">
+{
+  "imports": {
+    "three":        "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
+
+// Flask serves meshes at /meshes/{id}.obj (see App.py route).
+const MESH_BASE = '/meshes/';
+const ROOT_STRUCTURE_ID = 997;      // whole-brain root
+const CONTEXT_OPACITY = 0.10;        // faint shell
+const REGION_OPACITY  = 0.85;
+
+// --- Scene setup ----------------------------------------------------
+const canvas = document.getElementById('three-canvas');
+const wrap   = document.getElementById('three-wrap');
+const statusAcro = document.querySelector('#three-status .three-status-acro');
+const statusName = document.querySelector('#three-status .three-status-name');
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1012);
+
+const camera = new THREE.PerspectiveCamera(38, 1, 100, 200000);
+camera.position.set(14000, 8000, 18000);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.zoomSpeed = 0.3;
+
+// Lighting — matches the 3D-only viewer we built
+scene.add(new THREE.AmbientLight(0x3a3428, 0.35));
+const key  = new THREE.DirectionalLight(0xfff0d4, 1.1); key.position.set(1, 1.3, 1);  scene.add(key);
+const fill = new THREE.DirectionalLight(0x6a88b0, 0.45); fill.position.set(-1, 0.3, -0.8); scene.add(fill);
+const rim  = new THREE.DirectionalLight(0xc89f65, 0.5); rim.position.set(0, -1, 0.5); scene.add(rim);
+
+// PIR → Three: flip Y so Superior points up
+const rootGroup = new THREE.Group();
+rootGroup.scale.y = -1;
+scene.add(rootGroup);
+
+let contextMesh = null;   // whole-brain shell
+let regionMeshes = [];    // currently-selected region mesh(es)
+let initialView = null;   // captured after first framing, for recenter
+let axesGroup   = null;
+
+const loader = new OBJLoader();
+
+// --- Camera framing --------------------------------------------------
+function frameMesh(mesh, padding = 1.4) {
+  mesh.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(mesh);
+  if (box.isEmpty()) return;
+  const center = new THREE.Vector3();
+  const size   = new THREE.Vector3();
+  box.getCenter(center); box.getSize(size);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fov = camera.fov * Math.PI / 180;
+  const dist = (maxDim / 2) / Math.tan(fov / 2) * padding;
+
+  controls.target.copy(center);
+  const dir = new THREE.Vector3(0.8, 0.5, 1.0).normalize();
+  camera.position.copy(center).addScaledVector(dir, dist);
+  camera.updateProjectionMatrix();
+
+  const boxRadius = size.length() / 2;
+  controls.minDistance = boxRadius * 1.1;
+  controls.maxDistance = boxRadius * 4;
+  controls.update();
+}
+
+// --- Simple axes + anatomical labels --------------------------------
+function buildAxes(centerLocal, sizeLocal) {
+  if (axesGroup) {
+    axesGroup.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
+    rootGroup.remove(axesGroup);
+  }
+  axesGroup = new THREE.Group();
+  axesGroup.position.copy(centerLocal);
+  const len = Math.max(sizeLocal.x, sizeLocal.y, sizeLocal.z) * 0.55;
+
+  const mkLine = (dir, col) => {
+    const g = new THREE.BufferGeometry().setFromPoints([
+      dir.clone().multiplyScalar(-len),
+      dir.clone().multiplyScalar( len),
+    ]);
+    return new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.30, depthTest: false }));
+  };
+  axesGroup.add(mkLine(new THREE.Vector3(1, 0, 0), 0xc89f65));
+  axesGroup.add(mkLine(new THREE.Vector3(0, 1, 0), 0x8fa8c8));
+  axesGroup.add(mkLine(new THREE.Vector3(0, 0, 1), 0x8aa882));
+
+  const label = (text, pos, col) => {
+    const cvs = document.createElement('canvas');
+    cvs.width = 64; cvs.height = 64;
+    const ctx = cvs.getContext('2d');
+    ctx.fillStyle = '#' + col.toString(16).padStart(6, '0');
+    ctx.font = 'italic 40px Georgia, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 32, 34);
+    const tex = new THREE.CanvasTexture(cvs);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+    spr.position.copy(pos);
+    const s = len * 0.22;
+    spr.scale.set(s, s, 1);
+    axesGroup.add(spr);
+  };
+  const off = len * 1.08;
+  label('F', new THREE.Vector3(-off, 0, 0), 0xc89f65);   // Front (anterior, mouse's nose)
+  label('B', new THREE.Vector3( off, 0, 0), 0xc89f65);   // Back  (posterior)
+  label('U', new THREE.Vector3(0, -off, 0), 0x8fa8c8);   // Up    (superior, Y-flipped)
+  label('D', new THREE.Vector3(0,  off, 0), 0x8fa8c8);   // Down  (inferior)
+  label('L', new THREE.Vector3(0, 0, -off), 0x8aa882);   // Left
+  label('R', new THREE.Vector3(0, 0,  off), 0x8aa882);   // Right
+
+  rootGroup.add(axesGroup);
+}
+
+// --- Mesh loading ---------------------------------------------------
+function makeMaterial(hex, opacity, isContext) {
+  return new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(hex),
+    roughness: 0.55, metalness: 0.05, clearcoat: 0.15,
+    transparent: true, opacity,
+    depthWrite: !isContext,
+    side: isContext ? THREE.BackSide : THREE.FrontSide,
+  });
+}
+
+async function loadMesh(id, { color = '#c89f65', opacity = REGION_OPACITY, isContext = false } = {}) {
+  return new Promise((resolve, reject) => {
+    loader.load(
+      MESH_BASE + id + '.obj',
+      group => {
+        let mesh = null;
+        group.traverse(o => { if (o.isMesh && !mesh) mesh = o; });
+        if (!mesh) { reject(new Error('empty mesh')); return; }
+        if (!mesh.geometry.attributes.normal) mesh.geometry.computeVertexNormals();
+        mesh.material = makeMaterial(color, opacity, isContext);
+        mesh.userData.structureId = id;
+        resolve(mesh);
+      },
+      undefined,
+      err => reject(err)
+    );
+  });
+}
+
+// Set the whole-brain shell on startup (if the file is available)
+async function initShell() {
+  try {
+    const mesh = await loadMesh(ROOT_STRUCTURE_ID, { color: '#c0c6cf', opacity: CONTEXT_OPACITY, isContext: true });
+    contextMesh = mesh;
+    rootGroup.add(mesh);
+
+    // Frame camera on whole brain, also build axes
+    frameMesh(mesh);
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox;
+    const c = new THREE.Vector3(), s = new THREE.Vector3();
+    bb.getCenter(c); bb.getSize(s);
+    buildAxes(c, s);
+
+    // Capture initial view for recenter
+    initialView = { position: camera.position.clone(), target: controls.target.clone() };
+  } catch (e) {
+    console.warn('3D: root shell unavailable', e);
+    setStatus('—', 'shell unavailable — meshes/ folder missing?');
+  }
+}
+
+// --- Smooth camera tween --------------------------------------------
+let tween = null;
+function tweenTo(toPos, toTarget, dur = 600) {
+  tween = {
+    fromPos: camera.position.clone(),
+    fromTarget: controls.target.clone(),
+    toPos: toPos.clone(), toTarget: toTarget.clone(),
+    t0: performance.now(), dur,
+  };
+}
+controls.addEventListener('start', () => { tween = null; });
+
+// --- Public API ------------------------------------------------------
+function setStatus(acro, name) {
+  statusAcro.textContent = acro || '—';
+  statusName.textContent = name || '';
+}
+
+function clearRegionMeshes(){
+  for (const m of regionMeshes) {
+    rootGroup.remove(m);
+    m.geometry?.dispose();
+    m.material?.dispose();
+  }
+  regionMeshes = [];
+}
+
+window.brain3d = {
+  async showRegion(id, info = {}) {
+    if (!id) return;
+    clearRegionMeshes();
+    setStatus(info.acronym || '...', 'loading ' + (info.name || `structure ${id}`));
+    try {
+      const color = info.color || '#ffb74a';
+      const mesh = await loadMesh(id, { color, opacity: REGION_OPACITY, isContext: false });
+      regionMeshes.push(mesh);
+      rootGroup.add(mesh);
+      setStatus(info.acronym || '—', info.name || `structure ${id}`);
+    } catch (err) {
+      const is404 = err && err.target && err.target.status === 404;
+      const msg = is404
+        ? 'not delineated in the CCFv3 3D volume — no mesh to display'
+        : 'failed to load mesh';
+      setStatus(info.acronym || '—', msg);
+    }
+  },
+  recenter() {
+    if (initialView) tweenTo(initialView.position, initialView.target);
+  },
+  toggleShell() {
+    if (!contextMesh) return false;
+    contextMesh.visible = !contextMesh.visible;
+    return contextMesh.visible;
+  },
+  clear() {
+    clearRegionMeshes();
+    setStatus('idle', 'click a region to load its mesh');
+  },
+};
+
+// --- Animation loop + resize ----------------------------------------
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (w === 0 || h === 0) return;
+  if (canvas.width !== w || canvas.height !== h) {
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+}
+function animate() {
+  resize();
+  if (tween) {
+    const k = Math.min(1, (performance.now() - tween.t0) / tween.dur);
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    camera.position.lerpVectors(tween.fromPos, tween.toPos, e);
+    controls.target.lerpVectors(tween.fromTarget, tween.toTarget, e);
+    if (k === 1) tween = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+animate();
+window.addEventListener('resize', resize);
+
+// Toolbar wiring
+document.getElementById('three-recenter').addEventListener('click', () => window.brain3d.recenter());
+document.getElementById('three-shell-toggle').addEventListener('click', (e) => {
+  const visible = window.brain3d.toggleShell();
+  e.currentTarget.classList.toggle('active', visible);
+});
+
+// Go!
+initShell();
+</script>
 
 <script>
 const API = 'http://localhost:5000';
@@ -721,9 +1132,12 @@ async function redrawHighlightForView(v){
 })();
 
 // -- Per-view state --------------------------------------------
+// Only the 2D slice views (sagittal/coronal/transverse) are handled here.
+// The 3D view has no slice slider and manages itself in its own module.
 const views = {};
 document.querySelectorAll('.view-cell').forEach(cell => {
   const v = cell.dataset.view;
+  if (v === 'three-d') return;   // 3D cell is owned by the Three.js module
   views[v] = {
     cell, img:cell.querySelector('.atlas-img'), canvas:cell.querySelector('.hl-canvas'),
     zoomLayer:cell.querySelector('.zoom-layer'),
@@ -1011,6 +1425,13 @@ async function selectTreeNode(node){
   const acro  = node.acronym||'';
   if(!label) return;
 
+  // Sync the 3D view immediately — we already have the numeric Allen id from
+  // the ontology node, no need to wait for 2D highlight + updatePanel.
+  if (window.brain3d && node.id) {
+    const color = node._color || ('#' + (node.color_hex_triplet || 'ffb74a'));
+    window.brain3d.showRegion(node.id, { acronym: acro, name: node.name || label, color });
+  }
+
   const key = `${label}||${acro}`;
 
   // Same node as last successfully loaded — track as rapid click
@@ -1059,7 +1480,7 @@ async function selectTreeNode(node){
         await selectSearchResult(document.createElement('div'),leaf);
         return;
       }
-      setStatus(`"${label}" — not found in CCFv3`,'error');
+      setStatus(`"${label}" — region exists in the Allen ontology but was not delineated in the CCFv3 3D volume (no voxels to display)`,'error');
       if(window.notifyChatRegion) window.notifyChatRegion(label,{parcellation_index:null,structure:label,acronym:acro,_unavailable:true});
       _treeLastKey = null;
       return;
@@ -1242,6 +1663,8 @@ loadOntology();
     startX   = e.clientX;
     startW   = document.getElementById('info-panel').offsetWidth;
     handle.classList.add('dragging');
+    // Kill the eased right-transition on the toggle so it tracks the handle 1:1
+    document.getElementById('panel-toggle')?.classList.add('no-transition');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     e.preventDefault();
@@ -1251,7 +1674,12 @@ loadOntology();
     if(!dragging) return;
     const delta = startX - e.clientX;   // dragging left = making wider
     const newW  = Math.min(MAX_W, Math.max(MIN_W, startW + delta));
-    root.style.gridTemplateColumns = `1fr ${newW}px`;
+    document.getElementById('info-panel').style.width = newW + 'px';
+    // Keep the toggle button pinned to the panel's left edge when panel is open
+    const toggle = document.getElementById('panel-toggle');
+    if(toggle && !document.getElementById('info-panel').classList.contains('collapsed')){
+      toggle.style.right = newW + 'px';
+    }
     // Resyncing canvases after resize keeps highlight overlay aligned
     requestAnimationFrame(()=>Object.keys(views).forEach(v=>syncCanvas(v)));
     // Keep search/ontology dropdowns anchored to their inputs during resize
@@ -1263,11 +1691,42 @@ loadOntology();
     if(!dragging) return;
     dragging = false;
     handle.classList.remove('dragging');
+    document.getElementById('panel-toggle')?.classList.remove('no-transition');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
     // Final sync after drag ends
     requestAnimationFrame(()=>Object.keys(views).forEach(v=>syncCanvas(v)));
   });
+})();
+
+// -- Collapsible sidebar --------------------------------------------------------
+// Overlay side panel: click the toggle tab, or clicking any view auto-opens it.
+(function(){
+  const panel  = document.getElementById('info-panel');
+  const toggle = document.getElementById('panel-toggle');
+
+  function setCollapsed(collapsed){
+    panel.classList.toggle('collapsed', collapsed);
+    toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    // Sync the toggle's right-edge with the panel's current width.
+    // When collapsed, clear the inline style so CSS can pin it to right:0.
+    if(collapsed){
+      toggle.style.right = '';
+    } else {
+      toggle.style.right = panel.offsetWidth + 'px';
+    }
+    // Canvases should resync after the slide animation finishes so crosshairs
+    // and highlight overlays stay aligned to whatever's visible behind.
+    setTimeout(()=>{ Object.keys(views).forEach(v=>syncCanvas(v)); }, 340);
+  }
+  toggle.addEventListener('click', ()=>{
+    setCollapsed(!panel.classList.contains('collapsed'));
+  });
+
+  // Expose a global so other code can open the panel on a view click.
+  window.openInfoPanel = ()=>{
+    if(panel.classList.contains('collapsed')) setCollapsed(false);
+  };
 })();
 
 function updatePanel(data){
@@ -1287,6 +1746,38 @@ function updatePanel(data){
   wcXi.textContent=data.xi??'--'; wcYi.textContent=data.yi??'--'; wcZi.textContent=data.zi??'--';
   LEVELS.forEach(f=>{ const col=data[f+'_color']; if(col&&swDots[f]){ swDots[f].style.background=col; swDots[f].parentElement.style.color=col; } });
   if(acronym&&acronym!=='--') highlightTreeByAcronym(acronym);
+
+  // Sync the 3D view — find the structure id in the already-loaded ontology tree
+  syncThreeD({ name, acronym, data });
+}
+
+// Resolve a region {name, acronym} to a numeric Allen structure_id by
+// looking it up in the ontology tree we already loaded. Falls back to the
+// structure_id carried by `data` if the backend ever starts sending one.
+function syncThreeD({ name, acronym, data }){
+  if (!window.brain3d || !Array.isArray(_allTreeRows) || _allTreeRows.length === 0) return;
+  const acroLo = (acronym || '').toLowerCase();
+  const nameLo = (name || '').toLowerCase();
+
+  let entry = null;
+  if (acroLo && acroLo !== '--'){
+    entry = _allTreeRows.find(e => (e.node.acronym || '').toLowerCase() === acroLo);
+  }
+  if (!entry && nameLo && nameLo !== '--'){
+    entry = _allTreeRows.find(e => (e.node.name || '').toLowerCase() === nameLo);
+  }
+  if (!entry) return;
+
+  const node = entry.node;
+  const id = node.id;
+  if (!id) return;
+
+  const color = node._color || ('#' + (node.color_hex_triplet || 'ffb74a'));
+  window.brain3d.showRegion(id, {
+    acronym: node.acronym || acronym,
+    name:    node.name    || name,
+    color,
+  });
 }
 
 const viewsArea=document.getElementById('views-area');
@@ -1296,9 +1787,16 @@ document.getElementById('vmode-btns').addEventListener('click',e=>{
   const mode=btn.dataset.vmode; if(mode===currentViewMode) return;
   currentViewMode=mode;
   document.querySelectorAll('.vmode-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-  viewsArea.classList.remove('focus-sagittal','focus-coronal','focus-transverse');
+  viewsArea.classList.remove('focus-sagittal','focus-coronal','focus-transverse','focus-three-d');
   if(mode!=='all') viewsArea.classList.add('focus-'+mode);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{ const av=mode==='all'?Object.keys(views):[mode]; av.forEach(v=>syncCanvas(v)); }));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    // Only 2D views need syncCanvas — the 3D view resizes itself in its animate loop
+    const twoDviews = Object.keys(views);  // sagittal, coronal, transverse
+    const av = mode === 'all'
+      ? twoDviews
+      : (twoDviews.includes(mode) ? [mode] : []);
+    av.forEach(v => syncCanvas(v));
+  }));
 });
 
 Object.keys(views).forEach(v=>{
@@ -1339,6 +1837,9 @@ Object.keys(views).forEach(v=>{
     const c=imgCoords(e,v); if(!c) return;
     const {col,row,markerX,markerY}=c;
     if(col<0||col>=s.cols||row<0||row>=s.rows) return;
+
+    // Auto-open the info panel when the user clicks any view
+    if(typeof window.openInfoPanel === 'function') window.openInfoPanel();
 
     // -- Pre-fetch cache check ---------------------------------------------
     const cached = _clickCache[v];
@@ -1382,8 +1883,23 @@ Object.keys(views).forEach(v=>{
         suppressSliderReload=false;
         await Promise.all(otherViews.map(ov=>loadSliceP(ov)));
         await Promise.all(Object.keys(views).map(vv=>fetchAndDrawHighlight(vv,data.parcellation_index,highlightLevel)));
-        setStatus(`${data.structure||'parcellation '+data.parcellation_index} -- xi=${data.xi} yi=${data.yi} zi=${data.zi} . all views synced`,'ok');
-        if(window.notifyChatRegion) window.notifyChatRegion(data.structure||'Region '+data.parcellation_index,data);
+        setStatus(`${data.matched_label||data.structure||'parcellation '+data.parcellation_index} -- xi=${data.xi} yi=${data.yi} zi=${data.zi} . all views synced`,'ok');
+        if(window.notifyChatRegion){
+          // Always prefer matched_label (the exact clicked region) over the
+          // parent 'structure' field. Walk the hierarchy only as a fallback.
+          const regionName = data.matched_label ||
+            [data.substructure, data.structure, data.division, data.category]
+              .find(v => v && v !== '—' && v !== '--') ||
+            'Region '+data.parcellation_index;
+          const regionAcro = data.matched_acronym ||
+            [data.substructure_acronym, data.structure_acronym,
+             data.division_acronym, data.category_acronym, data.acronym]
+              .find(v => v && v !== '—' && v !== '--') || '';
+          // Stash the specific name into data.structure so downstream
+          // _currentRegion.structure (used by the /api/chat payload at line ~2400)
+          // sends "amygdalar capsule" to the AI, not "cerebrum related".
+          window.notifyChatRegion(regionName, {...data, structure: regionName, acronym: regionAcro});
+        }
       } catch(err){ setStatus('Lookup failed: '+err.message,'error'); }
       finally{ _clickPending[v]=false; }
     })();
@@ -1515,7 +2031,7 @@ async function runSearch(q){
           document.getElementById('r-idx').textContent='N/A';
           document.getElementById('r-struct').textContent=label; document.getElementById('r-struct').classList.remove('placeholder');
           document.getElementById('r-acro').textContent=acro||'--';
-          setStatus(`"${label}" -- not present in the CCFv3 annotation volume`,'error');
+          setStatus(`"${label}" — this region exists in the Allen ontology but was not delineated in the CCFv3 3D volume (no voxels to display)`,'error');
           highlightTreeByAcronym(acro||label);
           if(window.notifyChatRegion) window.notifyChatRegion(label,{parcellation_index:null,structure:label,acronym:acro,_unavailable:true});
           searchInput.value=''; clearSearchDropdown();
@@ -1552,6 +2068,9 @@ async function selectSearchResult(item,r){
   document.querySelectorAll('.search-result-item').forEach(i=>i.classList.remove('active'));
   item.classList.add('active'); activeSearchItem=r;
   const label=r.matched_label||(r.structure!=='--'?r.structure:(r.division!=='--'?r.division:r.category));
+
+  // Sync 3D view — resolves this name/acronym to a structure id via ontology tree
+  syncThreeD({ name: label, acronym: r.matched_acronym || r.group_acronym || '', data: r });
 
   // -- GROUP path ------------------------------------------------------------
   if(r.is_group){
@@ -1594,7 +2113,7 @@ async function selectSearchResult(item,r){
         item.classList.add('unavailable');
         const unavailNote=document.createElement('div'); unavailNote.className='sr-unavail'; unavailNote.textContent='(!) Region not found in annotation volume';
         item.querySelector('.sr-text').appendChild(unavailNote);
-        setStatus(`"${label}" (group) -- not present in the CCFv3 annotation volume`,'error');
+        setStatus(`"${label}" — group contains no regions that are delineated in the CCFv3 3D volume`,'error');
         return;
       }
       const{xi,yi,zi}=cData;
@@ -1637,7 +2156,7 @@ async function selectSearchResult(item,r){
       item.classList.add('unavailable');
       const unavailNote=document.createElement('div'); unavailNote.className='sr-unavail'; unavailNote.textContent='(!) Region not found in annotation volume';
       item.querySelector('.sr-text').appendChild(unavailNote);
-      setStatus(`"${label}" -- not present in the CCFv3 annotation volume`,'error');
+      setStatus(`"${label}" — this region exists in the Allen ontology but was not delineated in the CCFv3 3D volume (no voxels to display)`,'error');
       return;
     }
     const{xi,yi,zi}=cData;
