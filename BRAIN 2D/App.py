@@ -106,8 +106,44 @@ def _load_functional_kb():
     return lookup
 
 _functional_kb = _load_functional_kb()
-_functional_keyword_cache = {}
-_region_summary_cache = {}
+_OPENAI_REGION_CACHE_PATH = Path(__file__).parent / 'openai_region_cache.json'
+
+def _load_openai_region_cache():
+    empty = {'functional_keywords': {}, 'region_summaries': {}}
+    if not _OPENAI_REGION_CACHE_PATH.exists():
+        return empty
+
+    try:
+        data = _json.loads(_OPENAI_REGION_CACHE_PATH.read_text(encoding='utf-8'))
+    except Exception as e:
+        log.warning(f'OpenAI region cache load failed: {e}')
+        return empty
+
+    keywords = data.get('functional_keywords', {})
+    summaries = data.get('region_summaries', {})
+    if not isinstance(keywords, dict):
+        keywords = {}
+    if not isinstance(summaries, dict):
+        summaries = {}
+    print(f'OpenAI region cache loaded: {len(keywords)} keyword entries, {len(summaries)} summary entries')
+    return {'functional_keywords': keywords, 'region_summaries': summaries}
+
+def _save_openai_region_cache():
+    data = {
+        'functional_keywords': _functional_keyword_cache,
+        'region_summaries': _region_summary_cache,
+    }
+    try:
+        tmp_path = _OPENAI_REGION_CACHE_PATH.with_suffix('.tmp')
+        tmp_path.write_text(_json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+        tmp_path.replace(_OPENAI_REGION_CACHE_PATH)
+        print(f'OpenAI region cache saved: {_OPENAI_REGION_CACHE_PATH}')
+    except Exception as e:
+        log.warning(f'OpenAI region cache save failed: {e}')
+
+_openai_region_cache = _load_openai_region_cache()
+_functional_keyword_cache = _openai_region_cache['functional_keywords']
+_region_summary_cache = _openai_region_cache['region_summaries']
 
 def _get_functional_keywords(parcellation_index=None, region_name='', region_acronym='', limit=14):
     keys = [
@@ -250,6 +286,7 @@ def _generate_region_summary(region_name, region_acronym):
         summary = response.choices[0].message.content.strip()
         if summary:
             _region_summary_cache[cache_key] = summary
+            _save_openai_region_cache()
         return summary
     except Exception as e:
         log.warning(f'OpenAI summary generation failed for "{region_name}" ({region_acronym}): {e}')
@@ -494,6 +531,7 @@ def _generate_functional_keywords(region_name, region_acronym):
         print(f'openai keywords returned: {len(keywords)} keyword(s): {keywords}')
         if keywords:
             _functional_keyword_cache[cache_key] = keywords
+            _save_openai_region_cache()
         return keywords
     except Exception as e:
         print(f'openai keyword error: "{region_name}" ({region_acronym}): {e}')
