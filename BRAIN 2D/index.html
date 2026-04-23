@@ -347,6 +347,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .field-label{font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
 .field-value{font-size:.75rem;color:var(--text-hi);font-weight:600;line-height:1.4;min-height:1em;}
 .field-value.placeholder{color:var(--text-dim);font-weight:300;font-style:italic;font-size:.7rem;}
+.functional-keywords{margin-top:10px;padding-top:9px;border-top:1px solid var(--border);}
+.keyword-cloud-title{font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px;}
+.keyword-cloud{display:flex;flex-wrap:wrap;align-items:center;gap:5px 7px;min-height:28px;}
+.keyword-chip{color:var(--accent);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);border-radius:999px;padding:2px 7px;line-height:1.25;font-weight:700;letter-spacing:.02em;}
+.keyword-empty{color:var(--text-dim);font-size:.65rem;font-style:italic;}
 
 /* Ontology tree — lives in pane-tree */
 .ontology-search-wrap{flex-shrink:0;padding-bottom:6px;}
@@ -659,6 +664,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           <div class="field-value" id="r-acro" style="color:var(--accent);letter-spacing:.08em;margin-top:4px;">—</div>
         </div>
         <div id="r-idx" style="display:none">—</div>
+        <div class="functional-keywords">
+          <div class="keyword-cloud-title">Functional Keywords</div>
+          <div class="keyword-cloud" id="keyword-cloud"></div>
+        </div>
       </div>
 
       </div><!-- /pane-main-scroll -->
@@ -1359,6 +1368,7 @@ async function redrawHighlight(v){ if(lastParcIdx!==null) await fetchAndDrawHigh
 
 const rIdx=document.getElementById('r-idx'),rStruct=document.getElementById('r-struct'),rAcro=document.getElementById('r-acro');
 const wcXi=document.getElementById('wc-xi'),wcYi=document.getElementById('wc-yi'),wcZi=document.getElementById('wc-zi');
+const keywordCloud=document.getElementById('keyword-cloud');
 const swDots={organ:document.getElementById('sw-organ'),category:document.getElementById('sw-category'),division:document.getElementById('sw-division'),structure:document.getElementById('sw-structure'),substructure:document.getElementById('sw-substructure')};
 
 // -- Ontology Tree ---------------------------------------------
@@ -1729,6 +1739,37 @@ loadOntology();
   };
 })();
 
+function renderFunctionalKeywords(keywords){
+  if(!keywordCloud) return;
+  keywordCloud.innerHTML='';
+
+  if(!Array.isArray(keywords)||!keywords.length){
+    const empty=document.createElement('span');
+    empty.className='keyword-empty';
+    empty.textContent='No functional keyword data available for this region.';
+    keywordCloud.appendChild(empty);
+    return;
+  }
+
+  const weights=keywords.map(k=>Number(k.weight)||0);
+  const min=Math.min(...weights);
+  const max=Math.max(...weights);
+  const spread=max-min||1;
+
+  keywords.forEach(k=>{
+    const term=String(k.term||'').trim();
+    if(!term) return;
+    const weight=Number(k.weight)||min;
+    const normalized=(weight-min)/spread;
+    const chip=document.createElement('span');
+    chip.className='keyword-chip';
+    chip.textContent=term;
+    chip.style.fontSize=`${0.62+normalized*0.42}rem`;
+    chip.style.opacity=`${0.72+normalized*0.28}`;
+    keywordCloud.appendChild(chip);
+  });
+}
+
 function updatePanel(data){
   // matched_label is always the exact clicked region name from the backend
   // Fall back through hierarchy only if matched_label not present
@@ -1745,6 +1786,7 @@ function updatePanel(data){
   rAcro.textContent = acronym;
   wcXi.textContent=data.xi??'--'; wcYi.textContent=data.yi??'--'; wcZi.textContent=data.zi??'--';
   LEVELS.forEach(f=>{ const col=data[f+'_color']; if(col&&swDots[f]){ swDots[f].style.background=col; swDots[f].parentElement.style.color=col; } });
+  renderFunctionalKeywords(data.functional_keywords);
   if(acronym&&acronym!=='--') highlightTreeByAcronym(acronym);
 
   // Sync the 3D view — find the structure id in the already-loaded ontology tree
