@@ -1,0 +1,15 @@
+Flask
+Flask-Cors
+numpy
+scipy
+matplotlib
+SimpleITK
+Pillow
+openai
+langchain-community
+langchain-chroma
+langchain-huggingface
+langchain-text-splitters
+sentence-transformers
+gunicorn
+git+https://github.com/AllenInstitute/abc_atlas_access.git

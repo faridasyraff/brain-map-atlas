@@ -26,6 +26,7 @@ Endpoints
 print("RUNNING THIS APP.PY")
 
 import io, base64, json as _json, logging, os as _os, re, traceback
+import os
 from collections import Counter
 from datetime import datetime
 import numpy as np
@@ -426,7 +427,8 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
     return related[:limit]
 
 def _get_openai_api_key():
-    api_key = _os.environ.get('OPENAI_API_KEY', '')
+    # Deployment: hosting providers inject secrets through environment variables.
+    api_key = os.getenv("OPENAI_API_KEY", "")
     if api_key:
         print('[functional_keywords] OPENAI_API_KEY loaded from environment')
         return api_key
@@ -2618,7 +2620,8 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
     except ImportError:
         return "OpenAI package not installed. Run: pip install openai"
 
-    api_key = _os.environ.get('OPENAI_API_KEY', '')
+    # Deployment: prefer provider-managed environment variables for secrets.
+    api_key = os.getenv("OPENAI_API_KEY", "")
     if not api_key:
         # Try loading from .env file next to App.py
         env_path = Path(__file__).parent / '.env'
@@ -2723,5 +2726,5 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
     return response.choices[0].message.content.strip()
 
 if __name__ == '__main__':
-    print("\nOpen your browser at: http://localhost:5000\n")
-    app.run(debug=False, port=5000)
+    import os
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

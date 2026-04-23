@@ -498,6 +498,602 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .cloud-footer-hint{font-size:.65rem;color:var(--text-dim);}
 .cloud-nav-all{font-size:.65rem;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;background:none;border:1px solid rgba(0,212,255,.25);color:rgba(0,212,255,.65);padding:2px 8px;border-radius:2px;cursor:pointer;transition:all .15s;}
 .cloud-nav-all:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.05);}
+
+/* Desktop UI polish: cleaner inspector hierarchy without changing behavior */
+.info-panel{
+  background:linear-gradient(180deg,rgba(13,18,28,.95) 0%,rgba(7,10,16,.96) 100%);
+  border-left:1px solid rgba(125,190,255,.16);
+  box-shadow:-18px 0 48px rgba(0,0,0,.48);
+}
+.sidebar-tabs{
+  gap:6px;
+  padding:7px;
+  background:rgba(4,8,14,.58);
+  border-bottom:1px solid rgba(125,190,255,.12);
+}
+.sidebar-tab{
+  border:1px solid transparent;
+  border-radius:10px;
+  padding:9px 8px;
+  letter-spacing:.09em;
+}
+.sidebar-tab:not(:last-child){border-right:1px solid transparent;}
+.sidebar-tab.active{
+  color:var(--text-hi);
+  border-color:rgba(0,212,255,.25);
+  background:linear-gradient(180deg,rgba(0,212,255,.13),rgba(0,212,255,.04));
+}
+.sidebar-tab.active::after{display:none;}
+#pane-main-scroll{
+  padding:12px;
+  max-height:calc(100% - 340px)!important;
+}
+#pane-main-scroll>.panel-section{
+  margin:0 0 10px;
+  padding:13px 14px!important;
+  border:1px solid rgba(125,190,255,.12);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(17,24,38,.72),rgba(9,14,23,.72));
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+#pane-main-scroll>.panel-section h2{
+  margin-bottom:11px;
+  color:#7f96ad;
+  font-family:var(--mono);
+  font-size:.64rem;
+  letter-spacing:.16em;
+}
+.region-inspector-card{
+  border-color:rgba(0,212,255,.22)!important;
+  background:
+    radial-gradient(circle at 20% 0%,rgba(0,212,255,.12),transparent 34%),
+    linear-gradient(180deg,rgba(17,27,42,.88),rgba(8,13,21,.88))!important;
+}
+.region-inspector-card .field{
+  margin-bottom:0;
+  padding:14px;
+  border:1px solid rgba(0,212,255,.20);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(0,212,255,.10),rgba(255,255,255,.025));
+}
+#r-struct{
+  font-family:var(--display);
+  font-size:1.18rem;
+  line-height:1.16;
+  letter-spacing:.015em;
+}
+#r-struct.placeholder{
+  font-family:var(--mono);
+  font-size:.78rem;
+  line-height:1.45;
+}
+#r-acro{
+  display:inline-flex;
+  width:max-content;
+  margin-top:9px!important;
+  padding:3px 8px;
+  border:1px solid rgba(0,212,255,.28);
+  border-radius:999px;
+  background:rgba(0,212,255,.08);
+  font-size:.68rem;
+  font-weight:700;
+}
+.region-summary,.functional-keywords,.related-regions{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(125,190,255,.12);
+  border-radius:14px;
+  background:rgba(4,9,16,.44);
+}
+.region-summary-title,.keyword-cloud-title,.related-regions-title{
+  margin-bottom:9px;
+  color:#8198ae;
+  font-size:.58rem;
+  letter-spacing:.14em;
+}
+.region-summary-text{
+  padding:0;
+  border:none;
+  background:transparent;
+  color:#c9d9e8;
+  font-family:var(--mono);
+  font-size:.72rem;
+  line-height:1.65;
+}
+.keyword-cloud,.related-region-list{gap:7px;}
+.keyword-chip,.related-region-chip{
+  border-radius:999px;
+  padding:5px 9px;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);
+}
+.keyword-chip{
+  background:linear-gradient(180deg,rgba(0,212,255,.15),rgba(0,212,255,.06));
+}
+.related-region-chip{
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+}
+.world-grid{gap:8px;}
+.wcoord{
+  padding:9px 8px;
+  border:1px solid rgba(125,190,255,.10);
+  border-radius:12px;
+  background:rgba(255,255,255,.035);
+}
+.search-input,.ontology-search,.chat-input{
+  border-radius:10px;
+  background:rgba(4,9,16,.72);
+  border-color:rgba(125,190,255,.14);
+}
+.chat-panel{
+  padding:10px 14px 0;
+  border-top:1px solid rgba(125,190,255,.12);
+  background:linear-gradient(180deg,rgba(6,10,18,.5),rgba(4,7,12,.75));
+}
+#status-bar{
+  padding:7px 14px;
+  background:rgba(4,8,14,.9);
+  border-top:1px solid rgba(125,190,255,.12);
+}
+
+/* Inspector resize + chat usability polish */
+.info-panel{
+  min-width:320px;
+  max-width:600px;
+  will-change:width,transform;
+}
+.sidebar-resize-handle{
+  left:-4px;
+  width:10px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.05),transparent);
+}
+.sidebar-resize-handle::after{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:4px;
+  width:2px;
+  height:54px;
+  transform:translateY(-50%);
+  border-radius:999px;
+  background:rgba(125,190,255,.18);
+  transition:background .18s,box-shadow .18s,height .18s;
+}
+.sidebar-resize-handle:hover,.sidebar-resize-handle.dragging{
+  background:linear-gradient(90deg,rgba(0,212,255,.16),rgba(0,212,255,.04),transparent);
+  opacity:1;
+}
+.sidebar-resize-handle:hover::after,.sidebar-resize-handle.dragging::after{
+  height:86px;
+  background:var(--accent);
+  box-shadow:0 0 16px rgba(0,212,255,.7);
+}
+.chat-panel{
+  width:100%;
+  gap:8px;
+  padding:12px 14px 0;
+}
+.chat-header{
+  padding:0 0 8px;
+  font-size:.72rem;
+}
+.chat-messages{
+  gap:10px;
+  padding:8px 4px 10px 0;
+  scroll-behavior:smooth;
+}
+.chat-msg{
+  max-width:92%;
+  padding:9px 11px;
+  border-radius:12px;
+  font-size:.76rem;
+  line-height:1.62;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  box-shadow:0 8px 22px rgba(0,0,0,.20);
+}
+.chat-msg.user{
+  max-width:86%;
+  border-color:rgba(116,185,245,.28);
+  background:linear-gradient(180deg,rgba(26,42,58,.98),rgba(16,29,44,.98));
+  color:#dcecff;
+}
+.chat-msg.bot{
+  max-width:94%;
+  border-color:rgba(127,201,127,.24);
+  background:linear-gradient(180deg,rgba(13,31,21,.98),rgba(8,22,13,.98));
+  color:#aee2ae;
+}
+.chat-msg.thinking{
+  box-shadow:none;
+  background:rgba(255,255,255,.035);
+  border-color:rgba(125,190,255,.10);
+}
+.chat-input-row{
+  gap:9px;
+  padding:8px 0 12px;
+}
+.chat-input{
+  min-height:42px;
+  padding:10px 12px;
+  border-radius:12px;
+  font-size:.9rem;
+  line-height:1.3;
+}
+.chat-send{
+  min-height:42px;
+  padding:9px 15px;
+  border-radius:12px;
+  font-size:.86rem;
+  font-weight:700;
+  background:rgba(0,212,255,.07);
+}
+
+/* Vertical splitter between inspector content and assistant chat */
+#pane-main-scroll{
+  flex:1 1 auto!important;
+  min-height:180px;
+  max-height:none!important;
+}
+.inspector-vertical-resize-handle{
+  position:relative;
+  flex:0 0 14px;
+  cursor:row-resize;
+  margin:0 12px;
+  border-top:1px solid rgba(125,190,255,.10);
+  border-bottom:1px solid rgba(0,0,0,.20);
+  background:linear-gradient(180deg,rgba(0,212,255,.025),rgba(255,255,255,.015));
+}
+.inspector-vertical-resize-handle::before{
+  content:'';
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:46px;
+  height:3px;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  background:rgba(125,190,255,.22);
+  box-shadow:0 0 12px rgba(0,212,255,.10);
+  transition:background .16s,box-shadow .16s,width .16s;
+}
+.inspector-vertical-resize-handle:hover::before,
+.inspector-vertical-resize-handle.dragging::before{
+  width:74px;
+  background:var(--accent);
+  box-shadow:0 0 16px rgba(0,212,255,.65);
+}
+.chat-panel{
+  flex:0 0 340px;
+  min-height:190px;
+  max-height:calc(100% - 200px);
+}
+.chat-messages{
+  min-height:0;
+  overflow-y:auto;
+}
+.mobile-sheet-handle,.mobile-inspector-close{
+  display:none;
+}
+
+/* Mobile/tablet layout: one atlas view at a time + bottom-sheet inspector */
+@media (max-width: 820px){
+  html,body{
+    font-size:16px;
+    height:100dvh;
+    overflow:hidden;
+  }
+  body::after{opacity:.45;}
+  header{
+    min-height:96px;
+    height:auto;
+    align-items:flex-start;
+    gap:8px;
+    padding:8px 10px;
+    flex-wrap:wrap;
+  }
+  .header-title{font-size:.88rem;}
+  .header-sub{font-size:.58rem;}
+  .live-badge{
+    display:none;
+  }
+  .view-mode-group{
+    order:10;
+    width:100%;
+    overflow-x:auto;
+    padding-top:2px;
+  }
+  .view-mode-group label{font-size:.6rem;}
+  .vmode-btns{
+    width:max-content;
+    min-width:100%;
+    gap:7px;
+  }
+  .vmode-btn{
+    min-height:38px;
+    padding:9px 12px;
+    border-radius:999px;
+    font-size:.72rem;
+  }
+  .vmode-btn[data-vmode="all"]{
+    display:none;
+  }
+  .color-toolbar{
+    margin-left:auto;
+  }
+  .seg-btn{
+    min-height:38px;
+    padding:8px 13px;
+    border-radius:999px;
+  }
+  .root{
+    height:calc(100dvh - 96px);
+  }
+  .views-area{
+    display:block;
+    height:100%;
+    overflow:hidden;
+  }
+  .view-cell{
+    display:none;
+    height:100%;
+    border-right:0;
+    border-bottom:0;
+  }
+  .views-area.focus-sagittal .view-cell[data-view="sagittal"],
+  .views-area.focus-coronal .view-cell[data-view="coronal"],
+  .views-area.focus-transverse .view-cell[data-view="transverse"],
+  .views-area.focus-three-d .view-cell[data-view="three-d"]{
+    display:flex;
+  }
+  .views-area:not(.focus-sagittal):not(.focus-coronal):not(.focus-transverse):not(.focus-three-d) .view-cell[data-view="sagittal"]{
+    display:flex;
+  }
+  .view-header{
+    min-height:54px;
+    gap:7px;
+    padding:8px 9px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .view-tag{
+    font-size:.66rem;
+    padding:5px 9px;
+    border-radius:999px;
+  }
+  .view-axis-label{
+    font-size:.62rem!important;
+    white-space:nowrap;
+  }
+  .slider-btn,.recenter-btn{
+    min-width:36px;
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    font-size:1rem;
+  }
+  .view-header input[type=range]{
+    min-width:128px;
+    max-width:180px;
+    height:24px;
+  }
+  .idx-display,.zoom-display{
+    font-size:.76rem;
+    min-width:40px;
+  }
+  .coord-strip{
+    min-height:30px;
+    padding:7px 10px;
+    font-size:.68rem;
+  }
+  .canvas-wrap{
+    min-height:0;
+    touch-action:manipulation;
+  }
+  .three-toolbar{
+    top:10px;
+    left:10px;
+    gap:7px;
+  }
+  .three-tool-btn{
+    min-height:36px;
+    padding:8px 10px;
+    border-radius:10px;
+    font-size:.62rem;
+  }
+  .three-status{
+    top:10px;
+    right:10px;
+    max-width:48vw;
+    font-size:.6rem;
+  }
+  .info-panel{
+    left:0!important;
+    right:0!important;
+    top:auto!important;
+    bottom:0!important;
+    width:100%!important;
+    min-width:0;
+    max-width:none;
+    height:74dvh;
+    border-left:0;
+    border-top:1px solid rgba(0,212,255,.25);
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -22px 52px rgba(0,0,0,.58);
+    transform:translateY(0);
+    transition:transform .28s cubic-bezier(.3,.7,.3,1);
+    z-index:55;
+  }
+  .info-panel.collapsed{
+    transform:translateY(calc(100% - 52px));
+    box-shadow:0 -12px 34px rgba(0,0,0,.42);
+  }
+  .info-panel.sheet-dragging{
+    transition:none;
+  }
+  .mobile-sheet-handle{
+    display:block;
+    position:absolute;
+    top:6px;
+    left:50%;
+    width:76px;
+    height:20px;
+    transform:translateX(-50%);
+    z-index:75;
+    cursor:grab;
+    touch-action:none;
+  }
+  .mobile-sheet-handle::before{
+    content:'';
+    position:absolute;
+    left:50%;
+    top:8px;
+    width:48px;
+    height:4px;
+    transform:translateX(-50%);
+    border-radius:999px;
+    background:rgba(125,190,255,.36);
+    box-shadow:0 0 14px rgba(0,212,255,.22);
+  }
+  .mobile-sheet-handle:active{
+    cursor:grabbing;
+  }
+  .mobile-inspector-close{
+    display:flex;
+    position:absolute;
+    top:8px;
+    right:10px;
+    z-index:80;
+    width:36px;
+    height:36px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(125,190,255,.18);
+    border-radius:999px;
+    background:rgba(4,9,16,.72);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:1rem;
+    cursor:pointer;
+    box-shadow:0 0 18px rgba(0,212,255,.10);
+  }
+  .mobile-inspector-close:hover{
+    color:var(--accent);
+    border-color:rgba(0,212,255,.42);
+  }
+  .sidebar-resize-handle{
+    display:none;
+  }
+  .sidebar-tabs{
+    padding:22px 52px 8px 10px;
+    border-radius:22px 22px 0 0;
+  }
+  .sidebar-tab{
+    min-height:38px;
+    padding:9px 10px;
+    font-size:.68rem;
+  }
+  .panel-toggle{
+    top:auto!important;
+    right:12px!important;
+    bottom:10px;
+    width:48px;
+    height:38px;
+    border-radius:999px;
+    z-index:70;
+    background:rgba(8,14,22,.92);
+    box-shadow:0 0 24px rgba(0,212,255,.18);
+  }
+  .panel-toggle-icon{
+    transform:rotate(90deg);
+  }
+  .info-panel.collapsed ~ .panel-toggle .panel-toggle-icon{
+    transform:rotate(-90deg);
+  }
+  .sidebar-pane{
+    min-height:0;
+  }
+  #pane-main-scroll{
+    flex:1 1 auto!important;
+    min-height:180px;
+    padding:10px;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  #pane-main-scroll>.panel-section{
+    padding:12px!important;
+    margin-bottom:9px;
+    border-radius:13px;
+  }
+  .search-input,.ontology-search,.chat-input{
+    min-height:42px;
+    font-size:16px;
+  }
+  .search-clear{
+    min-width:38px;
+    min-height:38px;
+  }
+  .world-grid{
+    grid-template-columns:1fr;
+  }
+  .region-summary,.functional-keywords,.related-regions{
+    padding:11px;
+  }
+  #r-struct{
+    font-size:1.05rem;
+  }
+  .keyword-chip,.related-region-chip{
+    min-height:34px;
+    padding:7px 10px;
+  }
+  .inspector-vertical-resize-handle{
+    display:none;
+  }
+  .chat-panel{
+    flex:0 0 230px;
+    min-height:190px;
+    max-height:42%;
+    padding:10px 12px 0;
+  }
+  .chat-header{
+    min-height:34px;
+    font-size:.68rem;
+  }
+  .chat-messages{
+    gap:9px;
+    padding:8px 2px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .chat-msg{
+    max-width:96%;
+    font-size:.82rem;
+    line-height:1.5;
+    padding:9px 10px;
+  }
+  .chat-input-row{
+    gap:8px;
+    padding:8px 0 10px;
+  }
+  .chat-send{
+    min-width:68px;
+    min-height:44px;
+    font-size:.84rem;
+  }
+  #pane-tree{
+    min-height:0;
+    padding:12px;
+  }
+  .tree-scroll{
+    min-height:0;
+    -webkit-overflow-scrolling:touch;
+  }
+  #status-bar{
+    min-height:30px;
+    padding:7px 12px;
+    font-size:.68rem;
+  }
+}
 </style>
 </head>
 <body>
@@ -632,6 +1228,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
        ═══════════════════════════════════════════════════ -->
   <div class="info-panel collapsed" id="info-panel" style="position:absolute;">
     <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+    <div class="mobile-sheet-handle" id="mobile-sheet-handle" aria-label="Drag down to minimize inspector"></div>
+    <button class="mobile-inspector-close" id="mobile-inspector-close" type="button" aria-label="Minimize inspector">×</button>
 
     <!-- ── Tab strip ───────────────────────────────────── -->
     <div class="sidebar-tabs" id="sidebar-tabs">
@@ -667,7 +1265,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         </div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section region-inspector-card">
         <h2>Region Lookup</h2>
         <div class="field">
           <div class="field-value placeholder" id="r-struct">Click any view to identify a region</div>
@@ -689,6 +1287,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       </div>
 
       </div><!-- /pane-main-scroll -->
+
+      <div class="inspector-vertical-resize-handle" id="inspector-vertical-resize-handle" aria-label="Resize inspector and chat sections"></div>
 
       <!-- Chat lives inside pane-main at the bottom -->
       <div class="chat-panel">
@@ -1135,6 +1735,9 @@ async function redrawHighlightForView(v){
 
   function activatePane(paneName) {
     tabs.forEach(t => t.classList.toggle('active', t.dataset.pane === paneName));
+    if(paneName === 'main' && window.matchMedia('(max-width: 820px)').matches && typeof window.openInfoPanel === 'function'){
+      window.openInfoPanel();
+    }
 
     if (paneName === 'tree') {
       paneMain.classList.remove('active');
@@ -1685,7 +2288,7 @@ loadOntology();
 (function(){
   const handle = document.getElementById('sidebar-resize-handle');
   const root   = document.querySelector('.root');
-  const MIN_W  = 240, MAX_W = 600;
+  const MIN_W  = 320, MAX_W = 600;
   let dragging = false, startX = 0, startW = 0;
 
   handle.addEventListener('mousedown', e=>{
@@ -1729,13 +2332,64 @@ loadOntology();
   });
 })();
 
+// -- Inspector/chat vertical resize --------------------------------------------
+(function(){
+  const handle = document.getElementById('inspector-vertical-resize-handle');
+  const pane   = document.getElementById('pane-main');
+  const top    = document.getElementById('pane-main-scroll');
+  const chat   = document.querySelector('#pane-main .chat-panel');
+  if(!handle || !pane || !top || !chat) return;
+
+  const MIN_TOP = 180;
+  const MIN_CHAT = 190;
+  let dragging = false, startY = 0, startTopH = 0, availableH = 0;
+
+  function availableHeight(){
+    return pane.clientHeight - handle.offsetHeight;
+  }
+
+  handle.addEventListener('mousedown', e=>{
+    dragging = true;
+    startY = e.clientY;
+    startTopH = top.getBoundingClientRect().height;
+    availableH = availableHeight();
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const maxTop = Math.max(MIN_TOP, availableH - MIN_CHAT);
+    const nextTop = Math.min(maxTop, Math.max(MIN_TOP, startTopH + (e.clientY - startY)));
+    const nextChat = Math.max(MIN_CHAT, availableH - nextTop);
+    top.style.flex = `0 0 ${nextTop}px`;
+    chat.style.flex = `0 0 ${nextChat}px`;
+  });
+
+  document.addEventListener('mouseup', ()=>{
+    if(!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
 // -- Collapsible sidebar --------------------------------------------------------
 // Overlay side panel: click the toggle tab, or clicking any view auto-opens it.
 (function(){
   const panel  = document.getElementById('info-panel');
   const toggle = document.getElementById('panel-toggle');
+  const closeBtn = document.getElementById('mobile-inspector-close');
+  const sheetHandle = document.getElementById('mobile-sheet-handle');
+  const mobileSheetQuery = window.matchMedia('(max-width: 820px)');
+  let sheetDragging = false, sheetStartY = 0, sheetDeltaY = 0;
 
   function setCollapsed(collapsed){
+    panel.style.transform = '';
+    panel.classList.remove('sheet-dragging');
     panel.classList.toggle('collapsed', collapsed);
     toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     // Sync the toggle's right-edge with the panel's current width.
@@ -1751,6 +2405,41 @@ loadOntology();
   }
   toggle.addEventListener('click', ()=>{
     setCollapsed(!panel.classList.contains('collapsed'));
+  });
+  closeBtn?.addEventListener('click', ()=>setCollapsed(true));
+
+  sheetHandle?.addEventListener('pointerdown', e=>{
+    if(!mobileSheetQuery.matches) return;
+    sheetDragging = true;
+    sheetStartY = e.clientY;
+    sheetDeltaY = 0;
+    panel.classList.add('sheet-dragging');
+    sheetHandle.setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  });
+  sheetHandle?.addEventListener('pointermove', e=>{
+    if(!sheetDragging) return;
+    sheetDeltaY = e.clientY - sheetStartY;
+    if(panel.classList.contains('collapsed') && sheetDeltaY < -28){
+      setCollapsed(false);
+      return;
+    }
+    if(sheetDeltaY <= 0 || panel.classList.contains('collapsed')) return;
+    panel.style.transform = `translateY(${Math.min(sheetDeltaY, panel.offsetHeight - 52)}px)`;
+  });
+  sheetHandle?.addEventListener('pointerup', ()=>{
+    if(!sheetDragging) return;
+    sheetDragging = false;
+    const shouldCollapse = sheetDeltaY > 72;
+    panel.style.transform = '';
+    panel.classList.remove('sheet-dragging');
+    setCollapsed(shouldCollapse);
+  });
+  sheetHandle?.addEventListener('pointercancel', ()=>{
+    if(!sheetDragging) return;
+    sheetDragging = false;
+    panel.style.transform = '';
+    panel.classList.remove('sheet-dragging');
   });
 
   // Expose a global so other code can open the panel on a view click.
@@ -1901,11 +2590,12 @@ function syncThreeD({ name, acronym, data }){
 
 const viewsArea=document.getElementById('views-area');
 let currentViewMode='all';
-document.getElementById('vmode-btns').addEventListener('click',e=>{
-  const btn=e.target.closest('.vmode-btn'); if(!btn) return;
-  const mode=btn.dataset.vmode; if(mode===currentViewMode) return;
+const mobileViewQuery=window.matchMedia('(max-width: 820px)');
+function setViewMode(mode){
+  if(mobileViewQuery.matches && mode==='all') mode='sagittal';
+  if(mode===currentViewMode) return;
   currentViewMode=mode;
-  document.querySelectorAll('.vmode-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.vmode-btn').forEach(b=>b.classList.toggle('active', b.dataset.vmode===mode));
   viewsArea.classList.remove('focus-sagittal','focus-coronal','focus-transverse','focus-three-d');
   if(mode!=='all') viewsArea.classList.add('focus-'+mode);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -1916,7 +2606,18 @@ document.getElementById('vmode-btns').addEventListener('click',e=>{
       : (twoDviews.includes(mode) ? [mode] : []);
     av.forEach(v => syncCanvas(v));
   }));
+}
+document.getElementById('vmode-btns').addEventListener('click',e=>{
+  const btn=e.target.closest('.vmode-btn'); if(!btn) return;
+  setViewMode(btn.dataset.vmode);
 });
+function syncMobileViewMode(){
+  if(mobileViewQuery.matches && currentViewMode==='all') setViewMode('sagittal');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>Object.keys(views).forEach(v=>syncCanvas(v))));
+}
+if(mobileViewQuery.addEventListener) mobileViewQuery.addEventListener('change', syncMobileViewMode);
+else mobileViewQuery.addListener(syncMobileViewMode);
+syncMobileViewMode();
 
 Object.keys(views).forEach(v=>{
   const s=views[v];
