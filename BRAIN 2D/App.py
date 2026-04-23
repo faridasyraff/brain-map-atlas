@@ -23,7 +23,10 @@ Endpoints
        Returns RGBA mask using the official atlas color for that level.
 """
 
-import io, base64, json as _json, logging, traceback
+print("RUNNING THIS APP.PY")
+
+import io, base64, json as _json, logging, os as _os, re, traceback
+from collections import Counter
 from datetime import datetime
 import numpy as np
 from scipy.ndimage import binary_erosion
@@ -68,6 +71,211 @@ def _setup_logger():
 
 log = _setup_logger()
 log.info('Atlas backend starting up')
+
+_KEYWORD_STOPWORDS = {
+    'about', 'above', 'after', 'also', 'among', 'and', 'are', 'areas',
+    'brain', 'can', 'cell', 'cells', 'from', 'for', 'has', 'have', 'into',
+    'its', 'may', 'more', 'most', 'other', 'outputs', 'region', 'regions',
+    'role', 'roles', 'system', 'that', 'the', 'their', 'these', 'this',
+    'through', 'via', 'with'
+}
+
+def _load_functional_kb():
+    kb_path = Path(__file__).parent / 'brain_regions_kb.json'
+    if not kb_path.exists():
+        log.warning(f'functional keyword KB not found: {kb_path}')
+        return {}
+
+    try:
+        kb = _json.loads(kb_path.read_text(encoding='utf-8'))
+    except Exception as e:
+        log.warning(f'functional keyword KB load failed: {e}')
+        return {}
+
+    lookup = {}
+    for region in kb.get('regions', []):
+        keys = [
+            str(region.get('parcellation_index', '')).strip(),
+            str(region.get('structure', '')).lower().strip(),
+            str(region.get('substructure', '')).lower().strip(),
+            str(region.get('acronym', '')).lower().strip(),
+        ]
+        for key in keys:
+            if key:
+                lookup[key] = region
+    return lookup
+
+_functional_kb = _load_functional_kb()
+_functional_keyword_cache = {}
+
+def _get_functional_keywords(parcellation_index=None, region_name='', region_acronym='', limit=14):
+    keys = [
+        str(parcellation_index or '').strip(),
+        str(region_name or '').lower().strip(),
+        str(region_acronym or '').lower().strip(),
+    ]
+
+    region = None
+    for key in keys:
+        if key and key in _functional_kb:
+            region = _functional_kb[key]
+            break
+    if not region:
+        return []
+
+    curated = region.get('functional_keywords')
+    if isinstance(curated, list):
+        keywords = []
+        for item in curated:
+            if isinstance(item, dict):
+                term = str(item.get('term', '')).strip()
+                try:
+                    weight = float(item.get('weight', 1.0))
+                except (TypeError, ValueError):
+                    weight = 1.0
+            else:
+                term = str(item).strip()
+                weight = 1.0
+            if term:
+                keywords.append({'term': term, 'weight': weight})
+        return keywords[:limit]
+
+    weighted_fields = [
+        ('function', 3),
+        ('connectivity', 2),
+        ('clinical_relevance', 1),
+        ('notes', 1),
+    ]
+    counts = Counter()
+    for field, multiplier in weighted_fields:
+        text = str(region.get(field, '') or '').lower()
+        for word in re.findall(r'[a-z][a-z-]{3,}', text):
+            if word not in _KEYWORD_STOPWORDS:
+                counts[word] += multiplier
+
+    if not counts:
+        return []
+
+    max_count = max(counts.values())
+    return [
+        {
+            'term': term,
+            'weight': round(0.55 + (count / max_count) * 0.45, 2),
+        }
+        for term, count in counts.most_common(limit)
+    ]
+
+def _get_openai_api_key():
+    api_key = _os.environ.get('OPENAI_API_KEY', '')
+    if api_key:
+        print('[functional_keywords] OPENAI_API_KEY loaded from environment')
+        return api_key
+
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        print(f'[functional_keywords] .env found at {env_path}')
+        for line in env_path.read_text().splitlines():
+            if line.startswith('OPENAI_API_KEY='):
+                api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
+                if api_key:
+                    print('[functional_keywords] OPENAI_API_KEY loaded from .env')
+                    return api_key
+        print('[functional_keywords] .env loaded but OPENAI_API_KEY was not found')
+    else:
+        print(f'[functional_keywords] .env not found at {env_path}')
+    return ''
+
+def _parse_keyword_json(content):
+    text = (content or '').strip()
+    if text.startswith('```'):
+        text = re.sub(r'^```(?:json)?\s*', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'\s*```$', '', text)
+
+    try:
+        parsed = _json.loads(text)
+    except Exception:
+        match = re.search(r'\[[\s\S]*\]', text)
+        if not match:
+            return []
+        parsed = _json.loads(match.group(0))
+
+    if not isinstance(parsed, list):
+        return []
+
+    keywords = []
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        term = str(item.get('term', '')).strip()
+        if not term:
+            continue
+        try:
+            weight = float(item.get('weight', 0.75))
+        except (TypeError, ValueError):
+            weight = 0.75
+        weight = max(0.5, min(1.0, weight))
+        keywords.append({'term': term, 'weight': round(weight, 2)})
+        if len(keywords) >= 15:
+            break
+    return keywords
+
+def _generate_functional_keywords(region_name, region_acronym):
+    acronym_key = (region_acronym or '').lower().strip()
+    cache_key = acronym_key if acronym_key not in {'', '--', '—'} else (region_name or '').lower().strip()
+    if not cache_key:
+        print('openai keyword error: missing region cache key')
+        return []
+    if cache_key in _functional_keyword_cache:
+        print(f'openai keywords returned: cache hit for {cache_key}')
+        return _functional_keyword_cache[cache_key]
+
+    api_key = _get_openai_api_key()
+    if not api_key:
+        print('openai keyword error: missing API key')
+        return []
+
+    try:
+        from openai import OpenAI
+    except ImportError:
+        print('openai keyword error: OpenAI package not installed')
+        log.warning('OpenAI package not installed; using local functional keywords')
+        return []
+
+    try:
+        print(f'calling openai for keywords: "{region_name}" ({region_acronym})')
+        client = OpenAI(api_key=api_key, timeout=8.0)
+        response = client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': 'You are a neuroscience assistant.'},
+                {'role': 'user', 'content': (
+                    'Generate 8-15 short functional keywords for the brain region:\n'
+                    f'Name: {region_name}\n'
+                    f'Acronym: {region_acronym}\n\n'
+                    'Return ONLY a JSON array of objects:\n'
+                    '[\n'
+                    ' {"term": "motor control", "weight": 1.0},\n'
+                    ' {"term": "habit learning", "weight": 0.9}\n'
+                    ']\n\n'
+                    'Rules:\n'
+                    '- short scientific keywords\n'
+                    '- no explanations\n'
+                    '- valid JSON only\n'
+                    '- weights between 0.5 and 1.0'
+                )},
+            ],
+            max_tokens=350,
+            temperature=0.2,
+        )
+        keywords = _parse_keyword_json(response.choices[0].message.content)
+        print(f'openai keywords returned: {len(keywords)} keyword(s): {keywords}')
+        if keywords:
+            _functional_keyword_cache[cache_key] = keywords
+        return keywords
+    except Exception as e:
+        print(f'openai keyword error: "{region_name}" ({region_acronym}): {e}')
+        log.warning(f'OpenAI keyword generation failed for "{region_name}" ({region_acronym}): {e}')
+        return []
 
 # ── Rapid-click / spam tracker ────────────────────────────────────────────────
 # Fires a WARNING if the same parcellation_index or group name is requested
@@ -651,6 +859,7 @@ def get_slice():
 
 @app.route('/api/lookup', methods=['POST'])
 def lookup():
+    print('lookup called')
     data = request.get_json(force=True)
     try:
         view = data['view'].lower()
@@ -713,6 +922,22 @@ def lookup():
                 break
         result['matched_label']   = matched_name
         result['matched_acronym'] = matched_acro
+        keywords = _get_functional_keywords(
+            parcellation_index=parcellation_index,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
+        print("local keyword count", len(keywords))
+        if not keywords:
+            print("calling OpenAI")
+            try:
+                keywords = _generate_functional_keywords(matched_name, matched_acro)
+                print("OpenAI returned keywords", keywords)
+            except Exception as e:
+                print("OpenAI error", e)
+                keywords = []
+        result["functional_keywords"] = keywords
+        print("functional_keywords added", result["functional_keywords"])
 
         _check_rapid(_rapid_lookup, parcellation_index, matched_name, 'lookup')
         log.info(f'lookup ok — pidx={parcellation_index} name={matched_name}')
@@ -2106,8 +2331,6 @@ def chat():
 
 
 # ── ChatGPT (OpenAI) handler ───────────────────────────────────────────────────
-import os as _os
-
 def _gpt_answer(question, region_name='', parcellation_index=''):
     """
     Sends the question to OpenAI GPT with region context built from the atlas
