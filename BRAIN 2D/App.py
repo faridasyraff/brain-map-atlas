@@ -107,6 +107,7 @@ def _load_functional_kb():
 
 _functional_kb = _load_functional_kb()
 _functional_keyword_cache = {}
+_region_summary_cache = {}
 
 def _get_functional_keywords(parcellation_index=None, region_name='', region_acronym='', limit=14):
     keys = [
@@ -207,6 +208,52 @@ def _get_region_summary(parcellation_index=None, region_name='', region_acronym=
             break
 
     return ' '.join(clean_sentences[:3]).strip()
+
+def _generate_region_summary(region_name, region_acronym):
+    acronym_key = (region_acronym or '').lower().strip()
+    cache_key = acronym_key if acronym_key not in {'', '--', 'â€”', '—'} else (region_name or '').lower().strip()
+    if not cache_key:
+        return ''
+    if cache_key in _region_summary_cache:
+        return _region_summary_cache[cache_key]
+
+    api_key = _get_openai_api_key()
+    if not api_key:
+        return ''
+
+    try:
+        from openai import OpenAI
+    except ImportError:
+        log.warning('OpenAI package not installed; cannot generate region summary')
+        return ''
+
+    try:
+        client = OpenAI(api_key=api_key, timeout=6.0)
+        response = client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': 'You are a neuroscience assistant.'},
+                {'role': 'user', 'content': (
+                    'Write a concise 2-3 sentence functional summary for this mouse brain region.\n\n'
+                    f'Name: {region_name}\n'
+                    f'Acronym: {region_acronym}\n\n'
+                    'Rules:\n'
+                    '- Focus on function and connectivity\n'
+                    '- Plain readable neuroscience language\n'
+                    '- No bullet points\n'
+                    '- Do not invent precise experimental claims'
+                )},
+            ],
+            max_tokens=220,
+            temperature=0.2,
+        )
+        summary = response.choices[0].message.content.strip()
+        if summary:
+            _region_summary_cache[cache_key] = summary
+        return summary
+    except Exception as e:
+        log.warning(f'OpenAI summary generation failed for "{region_name}" ({region_acronym}): {e}')
+        return ''
 
 def _get_related_regions(parcellation_index=None, region_name='', region_acronym='', limit=8):
     keys = [
@@ -1098,11 +1145,16 @@ def lookup():
                 break
         result['matched_label']   = matched_name
         result['matched_acronym'] = matched_acro
-        result["region_summary"] = _get_region_summary(
+        summary = _get_region_summary(
             parcellation_index=parcellation_index,
             region_name=matched_name,
             region_acronym=matched_acro,
         )
+        print("local summary:", summary)
+        if not summary:
+            print("openai fallback used for", matched_name)
+            summary = _generate_region_summary(matched_name, matched_acro)
+        result["region_summary"] = summary
         keywords = _get_functional_keywords(
             parcellation_index=parcellation_index,
             region_name=matched_name,
