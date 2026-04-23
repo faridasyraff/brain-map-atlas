@@ -165,6 +165,139 @@ def _get_functional_keywords(parcellation_index=None, region_name='', region_acr
         for term, count in counts.most_common(limit)
     ]
 
+def _get_related_regions(parcellation_index=None, region_name='', region_acronym='', limit=8):
+    keys = [
+        str(parcellation_index or '').strip(),
+        str(region_name or '').lower().strip(),
+        str(region_acronym or '').lower().strip(),
+    ]
+
+    region = None
+    for key in keys:
+        if key and key in _functional_kb:
+            region = _functional_kb[key]
+            break
+
+    related = []
+    seen = set()
+
+    def _selected_names():
+        vals = {str(region_name or '').lower().strip(), str(region_acronym or '').lower().strip()}
+        if region:
+            for f in ['structure', 'substructure', 'division', 'category', 'acronym']:
+                vals.add(str(region.get(f, '') or '').lower().strip())
+        return {v for v in vals if v and v not in {'--', 'â€”', '—'}}
+
+    selected = _selected_names()
+
+    def _add_related(name, relationship, query=None):
+        clean = re.sub(r'\([^)]*\)', '', str(name or ''))
+        clean = re.sub(r'\b(from|to|via|with|and|also)\b', '', clean, flags=re.IGNORECASE).strip(" .")
+        clean = re.sub(r'\s+', ' ', clean)
+        key = clean.lower()
+        if len(clean) < 3 or key in seen or key in selected:
+            return False
+        seen.add(key)
+        related.append({
+            'name': clean,
+            'label': clean,
+            'relationship': relationship,
+            'query': query or clean,
+        })
+        return len(related) >= limit
+
+    # 1. Explicit connectivity from brain_regions_kb.json.
+    connectivity = str(region.get('connectivity', '') or '') if region else ''
+    if connectivity:
+        parts = re.split(r'(?i)\b(inputs?|outputs?)\s*:', connectivity)
+        chunks = []
+        if len(parts) > 1:
+            for i in range(1, len(parts), 2):
+                rel = parts[i].lower().rstrip('s')
+                text = parts[i + 1] if i + 1 < len(parts) else ''
+                chunks.append((rel, text))
+        else:
+            chunks.append(('related', connectivity))
+
+        for relationship, text in chunks:
+            text = re.sub(r'\([^)]*\)', '', text)
+            for raw in re.split(r',|;|\band\b|\u2192|->', text):
+                if _add_related(raw, relationship):
+                    print('related regions parsed', related)
+                    return related
+
+    row = None
+    pidx = None
+    try:
+        pidx = int(parcellation_index) if parcellation_index not in (None, '') else None
+    except (TypeError, ValueError):
+        pidx = None
+
+    if pidx is not None and pidx in name_df.index:
+        row = name_df.loc[pidx]
+    elif region_name:
+        rn = str(region_name).lower().strip()
+        for col in ['substructure', 'structure', 'division', 'category']:
+            hits = name_df[name_df[col].fillna('').str.lower() == rn]
+            if not hits.empty:
+                row = hits.iloc[0]
+                pidx = int(hits.index[0])
+                break
+
+    if row is None:
+        print('related regions parsed', related)
+        return related[:limit]
+
+    # 2. Child/parent hierarchy matches from the selected row.
+    hierarchy = ['category', 'division', 'structure', 'substructure']
+    row_vals = {f: str(row.get(f, '') or '').strip() for f in hierarchy}
+    for parent, child in [('structure', 'substructure'), ('division', 'structure'), ('category', 'division')]:
+        parent_val = row_vals.get(parent)
+        child_val = row_vals.get(child)
+        if parent_val and child_val and parent_val not in {'--', 'â€”', '—'}:
+            if parent_val.lower() != child_val.lower():
+                if _add_related(parent_val, 'parent'):
+                    print('related regions parsed', related)
+                    return related
+
+        if parent_val and parent_val not in {'--', 'â€”', '—'}:
+            try:
+                siblings = name_df[name_df[parent].fillna('').str.lower() == parent_val.lower()]
+                for _, sib in siblings.head(80).iterrows():
+                    sib_name = str(sib.get(child, '') or '').strip()
+                    if sib_name and sib_name.lower() != row_vals.get(child, '').lower():
+                        if _add_related(sib_name, 'sibling'):
+                            print('related regions parsed', related)
+                            return related
+            except Exception:
+                pass
+
+    # 3. Nearby atlas groups by structure/division/category.
+    for level in ['structure', 'division', 'category']:
+        val = row_vals.get(level)
+        if not val or val in {'--', 'â€”', '—'}:
+            continue
+        if _add_related(val, level):
+            print('related regions parsed', related)
+            return related
+
+        try:
+            matches = name_df[name_df[level].fillna('').str.lower() == val.lower()]
+            for _, m in matches.head(100).iterrows():
+                candidate = (
+                    str(m.get('substructure', '') or '').strip()
+                    or str(m.get('structure', '') or '').strip()
+                    or str(m.get('division', '') or '').strip()
+                )
+                if _add_related(candidate, f'same {level}'):
+                    print('related regions parsed', related)
+                    return related
+        except Exception:
+            pass
+
+    print('related regions parsed', related)
+    return related[:limit]
+
 def _get_openai_api_key():
     api_key = _os.environ.get('OPENAI_API_KEY', '')
     if api_key:
@@ -938,6 +1071,12 @@ def lookup():
                 keywords = []
         result["functional_keywords"] = keywords
         print("functional_keywords added", result["functional_keywords"])
+        result["related_regions"] = _get_related_regions(
+            parcellation_index=parcellation_index,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
+        print("related_regions added", result["related_regions"])
 
         _check_rapid(_rapid_lookup, parcellation_index, matched_name, 'lookup')
         log.info(f'lookup ok — pidx={parcellation_index} name={matched_name}')
