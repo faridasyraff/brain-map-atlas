@@ -165,6 +165,49 @@ def _get_functional_keywords(parcellation_index=None, region_name='', region_acr
         for term, count in counts.most_common(limit)
     ]
 
+def _get_region_summary(parcellation_index=None, region_name='', region_acronym=''):
+    keys = [
+        str(parcellation_index or '').strip(),
+        str(region_name or '').lower().strip(),
+        str(region_acronym or '').lower().strip(),
+    ]
+
+    region = None
+    for key in keys:
+        if key and key in _functional_kb:
+            region = _functional_kb[key]
+            break
+    if not region:
+        return ''
+
+    function_text = str(region.get('function', '') or '').strip()
+    connectivity_text = str(region.get('connectivity', '') or '').strip()
+    notes_text = str(region.get('notes', '') or '').strip()
+
+    candidate_texts = []
+    if function_text:
+        candidate_texts.append(function_text)
+    if connectivity_text and re.search(r'\b(input|inputs|output|outputs|project|projects|projection|connect|connectivity)\b', connectivity_text, re.IGNORECASE):
+        candidate_texts.append('Connectivity: ' + connectivity_text)
+    if not function_text and notes_text:
+        candidate_texts.append(notes_text)
+
+    seen = set()
+    clean_sentences = []
+    for sentence in re.split(r'(?<=[.!?])\s+', ' '.join(candidate_texts)):
+        sentence = re.sub(r'\s+', ' ', sentence).strip()
+        if not sentence:
+            continue
+        key = re.sub(r'[^a-z0-9]+', ' ', sentence.lower()).strip()
+        if key in seen:
+            continue
+        seen.add(key)
+        clean_sentences.append(sentence)
+        if len(clean_sentences) >= 3:
+            break
+
+    return ' '.join(clean_sentences[:3]).strip()
+
 def _get_related_regions(parcellation_index=None, region_name='', region_acronym='', limit=8):
     keys = [
         str(parcellation_index or '').strip(),
@@ -1055,6 +1098,11 @@ def lookup():
                 break
         result['matched_label']   = matched_name
         result['matched_acronym'] = matched_acro
+        result["region_summary"] = _get_region_summary(
+            parcellation_index=parcellation_index,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
         keywords = _get_functional_keywords(
             parcellation_index=parcellation_index,
             region_name=matched_name,
