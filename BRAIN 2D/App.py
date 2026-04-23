@@ -106,7 +106,44 @@ def _load_functional_kb():
     return lookup
 
 _functional_kb = _load_functional_kb()
-_functional_keyword_cache = {}
+_OPENAI_REGION_CACHE_PATH = Path(__file__).parent / 'openai_region_cache.json'
+
+def _load_openai_region_cache():
+    empty = {'functional_keywords': {}, 'region_summaries': {}}
+    if not _OPENAI_REGION_CACHE_PATH.exists():
+        return empty
+
+    try:
+        data = _json.loads(_OPENAI_REGION_CACHE_PATH.read_text(encoding='utf-8'))
+    except Exception as e:
+        log.warning(f'OpenAI region cache load failed: {e}')
+        return empty
+
+    keywords = data.get('functional_keywords', {})
+    summaries = data.get('region_summaries', {})
+    if not isinstance(keywords, dict):
+        keywords = {}
+    if not isinstance(summaries, dict):
+        summaries = {}
+    print(f'OpenAI region cache loaded: {len(keywords)} keyword entries, {len(summaries)} summary entries')
+    return {'functional_keywords': keywords, 'region_summaries': summaries}
+
+def _save_openai_region_cache():
+    data = {
+        'functional_keywords': _functional_keyword_cache,
+        'region_summaries': _region_summary_cache,
+    }
+    try:
+        tmp_path = _OPENAI_REGION_CACHE_PATH.with_suffix('.tmp')
+        tmp_path.write_text(_json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+        tmp_path.replace(_OPENAI_REGION_CACHE_PATH)
+        print(f'OpenAI region cache saved: {_OPENAI_REGION_CACHE_PATH}')
+    except Exception as e:
+        log.warning(f'OpenAI region cache save failed: {e}')
+
+_openai_region_cache = _load_openai_region_cache()
+_functional_keyword_cache = _openai_region_cache['functional_keywords']
+_region_summary_cache = _openai_region_cache['region_summaries']
 
 def _get_functional_keywords(parcellation_index=None, region_name='', region_acronym='', limit=14):
     keys = [
@@ -164,6 +201,96 @@ def _get_functional_keywords(parcellation_index=None, region_name='', region_acr
         }
         for term, count in counts.most_common(limit)
     ]
+
+def _get_region_summary(parcellation_index=None, region_name='', region_acronym=''):
+    keys = [
+        str(parcellation_index or '').strip(),
+        str(region_name or '').lower().strip(),
+        str(region_acronym or '').lower().strip(),
+    ]
+
+    region = None
+    for key in keys:
+        if key and key in _functional_kb:
+            region = _functional_kb[key]
+            break
+    if not region:
+        return ''
+
+    function_text = str(region.get('function', '') or '').strip()
+    connectivity_text = str(region.get('connectivity', '') or '').strip()
+    notes_text = str(region.get('notes', '') or '').strip()
+
+    candidate_texts = []
+    if function_text:
+        candidate_texts.append(function_text)
+    if connectivity_text and re.search(r'\b(input|inputs|output|outputs|project|projects|projection|connect|connectivity)\b', connectivity_text, re.IGNORECASE):
+        candidate_texts.append('Connectivity: ' + connectivity_text)
+    if not function_text and notes_text:
+        candidate_texts.append(notes_text)
+
+    seen = set()
+    clean_sentences = []
+    for sentence in re.split(r'(?<=[.!?])\s+', ' '.join(candidate_texts)):
+        sentence = re.sub(r'\s+', ' ', sentence).strip()
+        if not sentence:
+            continue
+        key = re.sub(r'[^a-z0-9]+', ' ', sentence.lower()).strip()
+        if key in seen:
+            continue
+        seen.add(key)
+        clean_sentences.append(sentence)
+        if len(clean_sentences) >= 3:
+            break
+
+    return ' '.join(clean_sentences[:3]).strip()
+
+def _generate_region_summary(region_name, region_acronym):
+    acronym_key = (region_acronym or '').lower().strip()
+    cache_key = acronym_key if acronym_key not in {'', '--', 'â€”', '—'} else (region_name or '').lower().strip()
+    if not cache_key:
+        return ''
+    if cache_key in _region_summary_cache:
+        return _region_summary_cache[cache_key]
+
+    api_key = _get_openai_api_key()
+    if not api_key:
+        return ''
+
+    try:
+        from openai import OpenAI
+    except ImportError:
+        log.warning('OpenAI package not installed; cannot generate region summary')
+        return ''
+
+    try:
+        client = OpenAI(api_key=api_key, timeout=6.0)
+        response = client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': 'You are a neuroscience assistant.'},
+                {'role': 'user', 'content': (
+                    'Write a concise 2-3 sentence functional summary for this mouse brain region.\n\n'
+                    f'Name: {region_name}\n'
+                    f'Acronym: {region_acronym}\n\n'
+                    'Rules:\n'
+                    '- Focus on function and connectivity\n'
+                    '- Plain readable neuroscience language\n'
+                    '- No bullet points\n'
+                    '- Do not invent precise experimental claims'
+                )},
+            ],
+            max_tokens=220,
+            temperature=0.2,
+        )
+        summary = response.choices[0].message.content.strip()
+        if summary:
+            _region_summary_cache[cache_key] = summary
+            _save_openai_region_cache()
+        return summary
+    except Exception as e:
+        log.warning(f'OpenAI summary generation failed for "{region_name}" ({region_acronym}): {e}')
+        return ''
 
 def _get_related_regions(parcellation_index=None, region_name='', region_acronym='', limit=8):
     keys = [
@@ -404,6 +531,7 @@ def _generate_functional_keywords(region_name, region_acronym):
         print(f'openai keywords returned: {len(keywords)} keyword(s): {keywords}')
         if keywords:
             _functional_keyword_cache[cache_key] = keywords
+            _save_openai_region_cache()
         return keywords
     except Exception as e:
         print(f'openai keyword error: "{region_name}" ({region_acronym}): {e}')
@@ -1055,6 +1183,16 @@ def lookup():
                 break
         result['matched_label']   = matched_name
         result['matched_acronym'] = matched_acro
+        summary = _get_region_summary(
+            parcellation_index=parcellation_index,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
+        print("local summary:", summary)
+        if not summary:
+            print("openai fallback used for", matched_name)
+            summary = _generate_region_summary(matched_name, matched_acro)
+        result["region_summary"] = summary
         keywords = _get_functional_keywords(
             parcellation_index=parcellation_index,
             region_name=matched_name,
