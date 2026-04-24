@@ -8,8 +8,8 @@ Volume: 1320 × 800 × 1140 voxels, ASL orientation
   axis-2 (z): left     → right        size 1140
 
 View slice extraction (post-transpose ready for imshow):
-  coronal    fix x → arr[xi,:,:]        rows=y  cols=z  shape(800,1140)
-  sagittal   fix z → arr[:,:,zi].T      rows=y  cols=x  shape(800,1320)
+  sagittal   fix x → arr[xi,:,:]        rows=y  cols=z  shape(800,1140)
+  coronal    fix z → arr[:,:,zi].T      rows=y  cols=x  shape(800,1320)
   transverse fix y → arr[:,yi,:]        rows=x  cols=z  shape(1320,1140)
 
 Endpoints
@@ -23,8 +23,6 @@ Endpoints
        Returns RGBA mask using the official atlas color for that level.
 """
 
-print("RUNNING THIS APP.PY")
-
 import io, base64, json as _json, logging, os as _os, re, traceback
 from collections import Counter
 from datetime import datetime
@@ -36,8 +34,9 @@ import matplotlib.pyplot as plt
 import SimpleITK as sitk
 from pathlib import Path
 from PIL import Image
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
+import json
 from abc_atlas_access.abc_atlas_cache.abc_project_cache import AbcProjectCache
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
@@ -106,44 +105,54 @@ def _load_functional_kb():
     return lookup
 
 _functional_kb = _load_functional_kb()
+
+# ── AI-generated region enrichment cache ─────────────────────────────────────
+# Persists OpenAI responses so a region is only generated once. First click on
+# an uncached region takes ~1-3s (blocking on OpenAI), later clicks are instant.
+# The slow work happens in /api/enrich (called asynchronously from the
+# frontend), NOT in /api/lookup — so the click itself never stalls.
 _OPENAI_REGION_CACHE_PATH = Path(__file__).parent / 'openai_region_cache.json'
 
 def _load_openai_region_cache():
     empty = {'functional_keywords': {}, 'region_summaries': {}}
     if not _OPENAI_REGION_CACHE_PATH.exists():
         return empty
-
     try:
         data = _json.loads(_OPENAI_REGION_CACHE_PATH.read_text(encoding='utf-8'))
     except Exception as e:
-        log.warning(f'OpenAI region cache load failed: {e}')
+        log.warning(f'AI region cache load failed: {e}')
         return empty
-
-    keywords = data.get('functional_keywords', {})
-    summaries = data.get('region_summaries', {})
-    if not isinstance(keywords, dict):
-        keywords = {}
-    if not isinstance(summaries, dict):
-        summaries = {}
-    print(f'OpenAI region cache loaded: {len(keywords)} keyword entries, {len(summaries)} summary entries')
-    return {'functional_keywords': keywords, 'region_summaries': summaries}
+    kw = data.get('functional_keywords', {})
+    su = data.get('region_summaries', {})
+    if not isinstance(kw, dict): kw = {}
+    if not isinstance(su, dict): su = {}
+    log.info(f'AI region cache loaded: {len(kw)} keyword entries, {len(su)} summaries')
+    return {'functional_keywords': kw, 'region_summaries': su}
 
 def _save_openai_region_cache():
     data = {
         'functional_keywords': _functional_keyword_cache,
-        'region_summaries': _region_summary_cache,
+        'region_summaries':    _region_summary_cache,
     }
     try:
-        tmp_path = _OPENAI_REGION_CACHE_PATH.with_suffix('.tmp')
-        tmp_path.write_text(_json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
-        tmp_path.replace(_OPENAI_REGION_CACHE_PATH)
-        print(f'OpenAI region cache saved: {_OPENAI_REGION_CACHE_PATH}')
+        tmp = _OPENAI_REGION_CACHE_PATH.with_suffix('.tmp')
+        tmp.write_text(_json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+        tmp.replace(_OPENAI_REGION_CACHE_PATH)
     except Exception as e:
-        log.warning(f'OpenAI region cache save failed: {e}')
+        log.warning(f'AI region cache save failed: {e}')
 
-_openai_region_cache = _load_openai_region_cache()
+_openai_region_cache      = _load_openai_region_cache()
 _functional_keyword_cache = _openai_region_cache['functional_keywords']
-_region_summary_cache = _openai_region_cache['region_summaries']
+_region_summary_cache     = _openai_region_cache['region_summaries']
+
+def _cache_key(region_name, region_acronym):
+    """Stable key used for both caches. Prefers acronym (short, stable),
+    falls back to lowercased name."""
+    acro = (region_acronym or '').lower().strip()
+    if acro and acro not in {'', '--', '—'}:
+        return acro
+    return (region_name or '').lower().strip()
+
 
 def _get_functional_keywords(parcellation_index=None, region_name='', region_acronym='', limit=14):
     keys = [
@@ -158,6 +167,10 @@ def _get_functional_keywords(parcellation_index=None, region_name='', region_acr
             region = _functional_kb[key]
             break
     if not region:
+        # Not in curated KB — check AI cache next (populated by /api/enrich).
+        ck = _cache_key(region_name, region_acronym)
+        if ck and ck in _functional_keyword_cache:
+            return _functional_keyword_cache[ck][:limit]
         return []
 
     curated = region.get('functional_keywords')
@@ -215,6 +228,10 @@ def _get_region_summary(parcellation_index=None, region_name='', region_acronym=
             region = _functional_kb[key]
             break
     if not region:
+        # Not in curated KB — check AI cache next (populated by /api/enrich).
+        ck = _cache_key(region_name, region_acronym)
+        if ck and ck in _region_summary_cache:
+            return _region_summary_cache[ck]
         return ''
 
     function_text = str(region.get('function', '') or '').strip()
@@ -244,53 +261,6 @@ def _get_region_summary(parcellation_index=None, region_name='', region_acronym=
             break
 
     return ' '.join(clean_sentences[:3]).strip()
-
-def _generate_region_summary(region_name, region_acronym):
-    acronym_key = (region_acronym or '').lower().strip()
-    cache_key = acronym_key if acronym_key not in {'', '--', 'â€”', '—'} else (region_name or '').lower().strip()
-    if not cache_key:
-        return ''
-    if cache_key in _region_summary_cache:
-        return _region_summary_cache[cache_key]
-
-    api_key = _get_openai_api_key()
-    if not api_key:
-        return ''
-
-    try:
-        from openai import OpenAI
-    except ImportError:
-        log.warning('OpenAI package not installed; cannot generate region summary')
-        return ''
-
-    try:
-        client = OpenAI(api_key=api_key, timeout=6.0)
-        response = client.chat.completions.create(
-            model='gpt-4o-mini',
-            messages=[
-                {'role': 'system', 'content': 'You are a neuroscience assistant.'},
-                {'role': 'user', 'content': (
-                    'Write a concise 2-3 sentence functional summary for this mouse brain region.\n\n'
-                    f'Name: {region_name}\n'
-                    f'Acronym: {region_acronym}\n\n'
-                    'Rules:\n'
-                    '- Focus on function and connectivity\n'
-                    '- Plain readable neuroscience language\n'
-                    '- No bullet points\n'
-                    '- Do not invent precise experimental claims'
-                )},
-            ],
-            max_tokens=220,
-            temperature=0.2,
-        )
-        summary = response.choices[0].message.content.strip()
-        if summary:
-            _region_summary_cache[cache_key] = summary
-            _save_openai_region_cache()
-        return summary
-    except Exception as e:
-        log.warning(f'OpenAI summary generation failed for "{region_name}" ({region_acronym}): {e}')
-        return ''
 
 def _get_related_regions(parcellation_index=None, region_name='', region_acronym='', limit=8):
     keys = [
@@ -425,118 +395,158 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
     print('related regions parsed', related)
     return related[:limit]
 
+# ── OpenAI-backed generators (for /api/enrich) ────────────────────────────────
+# These run synchronously but only when invoked by /api/enrich, which the
+# frontend calls asynchronously AFTER a click's panel is already populated.
+# They write their results into the module-level caches and persist them.
+
 def _get_openai_api_key():
+    """Return OPENAI_API_KEY from env or a .env file next to App.py. '' if none."""
     api_key = _os.environ.get('OPENAI_API_KEY', '')
     if api_key:
-        print('[functional_keywords] OPENAI_API_KEY loaded from environment')
         return api_key
-
     env_path = Path(__file__).parent / '.env'
-    if env_path.exists():
-        print(f'[functional_keywords] .env found at {env_path}')
-        for line in env_path.read_text().splitlines():
+    if not env_path.exists():
+        return ''
+    try:
+        for line in env_path.read_text(encoding='utf-8').splitlines():
+            line = line.strip()
             if line.startswith('OPENAI_API_KEY='):
-                api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
-                if api_key:
-                    print('[functional_keywords] OPENAI_API_KEY loaded from .env')
-                    return api_key
-        print('[functional_keywords] .env loaded but OPENAI_API_KEY was not found')
-    else:
-        print(f'[functional_keywords] .env not found at {env_path}')
+                return line.split('=', 1)[1].strip().strip('"').strip("'")
+    except Exception as e:
+        log.warning(f'.env read failed: {e}')
     return ''
 
+
 def _parse_keyword_json(content):
-    text = (content or '').strip()
-    if text.startswith('```'):
-        text = re.sub(r'^```(?:json)?\s*', '', text, flags=re.IGNORECASE)
-        text = re.sub(r'\s*```$', '', text)
-
+    """Parse OpenAI's response into [{term, weight}] entries. The model
+    sometimes wraps output in ```json fences or prose; strip that."""
+    content = (content or '').strip()
+    content = re.sub(r'^```(?:json)?\s*', '', content)
+    content = re.sub(r'\s*```$', '', content).strip()
     try:
-        parsed = _json.loads(text)
+        parsed = _json.loads(content)
     except Exception:
-        match = re.search(r'\[[\s\S]*\]', text)
-        if not match:
+        # Try to find the first [...] in the text
+        m = re.search(r'\[.*\]', content, re.DOTALL)
+        if not m:
             return []
-        parsed = _json.loads(match.group(0))
-
-    if not isinstance(parsed, list):
-        return []
-
-    keywords = []
-    for item in parsed:
-        if not isinstance(item, dict):
-            continue
-        term = str(item.get('term', '')).strip()
-        if not term:
-            continue
         try:
-            weight = float(item.get('weight', 0.75))
-        except (TypeError, ValueError):
-            weight = 0.75
-        weight = max(0.5, min(1.0, weight))
-        keywords.append({'term': term, 'weight': round(weight, 2)})
-        if len(keywords) >= 15:
-            break
-    return keywords
+            parsed = _json.loads(m.group(0))
+        except Exception:
+            return []
 
-def _generate_functional_keywords(region_name, region_acronym):
-    acronym_key = (region_acronym or '').lower().strip()
-    cache_key = acronym_key if acronym_key not in {'', '--', '—'} else (region_name or '').lower().strip()
-    if not cache_key:
-        print('openai keyword error: missing region cache key')
-        return []
-    if cache_key in _functional_keyword_cache:
-        print(f'openai keywords returned: cache hit for {cache_key}')
-        return _functional_keyword_cache[cache_key]
+    out = []
+    if isinstance(parsed, list):
+        for item in parsed:
+            if isinstance(item, dict):
+                term = str(item.get('term', '')).strip()
+                try:
+                    weight = float(item.get('weight', 1.0))
+                except (TypeError, ValueError):
+                    weight = 1.0
+                if term:
+                    out.append({'term': term, 'weight': weight})
+            elif isinstance(item, str) and item.strip():
+                out.append({'term': item.strip(), 'weight': 1.0})
+    return out
+
+
+def _generate_region_summary(region_name, region_acronym):
+    """Return a 2-3 sentence functional summary for the region. Blocks on
+    OpenAI. Caches the result. Returns '' on any failure."""
+    ck = _cache_key(region_name, region_acronym)
+    if not ck:
+        return ''
+    if ck in _region_summary_cache:
+        return _region_summary_cache[ck]
 
     api_key = _get_openai_api_key()
     if not api_key:
-        print('openai keyword error: missing API key')
+        return ''
+
+    try:
+        from openai import OpenAI
+    except ImportError:
+        log.warning('openai package not installed; `pip install openai`')
+        return ''
+
+    try:
+        client = OpenAI(api_key=api_key, timeout=8.0)
+        response = client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': 'You are a concise neuroscience assistant.'},
+                {'role': 'user', 'content': (
+                    'Write a concise 2-3 sentence functional summary for this mouse brain region.\n\n'
+                    f'Name: {region_name}\n'
+                    f'Acronym: {region_acronym}\n\n'
+                    'Rules:\n'
+                    '- Focus on function and connectivity\n'
+                    '- Plain readable neuroscience language\n'
+                    '- No bullet points\n'
+                    '- Do not invent precise experimental claims'
+                )},
+            ],
+            max_tokens=220,
+            temperature=0.2,
+        )
+        summary = (response.choices[0].message.content or '').strip()
+        if summary:
+            _region_summary_cache[ck] = summary
+            _save_openai_region_cache()
+        return summary
+    except Exception as e:
+        log.warning(f'OpenAI summary generation failed for "{region_name}" ({region_acronym}): {e}')
+        return ''
+
+
+def _generate_functional_keywords(region_name, region_acronym):
+    """Return [{term, weight}] keyword list. Blocks on OpenAI. Caches result.
+    Returns [] on any failure."""
+    ck = _cache_key(region_name, region_acronym)
+    if not ck:
+        return []
+    if ck in _functional_keyword_cache:
+        return _functional_keyword_cache[ck]
+
+    api_key = _get_openai_api_key()
+    if not api_key:
         return []
 
     try:
         from openai import OpenAI
     except ImportError:
-        print('openai keyword error: OpenAI package not installed')
-        log.warning('OpenAI package not installed; using local functional keywords')
+        log.warning('openai package not installed; `pip install openai`')
         return []
 
     try:
-        print(f'calling openai for keywords: "{region_name}" ({region_acronym})')
-        client = OpenAI(api_key=api_key, timeout=8.0)
+        client = OpenAI(api_key=api_key, timeout=10.0)
         response = client.chat.completions.create(
             model='gpt-4o-mini',
             messages=[
-                {'role': 'system', 'content': 'You are a neuroscience assistant.'},
+                {'role': 'system', 'content': 'You return compact JSON only.'},
                 {'role': 'user', 'content': (
-                    'Generate 8-15 short functional keywords for the brain region:\n'
+                    'List up to 12 functional keywords for this mouse brain region. '
+                    'Terms should be short (1-2 words), lowercase, functionally distinctive. '
+                    'Return ONLY a JSON array of {"term": string, "weight": number 0..1} '
+                    'with no code fences and no prose.\n\n'
                     f'Name: {region_name}\n'
-                    f'Acronym: {region_acronym}\n\n'
-                    'Return ONLY a JSON array of objects:\n'
-                    '[\n'
-                    ' {"term": "motor control", "weight": 1.0},\n'
-                    ' {"term": "habit learning", "weight": 0.9}\n'
-                    ']\n\n'
-                    'Rules:\n'
-                    '- short scientific keywords\n'
-                    '- no explanations\n'
-                    '- valid JSON only\n'
-                    '- weights between 0.5 and 1.0'
+                    f'Acronym: {region_acronym}'
                 )},
             ],
             max_tokens=350,
             temperature=0.2,
         )
         keywords = _parse_keyword_json(response.choices[0].message.content)
-        print(f'openai keywords returned: {len(keywords)} keyword(s): {keywords}')
         if keywords:
-            _functional_keyword_cache[cache_key] = keywords
+            _functional_keyword_cache[ck] = keywords
             _save_openai_region_cache()
         return keywords
     except Exception as e:
-        print(f'openai keyword error: "{region_name}" ({region_acronym}): {e}')
         log.warning(f'OpenAI keyword generation failed for "{region_name}" ({region_acronym}): {e}')
         return []
+
 
 # ── Rapid-click / spam tracker ────────────────────────────────────────────────
 # Fires a WARNING if the same parcellation_index or group name is requested
@@ -739,6 +749,26 @@ try:
         except (ValueError, TypeError):
             continue
     print(f"struct_id→RGB lookup: {len(_struct_id_to_rgb)} entries")
+
+    # pidx → Allen structure_id (MBA identifier, int). Needed so /api/lookup
+    # can tell the frontend which .obj mesh to load when a user clicks a 2D
+    # pixel. Built by walking membership_df and mapping each pidx's
+    # term_label → MBA identifier via _term_nodes.
+    _pidx_to_sid = {}
+    for label, node in _term_nodes.items():
+        tid = (node.get('id') or '').strip()
+        if not tid.startswith('MBA:'):
+            continue
+        try:
+            sid = int(tid.replace('MBA:', ''))
+        except ValueError:
+            continue
+        if label in _term_label_to_indices:
+            for pidx in _term_label_to_indices[label]:
+                # If multiple sids map to the same pidx, keep the first (ordering
+                # is stable; collisions are rare).
+                _pidx_to_sid.setdefault(int(pidx), sid)
+    print(f"pidx→sid lookup: {len(_pidx_to_sid)} entries")
 
 except Exception as e:
     term_df               = None
@@ -1120,7 +1150,6 @@ def get_slice():
 
 @app.route('/api/lookup', methods=['POST'])
 def lookup():
-    print('lookup called')
     data = request.get_json(force=True)
     try:
         view = data['view'].lower()
@@ -1146,6 +1175,7 @@ def lookup():
         'view': view, 'idx': idx, 'col': col, 'row': row,
         'xi': xi, 'yi': yi, 'zi': zi,
         'parcellation_index': parcellation_index,
+        'structure_id': _pidx_to_sid.get(parcellation_index, 0),
     }
 
     # Attach per-level colors for this region
@@ -1183,38 +1213,28 @@ def lookup():
                 break
         result['matched_label']   = matched_name
         result['matched_acronym'] = matched_acro
-        summary = _get_region_summary(
+
+        # ── Region enrichment: functional summary, keywords, related regions ─
+        # Reads curated brain_regions_kb.json and (as fallback) the persistent
+        # AI cache populated by /api/enrich. No live OpenAI calls here — that
+        # would block the click. If neither source has an entry yet, the fields
+        # come back empty and the frontend fires /api/enrich asynchronously
+        # to fill them in.
+        result["region_summary"] = _get_region_summary(
             parcellation_index=parcellation_index,
             region_name=matched_name,
             region_acronym=matched_acro,
         )
-        print("local summary:", summary)
-        if not summary:
-            print("openai fallback used for", matched_name)
-            summary = _generate_region_summary(matched_name, matched_acro)
-        result["region_summary"] = summary
-        keywords = _get_functional_keywords(
+        result["functional_keywords"] = _get_functional_keywords(
             parcellation_index=parcellation_index,
             region_name=matched_name,
             region_acronym=matched_acro,
         )
-        print("local keyword count", len(keywords))
-        if not keywords:
-            print("calling OpenAI")
-            try:
-                keywords = _generate_functional_keywords(matched_name, matched_acro)
-                print("OpenAI returned keywords", keywords)
-            except Exception as e:
-                print("OpenAI error", e)
-                keywords = []
-        result["functional_keywords"] = keywords
-        print("functional_keywords added", result["functional_keywords"])
         result["related_regions"] = _get_related_regions(
             parcellation_index=parcellation_index,
             region_name=matched_name,
             region_acronym=matched_acro,
         )
-        print("related_regions added", result["related_regions"])
 
         _check_rapid(_rapid_lookup, parcellation_index, matched_name, 'lookup')
         log.info(f'lookup ok — pidx={parcellation_index} name={matched_name}')
@@ -1226,6 +1246,401 @@ def lookup():
     except Exception as e:
         log.error(f'lookup exception — {e}\n{traceback.format_exc()}')
         return jsonify({'error': str(e)}), 500
+
+
+# ── Diagnostic: compare a mesh's vertex bounding box vs the voxel
+#    bounding box of the same structure in the annotation volume. Used to
+#    investigate the offset observed between region meshes and plane voxels.
+# GET /api/debug_mesh_alignment?struct_id=672
+@app.route('/api/debug_mesh_alignment')
+def debug_mesh_alignment():
+    try:
+        sid = int(request.args.get('struct_id', '672'))  # default = CP
+    except ValueError:
+        return jsonify({'error': 'struct_id must be an integer'}), 400
+
+    meshes_dir = Path(__file__).parent / 'meshes'
+    mesh_path = meshes_dir / f'{sid}.obj'
+    if not mesh_path.exists():
+        return jsonify({'error': f'mesh {sid} not on disk'}), 404
+
+    # 1) Parse the mesh's vertex bounding box
+    xs, ys, zs = [], [], []
+    with open(mesh_path, 'r') as f:
+        for line in f:
+            if line.startswith('v '):
+                parts = line.split()
+                try:
+                    xs.append(float(parts[1]))
+                    ys.append(float(parts[2]))
+                    zs.append(float(parts[3]))
+                except (IndexError, ValueError):
+                    continue
+    if not xs:
+        return jsonify({'error': 'no vertices parsed'}), 500
+    mesh_bounds = {
+        'x_min': min(xs), 'x_max': max(xs),
+        'y_min': min(ys), 'y_max': max(ys),
+        'z_min': min(zs), 'z_max': max(zs),
+        'vertex_count': len(xs),
+    }
+
+    # 2) Find all parcellation_indices for this struct_id via MBA:sid → term label → pidxs
+    pidxs = []
+    mba = f'MBA:{sid}'
+    try:
+        # _id_to_label maps "MBA:672" → "AllenCCF-Ontology-2017: Caudoputamen"
+        label = _id_to_label.get(mba)
+        if label and label in _term_label_to_indices:
+            pidxs = sorted(_term_label_to_indices[label])
+    except NameError:
+        pass
+
+    # Fallback: any pidx where the structure_color lookup works via color_df
+    # (color_df is indexed by parcellation_index). We also try directly
+    # scanning `term_df` for matching identifier → label → indices.
+    if not pidxs:
+        try:
+            rows = term_df[term_df['identifier'].astype(str).str.strip() == mba]
+            labels = rows['label'].astype(str).str.strip().tolist()
+            for lab in labels:
+                if lab in _term_label_to_indices:
+                    pidxs.extend(_term_label_to_indices[lab])
+            pidxs = sorted(set(pidxs))
+        except Exception:
+            pass
+
+    # 3) Compute voxel bounding box for all matching parcellation_indices
+    voxel_bounds = None
+    if pidxs:
+        mask3d = np.isin(annotation_array, pidxs)
+        where = np.argwhere(mask3d)
+        if where.size:
+            x_min, y_min, z_min = where.min(axis=0).tolist()
+            x_max, y_max, z_max = where.max(axis=0).tolist()
+            voxel_bounds = {
+                # Voxel indices
+                'vox_x_min': int(x_min), 'vox_x_max': int(x_max),
+                'vox_y_min': int(y_min), 'vox_y_max': int(y_max),
+                'vox_z_min': int(z_min), 'vox_z_max': int(z_max),
+                # Converted to µm assuming 10µm voxels
+                'um_x_min': int(x_min) * 10, 'um_x_max': int(x_max) * 10,
+                'um_y_min': int(y_min) * 10, 'um_y_max': int(y_max) * 10,
+                'um_z_min': int(z_min) * 10, 'um_z_max': int(z_max) * 10,
+                'voxel_count': int(mask3d.sum()),
+            }
+
+    # 4) Report differences if we have both
+    comparison = None
+    if voxel_bounds:
+        comparison = {
+            'mesh_minus_voxel_um': {
+                'x_min_diff': mesh_bounds['x_min'] - voxel_bounds['um_x_min'],
+                'x_max_diff': mesh_bounds['x_max'] - voxel_bounds['um_x_max'],
+                'y_min_diff': mesh_bounds['y_min'] - voxel_bounds['um_y_min'],
+                'y_max_diff': mesh_bounds['y_max'] - voxel_bounds['um_y_max'],
+                'z_min_diff': mesh_bounds['z_min'] - voxel_bounds['um_z_min'],
+                'z_max_diff': mesh_bounds['z_max'] - voxel_bounds['um_z_max'],
+            },
+            'mesh_size_vs_voxel_size_um': {
+                'x_size_ratio': (mesh_bounds['x_max'] - mesh_bounds['x_min']) /
+                                max(1, voxel_bounds['um_x_max'] - voxel_bounds['um_x_min']),
+                'y_size_ratio': (mesh_bounds['y_max'] - mesh_bounds['y_min']) /
+                                max(1, voxel_bounds['um_y_max'] - voxel_bounds['um_y_min']),
+                'z_size_ratio': (mesh_bounds['z_max'] - mesh_bounds['z_min']) /
+                                max(1, voxel_bounds['um_z_max'] - voxel_bounds['um_z_min']),
+            },
+        }
+
+    return jsonify({
+        'struct_id': sid,
+        'mesh_bounds': mesh_bounds,
+        'matching_parcellation_indices': pidxs,
+        'voxel_bounds': voxel_bounds,
+        'comparison': comparison,
+    })
+
+
+# ── Resolve a compact index from the mesh volume (3D click path) ──
+# The mesh volume stores compact indices 1..N; meta['idx_to_sid'] maps to real
+# Allen structure_ids. Takes either `idx` (compact) or `sid` (raw).
+@app.route('/api/resolve_structure_id')
+def resolve_structure_id():
+    try:
+        sid_arg = request.args.get('sid', '').strip()
+        idx_arg = request.args.get('idx', '').strip()
+    except Exception:
+        return jsonify({'error': 'bad args'}), 400
+
+    sid = None
+    if idx_arg:
+        # Compact index path
+        try:
+            idx = int(idx_arg)
+        except ValueError:
+            return jsonify({'error': 'idx must be an integer'}), 400
+        mv = _load_mesh_volume()
+        if mv is None:
+            return jsonify({'error': 'mesh volume not loaded'}), 404
+        idx_to_sid = mv['meta'].get('idx_to_sid', [0])
+        if 0 < idx < len(idx_to_sid):
+            sid = int(idx_to_sid[idx])
+        else:
+            return jsonify({'error': f'idx {idx} out of range'}), 400
+    elif sid_arg:
+        try:
+            sid = int(sid_arg)
+        except ValueError:
+            return jsonify({'error': 'sid must be an integer'}), 400
+    else:
+        return jsonify({'error': 'pass ?idx=N or ?sid=N'}), 400
+
+    if sid is None or sid <= 0:
+        return jsonify({'error': f'invalid sid={sid}'}), 400
+
+    # Find a parcellation_index for this structure_id via MBA identifier
+    pidx = None
+    mba = f'MBA:{sid}'
+    try:
+        label = _id_to_label.get(mba)
+        if label and label in _term_label_to_indices:
+            candidates = sorted(_term_label_to_indices[label])
+            if candidates:
+                pidx = candidates[0]
+    except NameError:
+        pass
+
+    if pidx is None:
+        return jsonify({'error': f'no parcellation_index found for structure_id={sid}',
+                        'structure_id': sid}), 404
+
+    base = {'parcellation_index': pidx, 'structure_id': sid}
+    colors = {}
+    for level, colname in LEVEL_COLS.items():
+        try:
+            colors[f'{level}_color'] = color_df.loc[pidx, colname]
+        except KeyError:
+            colors[f'{level}_color'] = '#444444'
+    try:
+        r = name_df.loc[pidx]
+        hier = ['organ','category','division','structure','substructure']
+        result = {**base, **colors,
+            'organ':        str(r.get('organ',        '—')),
+            'category':     str(r.get('category',     '—')),
+            'division':     str(r.get('division',     '—')),
+            'structure':    str(r.get('structure',    '—')),
+            'substructure': str(r.get('substructure', '—')),
+        }
+        if acronym_df is not None and pidx in acronym_df.index:
+            a = acronym_df.loc[pidx]
+            for f in hier:
+                result[f + '_acronym'] = str(a.get(f, ''))
+        matched_name, matched_acro = '—', '—'
+        for f in reversed(hier):
+            v = result.get(f, '—')
+            if v and v != '—':
+                matched_name = v
+                matched_acro = result.get(f + '_acronym', '—') or '—'
+                break
+        result['matched_label']   = matched_name
+        result['matched_acronym'] = matched_acro
+
+        # Same fast enrichment as /api/lookup — reads curated KB + AI cache.
+        # No live OpenAI calls; the frontend fires /api/enrich asynchronously
+        # if fields come back empty.
+        result["region_summary"] = _get_region_summary(
+            parcellation_index=pidx,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
+        result["functional_keywords"] = _get_functional_keywords(
+            parcellation_index=pidx,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
+        result["related_regions"] = _get_related_regions(
+            parcellation_index=pidx,
+            region_name=matched_name,
+            region_acronym=matched_acro,
+        )
+
+        return jsonify(result)
+    except KeyError:
+        return jsonify({**base, **colors, 'error': f'No region for pidx {pidx}'})
+
+
+# ── Asynchronous region enrichment (called by frontend after panel is already
+# rendered). Takes pidx OR name/acronym. Returns region_summary,
+# functional_keywords, related_regions. Blocks on OpenAI if neither the
+# curated KB nor the AI cache have entries yet; instant on subsequent calls
+# thanks to the persistent cache.
+@app.route('/api/enrich')
+def api_enrich():
+    try:
+        pidx_arg = request.args.get('pidx', '').strip()
+        name_arg = request.args.get('name', '').strip()
+        acro_arg = request.args.get('acronym', '').strip()
+    except Exception:
+        return jsonify({'error': 'bad args'}), 400
+
+    pidx = None
+    if pidx_arg:
+        try:
+            pidx = int(pidx_arg)
+        except ValueError:
+            pass
+
+    # If only pidx was given, look up the name/acronym so OpenAI gets a useful
+    # prompt (pidx alone is opaque).
+    matched_name = name_arg
+    matched_acro = acro_arg
+    if (not matched_name or not matched_acro) and pidx is not None and pidx in name_df.index:
+        try:
+            r = name_df.loc[pidx]
+            hier = ['organ','category','division','structure','substructure']
+            for f in reversed(hier):
+                v = str(r.get(f, '') or '').strip()
+                if v and v != '—':
+                    if not matched_name:
+                        matched_name = v
+                    if not matched_acro and acronym_df is not None and pidx in acronym_df.index:
+                        a = acronym_df.loc[pidx]
+                        matched_acro = str(a.get(f, '') or '').strip()
+                    break
+        except Exception as e:
+            log.warning(f'/api/enrich name lookup failed for pidx={pidx}: {e}')
+
+    if not matched_name and not matched_acro:
+        return jsonify({'error': 'need pidx or name/acronym'}), 400
+
+    # Step 1: try curated KB + existing cache (fast).
+    summary  = _get_region_summary(parcellation_index=pidx,
+                                   region_name=matched_name, region_acronym=matched_acro)
+    keywords = _get_functional_keywords(parcellation_index=pidx,
+                                        region_name=matched_name, region_acronym=matched_acro)
+
+    # Step 2: anything still empty → generate via OpenAI (blocking, but this
+    # endpoint is called async so only this HTTP response is held up).
+    if not summary:
+        summary = _generate_region_summary(matched_name, matched_acro)
+    if not keywords:
+        try:
+            keywords = _generate_functional_keywords(matched_name, matched_acro)
+        except Exception as e:
+            log.warning(f'enrich keywords failed: {e}')
+            keywords = []
+
+    related = _get_related_regions(parcellation_index=pidx,
+                                   region_name=matched_name, region_acronym=matched_acro)
+
+    return jsonify({
+        'parcellation_index': pidx,
+        'matched_label':   matched_name,
+        'matched_acronym': matched_acro,
+        'region_summary':      summary,
+        'functional_keywords': keywords,
+        'related_regions':     related,
+    })
+
+
+# ── Resolve a parcellation_index directly (for 3D click via volume sampling)
+# No view/idx/col/row indirection — caller already knows the pidx from sampling
+# the volume on the client. Returns the same metadata as /api/lookup.
+@app.route('/api/resolve_parcellation')
+def resolve_parcellation():
+    try:
+        pidx = int(request.args.get('pidx', '0'))
+    except ValueError:
+        return jsonify({'error': 'pidx must be an integer'}), 400
+    if pidx <= 0:
+        return jsonify({'error': 'pidx must be > 0', 'parcellation_index': pidx}), 400
+    base = {'parcellation_index': pidx}
+    colors = {}
+    for level, colname in LEVEL_COLS.items():
+        try:
+            colors[f'{level}_color'] = color_df.loc[pidx, colname]
+        except KeyError:
+            colors[f'{level}_color'] = '#444444'
+    try:
+        r = name_df.loc[pidx]
+        hier = ['organ','category','division','structure','substructure']
+        result = {**base, **colors,
+            'organ':        str(r.get('organ',        '—')),
+            'category':     str(r.get('category',     '—')),
+            'division':     str(r.get('division',     '—')),
+            'structure':    str(r.get('structure',    '—')),
+            'substructure': str(r.get('substructure', '—')),
+        }
+        if acronym_df is not None and pidx in acronym_df.index:
+            a = acronym_df.loc[pidx]
+            for f in hier:
+                result[f + '_acronym'] = str(a.get(f, ''))
+        matched_name, matched_acro = '—', '—'
+        for f in reversed(hier):
+            v = result.get(f, '—')
+            if v and v != '—':
+                matched_name = v
+                matched_acro = result.get(f + '_acronym', '—') or '—'
+                break
+        result['matched_label']   = matched_name
+        result['matched_acronym'] = matched_acro
+        return jsonify(result)
+    except KeyError:
+        return jsonify({**base, **colors, 'error': f'No region for pidx {pidx}'})
+
+
+# ── eBrain 3D slicing helper ──────────────────────────────────────────────────
+# For a given view + slice index, return the list of unique parcellation indices
+# present in that slice, along with their most-specific acronyms so the frontend
+# can resolve them to Allen structure IDs and load the matching region meshes.
+# GET /api/structures_in_slice?view=coronal&idx=660
+@app.route('/api/structures_in_slice')
+def structures_in_slice():
+    view = request.args.get('view', 'coronal').lower()
+    try:
+        idx = int(request.args.get('idx', '0'))
+    except ValueError:
+        return jsonify({'error': 'idx must be an integer'}), 400
+    if view not in VIEW_CFG:
+        return jsonify({'error': 'invalid view'}), 400
+
+    try:
+        _, _, annot = get_slices(view, idx)
+    except Exception as e:
+        return jsonify({'error': f'slice extraction failed: {e}'}), 500
+
+    # Unique non-zero parcellation indices in this slice
+    uniq = np.unique(annot)
+    uniq = uniq[uniq > 0]
+
+    items = []
+    hier = ['substructure', 'structure', 'division', 'category', 'organ']
+    for pidx in uniq.tolist():
+        pidx = int(pidx)
+        # Most specific non-empty acronym for this parcellation index
+        acro = ''
+        name = ''
+        if acronym_df is not None and pidx in acronym_df.index:
+            arow = acronym_df.loc[pidx]
+            for f in hier:
+                v = str(arow.get(f, '')).strip()
+                if v and v != '—' and v != '--':
+                    acro = v
+                    break
+        if pidx in name_df.index:
+            nrow = name_df.loc[pidx]
+            for f in hier:
+                v = str(nrow.get(f, '')).strip()
+                if v and v != '—' and v != '--':
+                    name = v
+                    break
+        items.append({'parcellation_index': pidx, 'acronym': acro, 'name': name})
+
+    return jsonify({
+        'view': view, 'idx': idx,
+        'count': len(items),
+        'items': items,
+    })
 
 
 @app.route('/api/highlight', methods=['POST'])
@@ -2608,6 +3023,8 @@ def chat():
 
 
 # ── ChatGPT (OpenAI) handler ───────────────────────────────────────────────────
+import os as _os
+
 def _gpt_answer(question, region_name='', parcellation_index=''):
     """
     Sends the question to OpenAI GPT with region context built from the atlas
@@ -2721,6 +3138,185 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
         temperature=0.4,
     )
     return response.choices[0].message.content.strip()
+
+# ── eBrain volume rendering: serve the annotation array for GPU-side sampling
+# The frontend fetches this once, uploads it as a Data3DTexture, and samples it
+# in a custom fragment shader on each slice-plane quad. This gives pixel-perfect
+# cross-sections matching the 2D PNGs, with zero mesh loading.
+#
+# Downsample stride of 3 (~30µm voxels) gives ~440x267x380 × 2 bytes ≈ 90MB raw.
+# Gzipped over the wire it's usually 15-25MB.
+_VOLUME_CACHE = {}  # stride -> bytes
+
+@app.route('/api/annotation_volume_meta')
+def annotation_volume_meta():
+    stride = int(request.args.get('res', 3))
+    shape  = annotation_array[::stride, ::stride, ::stride].shape
+    return jsonify({
+        'shape': list(shape),              # (X, Y, Z) after stride
+        'stride': stride,
+        'dtype': 'uint16',
+        'original_shape': list(annotation_array.shape),
+        'byte_length': int(np.prod(shape) * 2),
+    })
+
+@app.route('/api/annotation_volume')
+def annotation_volume():
+    stride = int(request.args.get('res', 3))
+    if stride not in _VOLUME_CACHE:
+        vol = annotation_array[::stride, ::stride, ::stride].astype(np.uint16)
+        _VOLUME_CACHE[stride] = np.ascontiguousarray(vol).tobytes()
+    data = _VOLUME_CACHE[stride]
+    resp = Response(data, mimetype='application/octet-stream')
+    resp.headers['Content-Length'] = str(len(data))
+    resp.headers['X-Volume-Stride'] = str(stride)
+    return resp
+
+# Color lookup table: parcellation_id -> [R,G,B] as uint8 triples.
+# Packed binary (3 bytes per id), zero-filled for missing ids.
+@app.route('/api/annotation_lut')
+def annotation_lut():
+    # Use the structure-level color column from color_df (same indexing as
+    # the annotation volume voxels). This matches how /api/slice colorizes.
+    max_id = int(annotation_array.max()) + 1
+    lut = np.zeros((max_id, 3), dtype=np.uint8)
+    if color_df is not None and 'structure_color' in color_df.columns:
+        for pidx, row in color_df.iterrows():
+            try:
+                pidx_i = int(pidx)
+                if pidx_i < 0 or pidx_i >= max_id: continue
+                hx = str(row.get('structure_color', '')).strip().lstrip('#')
+                if len(hx) == 6:
+                    lut[pidx_i, 0] = int(hx[0:2], 16)
+                    lut[pidx_i, 1] = int(hx[2:4], 16)
+                    lut[pidx_i, 2] = int(hx[4:6], 16)
+            except Exception:
+                pass
+    data = np.ascontiguousarray(lut).tobytes()
+    resp = Response(data, mimetype='application/octet-stream')
+    resp.headers['Content-Length'] = str(len(data))
+    resp.headers['X-LUT-Max-Id']   = str(max_id)
+    return resp
+
+
+# ── Mesh-slab approach: list every structure_id we have a mesh file for.
+# Frontend uses this to preload all meshes on eBrain toggle so cross-section
+# slabs are immediately ready regardless of which slice the user visits.
+@app.route('/api/available_meshes')
+def available_meshes():
+    meshes_dir = Path(__file__).parent / 'meshes'
+    ids = []
+    for p in meshes_dir.glob('*.obj'):
+        try:
+            if p.stat().st_size > 0:
+                ids.append(int(p.stem))
+        except ValueError:
+            continue
+    ids.sort()
+    return jsonify({'count': len(ids), 'structure_ids': ids})
+
+
+# ── Mesh-derived volume (from voxelize_meshes.py) ─────────────────────────
+# Loaded lazily on first request. meshes_volume.npy is uint16, voxels = structure_id
+# (Allen structure_id, NOT parcellation_index).
+_MESH_VOL = {'array': None, 'meta': None, 'bytes': None}
+_MESH_LUT = {'bytes': None, 'max_id': 0}
+
+
+def _load_mesh_volume():
+    if _MESH_VOL['array'] is not None:
+        return _MESH_VOL
+    base = Path(__file__).parent
+    npy  = base / 'meshes_volume.npy'
+    jsn  = base / 'meshes_volume.json'
+    if not npy.exists() or not jsn.exists():
+        return None
+    arr = np.load(npy)
+    meta = json.loads(jsn.read_text())
+    _MESH_VOL['array'] = arr
+    _MESH_VOL['meta']  = meta
+    # Volume is uint16 compact indices (1..N); 0 = empty
+    _MESH_VOL['bytes'] = np.ascontiguousarray(arr, dtype=np.uint16).tobytes()
+    print(f"mesh_volume loaded: shape={arr.shape} dtype={arr.dtype} "
+          f"compact-ids={len(meta.get('ids_written', []))} "
+          f"size={len(_MESH_VOL['bytes'])/1024/1024:.1f}MB")
+    return _MESH_VOL
+
+
+@app.route('/api/mesh_volume_meta')
+def mesh_volume_meta():
+    mv = _load_mesh_volume()
+    if mv is None:
+        return jsonify({'error': 'meshes_volume.npy not found; run voxelize_meshes.py'}), 404
+    meta = dict(mv['meta'])
+    meta['byte_length'] = len(mv['bytes'])
+    return jsonify(meta)
+
+
+@app.route('/api/mesh_volume')
+def mesh_volume():
+    mv = _load_mesh_volume()
+    if mv is None:
+        return jsonify({'error': 'meshes_volume.npy not found'}), 404
+    resp = Response(mv['bytes'], mimetype='application/octet-stream')
+    resp.headers['Content-Length'] = str(len(mv['bytes']))
+    return resp
+
+
+@app.route('/api/mesh_lut')
+def mesh_lut():
+    """Color table keyed by COMPACT INDEX (not raw Allen structure_id).
+    meta['idx_to_sid'][i] = the real structure_id at compact index i.
+    Returns a packed RGB array, one entry per compact index (index 0 = empty).
+    """
+    mv = _load_mesh_volume()
+    if mv is None:
+        return jsonify({'error': 'mesh volume not loaded'}), 404
+    if _MESH_LUT['bytes'] is not None:
+        resp = Response(_MESH_LUT['bytes'], mimetype='application/octet-stream')
+        resp.headers['Content-Length'] = str(len(_MESH_LUT['bytes']))
+        resp.headers['X-LUT-Max-Id']   = str(_MESH_LUT['max_id'])
+        return resp
+
+    import urllib.request
+    id_to_color = {}
+    try:
+        with urllib.request.urlopen(
+            'http://api.brain-map.org/api/v2/structure_graph_download/1.json',
+            timeout=20) as r:
+            data = json.loads(r.read().decode('utf-8'))
+        def walk(node):
+            hx = (node.get('color_hex_triplet') or '').strip()
+            if hx:
+                id_to_color[int(node['id'])] = hx
+            for c in node.get('children') or []:
+                walk(c)
+        walk(data['msg'][0])
+    except Exception as e:
+        return jsonify({'error': f'ontology fetch failed: {e}'}), 500
+
+    idx_to_sid = mv['meta'].get('idx_to_sid', [0])
+    max_idx = len(idx_to_sid)
+    lut = np.zeros((max_idx, 3), dtype=np.uint8)
+    for i, sid in enumerate(idx_to_sid):
+        if i == 0:
+            continue  # empty / 0
+        hx = id_to_color.get(sid, '')
+        if len(hx) == 6:
+            try:
+                lut[i, 0] = int(hx[0:2], 16)
+                lut[i, 1] = int(hx[2:4], 16)
+                lut[i, 2] = int(hx[4:6], 16)
+            except ValueError:
+                pass
+    _MESH_LUT['bytes']  = np.ascontiguousarray(lut).tobytes()
+    _MESH_LUT['max_id'] = max_idx
+    print(f"mesh_lut built: {max_idx} compact entries")
+    resp = Response(_MESH_LUT['bytes'], mimetype='application/octet-stream')
+    resp.headers['Content-Length'] = str(len(_MESH_LUT['bytes']))
+    resp.headers['X-LUT-Max-Id']   = str(max_idx)
+    return resp
+
 
 if __name__ == '__main__':
     print("\nOpen your browser at: http://localhost:5000\n")
