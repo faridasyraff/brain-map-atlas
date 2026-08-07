@@ -32,3 +32,17 @@ yarn-error.log*
 
 __pycache__/
 *.pyc
+
+# Python env
+.venv/
+venv/
+
+# Runtime-generated data (backend/) -- downloaded atlas data, meshes, logs;
+# these come from Docker volumes / voxelize_meshes.py, not source control
+/backend/logs/
+/backend/data/
+/backend/meshes/
+backend/meshes_volume.npy
+backend/meshes_volume.json
+openai_region_cache.json
+*.tmp

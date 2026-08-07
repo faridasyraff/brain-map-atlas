@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allen CCFv3 · Brain Atlas Explorer</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/home.css">
+</head>
+<body class="home-body">
+
+<nav class="navbar">
+  <div class="navbar-brand">brain atlas</div>
+
+  <!-- Same element IDs as the sidebar's account bar in index.html — auth.js
+       drives both from one shared set of DOM hooks, just laid out
+       differently here (navbar instead of a sidebar strip). -->
+  <div id="account-bar">
+    <div class="account-logged-out" id="account-logged-out">
+      <button class="navbar-btn navbar-btn-ghost" id="account-signin-btn">Sign in</button>
+      <button class="navbar-btn navbar-btn-solid" id="account-signup-btn">Sign up</button>
+    </div>
+    <div class="account-logged-in" id="account-logged-in" style="display:none;">
+      <span class="account-email" id="account-email">—</span>
+      <span class="account-admin-badge" id="account-admin-badge" style="display:none;">ADMIN</span>
+      <button class="navbar-btn navbar-btn-ghost" id="account-logout-btn">Log out</button>
+    </div>
+  </div>
+</nav>
+
+<main class="home-main">
+  <section class="home-hero">
+    <h1>Explore the Allen Mouse Brain,<br>Region by Region</h1>
+    <p>
+      Sagittal, coronal, transverse, and full interactive 3D views of the
+      Allen CCFv3 mouse brain atlas — click any region to look it up, search
+      by name, or ask the built-in assistant what it does.
+    </p>
+    <a href="/app" class="hero-cta">Open the Atlas →</a>
+  </section>
+
+  <section class="feature-row">
+    <div class="feature-card" style="border-left-color:var(--col-sagittal)">
+      <div class="feature-title">Sagittal</div>
+      <div class="feature-text">Side-on slices through the whole brain</div>
+    </div>
+    <div class="feature-card" style="border-left-color:var(--col-coronal)">
+      <div class="feature-title">Coronal</div>
+      <div class="feature-text">Front-to-back cross sections</div>
+    </div>
+    <div class="feature-card" style="border-left-color:var(--col-transverse)">
+      <div class="feature-title">Transverse</div>
+      <div class="feature-text">Top-down horizontal slices</div>
+    </div>
+    <div class="feature-card" style="border-left-color:var(--col-three-d)">
+      <div class="feature-title">3D</div>
+      <div class="feature-text">Rotate, zoom, and inspect in full 3D</div>
+    </div>
+  </section>
+</main>
+
+<!-- Sign in / sign up modal — hidden until the navbar buttons open it -->
+<div class="account-form" id="account-form" style="display:none;">
+  <div class="account-modal-backdrop" id="account-modal-backdrop"></div>
+  <div class="account-modal-card">
+    <button class="account-modal-close" id="account-cancel-btn">Close</button>
+    <input class="account-input" id="account-email-input" type="email" placeholder="Email" autocomplete="email">
+    <input class="account-input" id="account-password-input" type="password" placeholder="Password" autocomplete="current-password">
+    <div class="account-error" id="account-error"></div>
+    <button class="account-submit-btn" id="account-submit-btn">Sign in</button>
+    <div class="account-toggle-mode" id="account-toggle-mode">
+      <span id="account-toggle-prompt">Need an account?</span> <a href="#" id="account-toggle-link">Sign up</a>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/src/home.js"></script>
+</body>
+</html>

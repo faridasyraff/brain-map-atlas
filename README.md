@@ -1,71 +1,47 @@
-# Getting Started with Create React App
+# Brain Atlas Explorer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive explorer for the Allen Institute's CCFv3 mouse brain atlas — three synced 2D slice views (sagittal, coronal, transverse), a 3D mesh viewer, region search, an anatomical hierarchy tree, and an AI chat assistant for asking questions about whatever region you're looking at.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **2D slice views** — sagittal/coronal/transverse views of the annotated CCFv3 volume, colorized by region, with zoom/pan and click-to-identify.
+- **3D region viewer** — loads individual structure meshes on click, with live slice planes showing where the 2D views currently sit in 3D space.
+- **Search** — look up a region by name or acronym, including whole anatomical groups (e.g. "Isocortex"), not just individual structures.
+- **Anatomical hierarchy tree** — browse the full Allen ontology; unavailable structures (no voxels in this atlas's annotation volume) are greyed out.
+- **AI chat** — ask questions about the currently selected region; auto-generated functional summaries, keywords, and related regions.
+- **Accounts** — sign up / sign in to save session state.
 
-### `npm start`
+## Running it
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Requires [Docker](https://www.docker.com/).
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. Copy `backend/.env.example` to `backend/.env` and fill in the values (an OpenAI API key is needed for the chat/summary features; a `SECRET_KEY` is needed for login to work at all — see the comments in that file for how to generate one).
+2. From the project root:
+   ```
+   docker compose up --build
+   ```
+3. Open `http://localhost:5000/app`.
 
-### `npm test`
+The first start downloads ~500MB of atlas data and mesh files, which can take a few minutes — subsequent starts are fast, since that data persists in a Docker volume between restarts.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Project structure
 
-### `npm run build`
+```
+backend/    Flask API — serves slice images, region lookups, search, the
+            ontology tree, mesh files, chat/AI endpoints, and auth.
+frontend/   Vanilla JS + Three.js frontend, built with Vite.
+Dockerfile, docker-compose.yml
+            Single-container setup: builds the frontend, serves it and the
+            API from one Flask app behind gunicorn.
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Backend API (selected endpoints)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- `GET /api/slice?view=coronal&idx=660&colorize=structure` — a rendered slice image
+- `POST /api/lookup` — resolve a clicked pixel to a region
+- `POST /api/highlight` — highlight a region on a given slice
+- `GET /api/search?q=...` — region search
+- `GET /api/ontology` — the full anatomical hierarchy tree
+- `GET /api/available_meshes` — which structures have a 3D mesh on disk
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-# brain-map-atlas
+See the docstrings at the top of `backend/App.py` for the complete list.

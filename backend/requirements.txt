@@ -1,0 +1,31 @@
+# Web framework + safety
+flask>=3.0
+flask-cors>=4.0
+flask-limiter>=3.5
+flask-compress>=1.15
+flask-login>=0.6
+python-dotenv>=1.0
+# The program that actually runs the app when it's live on the internet.
+# Flask has its own simple built-in way to run for testing on your own
+# computer, but it says itself it shouldn't be used for a real running app —
+# gunicorn is the sturdier version made for that.
+gunicorn>=22.0
+
+# Atlas / imaging
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+SimpleITK>=2.3
+pillow>=10.0
+pandas>=2.1
+# This one isn't available through the normal "pip install" package store —
+# the Allen Institute only publishes it on GitHub, so this line tells pip to
+# fetch it directly from there instead. Still just as safe as a normal
+# install, just from a different source.
+abc_atlas_access @ git+https://github.com/AllenInstitute/abc_atlas_access.git
+
+# AI chat (/api/chat, /api/enrich)
+openai>=1.0
+
+# Turns the 3D brain meshes into a single combined 3D image (voxelize_meshes.py)
+trimesh>=4.0
