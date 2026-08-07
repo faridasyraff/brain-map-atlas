@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allen CCFv3 · Brain Atlas Explorer</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div class="root">
+  <div class="views-area" id="views-area">
+
+    <!-- SAGITTAL -->
+    <div class="view-cell" data-view="sagittal">
+      <div class="view-header">
+        <span class="view-tag">Sagittal</span>
+        <button class="fullscreen-btn" title="Fullscreen this view">Full</button>
+        <span class="view-axis-label">Left → Right</span>
+        <button class="slider-btn" data-dir="-1">−</button>
+        <input type="range" class="idx-slider" min="51" max="1087" value="570">
+        <button class="slider-btn" data-dir="1">+</button>
+        <span class="idx-display">570</span>
+        <button class="recenter-btn" title="Recenter view">Reset</button>
+        <span class="zoom-display" style="margin-left:auto;">100%</span>
+      </div>
+      <div class="canvas-wrap">
+        <div class="loading-overlay"><div class="spinner"></div><div class="load-text">Loading…</div></div>
+        <div class="err-overlay"><div class="err-msg"></div><div class="err-hint">Run <code>python app.py</code> then refresh.</div></div>
+        <div class="no-voxel-note"></div>
+        <div class="zoom-layer"><img class="atlas-img" alt="sagittal"></div>
+        <canvas class="hl-canvas"></canvas>
+        <div class="xhair-h"></div><div class="xhair-v"></div>
+        <div class="click-marker"></div>
+      </div>
+      <div class="coord-strip">Col(Z):<span class="cx">—</span>&nbsp;&nbsp;Row(Y):<span class="cy">—</span></div>
+    </div>
+
+    <!-- CORONAL -->
+    <div class="view-cell" data-view="coronal">
+      <div class="view-header">
+        <span class="view-tag">Coronal</span>
+        <button class="fullscreen-btn" title="Fullscreen this view">Full</button>
+        <span class="view-axis-label">Ant → Post</span>
+        <button class="slider-btn" data-dir="-1">−</button>
+        <input type="range" class="idx-slider" min="0" max="1319" value="660">
+        <button class="slider-btn" data-dir="1">+</button>
+        <span class="idx-display">660</span>
+        <button class="recenter-btn" title="Recenter view">Reset</button>
+        <span class="zoom-display" style="margin-left:auto;">100%</span>
+      </div>
+      <div class="canvas-wrap">
+        <div class="loading-overlay"><div class="spinner"></div><div class="load-text">Loading…</div></div>
+        <div class="err-overlay"><div class="err-msg"></div><div class="err-hint">Run <code>python app.py</code> then refresh.</div></div>
+        <div class="no-voxel-note"></div>
+        <div class="zoom-layer"><img class="atlas-img" alt="coronal"></div>
+        <canvas class="hl-canvas"></canvas>
+        <div class="xhair-h"></div><div class="xhair-v"></div>
+        <div class="click-marker"></div>
+      </div>
+      <div class="coord-strip">Col(X):<span class="cx">—</span>&nbsp;&nbsp;Row(Y):<span class="cy">—</span></div>
+    </div>
+
+    <!-- TRANSVERSE -->
+    <div class="view-cell" data-view="transverse">
+      <div class="view-header">
+        <span class="view-tag">Transverse</span>
+        <button class="fullscreen-btn" title="Fullscreen this view">Full</button>
+        <span class="view-axis-label">Sup → Inf</span>
+        <button class="slider-btn" data-dir="-1">−</button>
+        <input type="range" class="idx-slider" min="14" max="757" value="400">
+        <button class="slider-btn" data-dir="1">+</button>
+        <span class="idx-display">400</span>
+        <button class="recenter-btn" title="Recenter view">Reset</button>
+        <span class="zoom-display" style="margin-left:auto;">100%</span>
+      </div>
+      <div class="canvas-wrap">
+        <div class="loading-overlay"><div class="spinner"></div><div class="load-text">Loading…</div></div>
+        <div class="err-overlay"><div class="err-msg"></div><div class="err-hint">Run <code>python app.py</code> then refresh.</div></div>
+        <div class="no-voxel-note"></div>
+        <div class="zoom-layer"><img class="atlas-img" alt="transverse"></div>
+        <canvas class="hl-canvas"></canvas>
+        <div class="xhair-h"></div><div class="xhair-v"></div>
+        <div class="click-marker"></div>
+      </div>
+      <div class="coord-strip">Col(Z):<span class="cx">—</span>&nbsp;&nbsp;Row(X):<span class="cy">—</span></div>
+    </div>
+
+    <!-- 3D -->
+    <div class="view-cell" data-view="three-d">
+      <div class="view-header">
+        <span class="view-tag">3D</span>
+        <button class="fullscreen-btn" title="Fullscreen this view">Full</button>
+      </div>
+      <div class="canvas-wrap" id="three-wrap">
+        <div class="three-status" id="three-status">
+          <span class="three-status-acro">idle</span>
+          <span class="three-status-name">click a region to load its mesh</span>
+        </div>
+        <div class="three-toolbar">
+          <button class="three-tool-btn" id="three-recenter" title="Recenter the camera on the brain">recenter</button>
+          <button class="three-tool-btn active" id="three-shell-toggle" title="Toggle whole-brain context shell">shell</button>
+          <button class="three-tool-btn" id="three-ebrain-toggle" title="eBrain mode: textured slice planes + octant cutaway">ebrain</button>
+        </div>
+        <canvas id="three-canvas"></canvas>
+      </div>
+      <div class="coord-strip three-coord-strip">
+        <span class="three-coord-group">
+          <span class="three-coord-label">X: Left → Right</span><span class="three-coord-val" id="three-cx">—</span>
+        </span>
+        <span class="three-coord-group">
+          <span class="three-coord-label">Y: Sup → Inf</span><span class="three-coord-val" id="three-cy">—</span>
+        </span>
+        <span class="three-coord-group">
+          <span class="three-coord-label">Z: Ant → Post</span><span class="three-coord-val" id="three-cz">—</span>
+        </span>
+        <span class="three-coord-group" style="margin-left:auto;">
+          <span class="three-coord-label">last click</span><span class="three-coord-val" id="three-cclick">—</span>
+        </span>
+      </div>
+    </div>
+
+  </div><!-- /views-area -->
+
+  <!-- ═══════════════════════════════════════════════════
+       RIGHT PANEL — tabbed sidebar
+       ═══════════════════════════════════════════════════ -->
+  <div class="info-panel collapsed" id="info-panel" style="position:absolute;">
+    <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
+    <!-- ── Account bar ─────────────────────────────────── -->
+    <div class="account-bar" id="account-bar">
+      <a href="/" class="account-home-link">← Home</a>
+      <div class="account-logged-out" id="account-logged-out">
+        <span class="account-prompt">Not signed in</span>
+        <button class="account-link-btn" id="account-signin-btn">Sign in</button>
+        <button class="account-link-btn" id="account-signup-btn">Sign up</button>
+      </div>
+      <div class="account-logged-in" id="account-logged-in" style="display:none;">
+        <span class="account-email" id="account-email">—</span>
+        <span class="account-admin-badge" id="account-admin-badge" style="display:none;">ADMIN</span>
+        <button class="account-link-btn" id="account-logout-btn">Log out</button>
+      </div>
+      <div class="account-form" id="account-form" style="display:none;">
+        <input class="account-input" id="account-email-input" type="email" placeholder="Email" autocomplete="email">
+        <input class="account-input" id="account-password-input" type="password" placeholder="Password" autocomplete="current-password">
+        <div class="account-error" id="account-error"></div>
+        <div class="account-form-row">
+          <button class="account-submit-btn" id="account-submit-btn">Sign in</button>
+          <button class="account-cancel-btn" id="account-cancel-btn">Cancel</button>
+        </div>
+        <div class="account-toggle-mode" id="account-toggle-mode">
+          <span id="account-toggle-prompt">Need an account?</span> <a href="#" id="account-toggle-link">Sign up</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab strip ───────────────────────────────────── -->
+    <div class="sidebar-tabs" id="sidebar-tabs">
+      <button class="sidebar-tab active" data-pane="main">Inspector</button>
+      <button class="sidebar-tab" data-pane="tree">Hierarchy</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         PANE 1 — default inspector (search, coords, highlight, lookup, history, chat)
+         ══════════════════════════════════════════════════ -->
+    <div class="sidebar-pane active" id="pane-main" style="overflow:hidden;">
+
+      <div id="pane-main-scroll" style="flex:0 0 auto;overflow-y:auto;overflow-x:hidden;max-height:calc(100% - 420px);">
+      <div class="panel-section" style="padding:8px 16px;flex-shrink:0;">
+        <h2>Search Region</h2>
+        <div class="search-wrap">
+          <input class="search-input" id="search-input" type="text" placeholder="e.g. hippocampus, cortex, CA1…" autocomplete="off" spellcheck="false">
+          <button class="search-clear" id="search-clear">Clear</button>
+        </div>
+        <div class="search-status" id="search-status"></div>
+      </div>
+
+      <div class="panel-section">
+        <h2>Region Lookup</h2>
+        <div class="field">
+          <div class="field-value placeholder" id="r-struct">Click any view to identify a region</div>
+          <div class="field-value" id="r-acro" style="color:var(--accent);letter-spacing:.08em;margin-top:4px;">—</div>
+        </div>
+        <div id="r-idx" style="display:none">—</div>
+        <div class="region-summary">
+          <div class="region-summary-title">Functional Summary</div>
+          <div class="region-summary-text" id="region-summary-text"></div>
+        </div>
+        <div class="functional-keywords">
+          <div class="keyword-cloud-title">Functional Keywords</div>
+          <div class="keyword-cloud" id="keyword-cloud"></div>
+        </div>
+        <div class="related-regions">
+          <div class="related-regions-title">Related Brain Regions</div>
+          <div class="related-region-list" id="related-region-list"></div>
+        </div>
+      </div>
+
+      </div><!-- /pane-main-scroll -->
+
+      <!-- Chat lives inside pane-main at the bottom -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <span class="chat-dot"></span>Brain Atlas Assistant
+          <div class="ai-toggle">
+            <label>AI</label>
+            <div class="ai-btn-grp" id="ai-provider-btns">
+              <button class="ai-btn active" data-ai="ollama" title="Local Ollama RAG">Local</button>
+              <button class="ai-btn" data-ai="openai" title="ChatGPT GPT-4o-mini">GPT</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg bot">Hi! Click a region or search for one, then ask me anything about it — function, connectivity, anatomy, and more.</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-input" type="text" placeholder="Ask a question…" autocomplete="off">
+          <button class="chat-send" id="chat-send">Send</button>
+        </div>
+      </div>
+
+    </div><!-- /pane-main -->
+
+    <!-- ══════════════════════════════════════════════════
+         PANE 2 — full-height anatomical hierarchy tree
+         ══════════════════════════════════════════════════ -->
+    <div id="pane-tree">
+      <h2>Anatomical Hierarchy</h2>
+      <div class="ontology-search-wrap">
+        <input class="ontology-search" id="ontology-search" type="text" placeholder="Search &amp; navigate…  Enter to jump" autocomplete="off" spellcheck="false">
+        <div id="ontology-search-hint" style="font-size:.52rem;color:var(--text-dim);margin-top:4px;min-height:1em;letter-spacing:.06em;"></div>
+      </div>
+      <div class="tree-scroll" id="ontology-tree">
+        <div class="tree-loading">Loading Allen CCFv3 ontology…</div>
+      </div>
+    </div><!-- /pane-tree -->
+
+    <div id="status-bar">Loading all three views…</div>
+  </div><!-- /info-panel -->
+
+  <button class="panel-toggle" id="panel-toggle" title="Toggle side panel" aria-expanded="false">
+    <span class="panel-toggle-label">Menu</span>
+  </button>
+</div><!-- /root -->
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

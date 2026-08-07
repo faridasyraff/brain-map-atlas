@@ -1,0 +1,30 @@
+# This file lists what NOT to include when building the app's container.
+# Anything not listed here gets sent to Docker and can end up inside the
+# final image — this is what keeps secrets, huge downloaded data files, and
+# stuff we don't need out of it.
+
+.git
+.venv
+.claude
+
+# Secrets — these get added when the container actually starts running
+# (as environment variables), never included when building the image itself.
+backend/.env
+
+# Data the app downloads or creates on its own the first time it runs.
+# There's no point copying old local copies of this in — the container will
+# just fetch or create its own anyway.
+backend/data/
+backend/logs/
+backend/meshes/
+backend/meshes_volume.npy
+backend/meshes_volume.json
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+
+# The frontend gets built fresh inside the container (see the Dockerfile) —
+# copying in a locally-built version or its installed packages here would
+# just be unnecessary extra weight.
+frontend/node_modules/
+frontend/dist/

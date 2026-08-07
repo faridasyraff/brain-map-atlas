@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - backend/.env
+    volumes:
+      # These three lines create permanent storage folders on your computer
+      # that live outside the container. Without them, every time you stop
+      # and restart the app it would forget everything and re-download the
+      # ~500MB of brain atlas data + mesh files from scratch. With them, that
+      # data is saved between restarts, so only the very first start is slow.
+      - atlas-data:/app/backend/data
+      - atlas-meshes:/app/backend/meshes
+      - atlas-logs:/app/backend/logs
+      # These two connect directly to the actual files already sitting on
+      # your computer (made by running voxelize_meshes.py) instead of a
+      # separate storage folder, so the container sees the exact same file
+      # you already generated instead of needing to make its own copy.
+      - ./backend/meshes_volume.npy:/app/backend/meshes_volume.npy
+      - ./backend/meshes_volume.json:/app/backend/meshes_volume.json
+
+volumes:
+  atlas-data:
+  atlas-meshes:
+  atlas-logs:
