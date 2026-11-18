@@ -9,6 +9,7 @@ import { _allTreeRows } from './state.js';
 import { setStatus } from './statusBar.js';
 import { highlightTreeByAcronym } from './ontology.js';
 import { selectSearchResult } from './searchPanel.js';
+import { copyCurrentLink } from './urlState.js';
 
 const rIdx=document.getElementById('r-idx'),rStruct=document.getElementById('r-struct'),rAcro=document.getElementById('r-acro');
 const regionSummaryText=document.getElementById('region-summary-text');
@@ -296,3 +297,12 @@ export function syncThreeD({ name, acronym, data }){
     console.warn(`[syncThreeD] no match for "${name}" / "${acronym}" and no structure_id`);
   }
 }
+
+// "Copy link": the address bar already describes the current view (see
+// urlState.js), so copying it is all that's needed.
+document.getElementById('copy-link-btn')?.addEventListener('click', async e=>{
+  const btn=e.currentTarget;
+  const ok=await copyCurrentLink();
+  setStatus(ok ? 'Link copied. It reopens this region at these slices.' : 'Could not copy automatically. Copy the address bar instead.', ok ? 'ok' : 'error');
+  if(ok){ btn.textContent='Copied'; setTimeout(()=>{ btn.textContent='Copy link'; }, 1500); }
+});

@@ -18,3 +18,10 @@ import './ontology.js';
 import './searchPanel.js';
 import './chatPanel.js';
 import './threeViewer.js';
+import { viewsReady } from './sliceViewer.js';
+import { restoreFromLink } from './searchPanel.js';
+
+// By the time this line runs every module above has finished loading, so it's
+// safe to replay a shared link (?region= / ?group=) once the first slice
+// images are in.
+viewsReady.then(restoreFromLink);
