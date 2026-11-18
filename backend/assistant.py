@@ -262,7 +262,7 @@ def _atlas_context(region_name='', parcellation_index='', region_acronym=''):
             node = _term_nodes.get(term, {})
             parent = _term_nodes.get(node.get('parent_label', ''), {})
             n_children = len(node.get('children', []))
-            lines.append(f"This is a grouping in the Allen hierarchy"
+            lines.append("This is a grouping in the Allen hierarchy"
                          + (f" under {parent.get('name')}" if parent.get('name') else '')
                          + (f", with {n_children} direct subdivisions" if n_children else '') + ".")
     if not lines:
@@ -305,7 +305,7 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
 
             elif not region_id:
                 print(f"[CortexMap] \u2139 '{region_name}' not found in /orch/api/regions.")
-                print(f"[CortexMap]   Falling back to local knowledge base.")
+                print("[CortexMap]   Falling back to local knowledge base.")
                 log.info(f"CortexMap: '{region_name}' not found in regions list")
                 cortexmap_status = 'region_not_found'
 
@@ -316,7 +316,7 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
 
                 if sum_err:
                     print(f"[CortexMap] \u2717 Could not fetch summaries for '{region_name}' — {sum_err}")
-                    print(f"[CortexMap]   Falling back to local knowledge base.")
+                    print("[CortexMap]   Falling back to local knowledge base.")
                     log.warning(f"CortexMap summaries fetch failed for '{region_name}': {sum_err}")
                     cortexmap_status = 'summaries_error'
 
@@ -327,13 +327,13 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
 
                 else:
                     print(f"[CortexMap] \u2139 No summaries yet for '{region_name}' — pipeline may still be generating.")
-                    print(f"[CortexMap]   Falling back to local knowledge base.")
+                    print("[CortexMap]   Falling back to local knowledge base.")
                     log.info(f"CortexMap: '{region_name}' has no summaries yet")
                     cortexmap_status = 'generating'
 
         except Exception as _e:
             print(f"[CortexMap] \u2717 Unexpected error for '{region_name}': {_e}")
-            print(f"[CortexMap]   Falling back to local knowledge base.")
+            print("[CortexMap]   Falling back to local knowledge base.")
             log.warning(f"CortexMap exception for '{region_name}': {_e}")
             cortexmap_status = 'error'
 

@@ -26,7 +26,9 @@ An interactive explorer for the Allen Institute's CCFv3 mouse brain atlas: four 
 - AI-generated functional summary, functional keywords, and related regions for the current selection (cached after the first request per region).
 
 ### AI chat
-- Ask questions about the currently selected region. Two backends: a local RAG pipeline (Ollama + gemma3:4b) that pulls context from a bundled knowledge base, or OpenAI, selectable per request.
+- Ask questions about the currently selected region, or general questions with nothing selected. There are two options, selectable per question:
+  - **Local** runs on your own computer with Ollama (gemma3:4b). For any region it's given the atlas's own facts: where the region sits in the hierarchy, its acronym, related regions, and the curated notes where they exist.
+  - **GPT** uses OpenAI.
 - **Semantic Region Cloud** — when the AI's answer mentions other region names, they turn into clickable chips that jump the atlas straight to that region.
 - Optional integration with [CortexMap](https://capstone.ssdd.dev), a separately-hosted research orchestrator, for deeper literature-backed answers.
 
@@ -38,8 +40,11 @@ Not every structure the Allen ontology names is actually delineated in the CCFv3
 
 ![All three 2D views showing the "no voxels here" note, and the 3D view separately showing a labeled parent-shape substitute](docs/screenshots/all-views-no-voxel-note.png)
 
+### Shareable links
+The address bar always describes the current view: the selected region (or group) and all three slice positions. Opening a copied link restores exactly that view. The inspector's **Copy link** button copies it.
+
 ### Accounts
-Sign up / sign in / sign out. One designated admin account (set via `ADMIN_EMAIL`, or automatically whoever signs up first if that's left blank).
+Create an account to save regions with a private note on each, and to keep a list of recently viewed regions; both are in the **Saved** tab. You can delete the account, and all of its data, from the same tab. One account can be the admin, set via `ADMIN_EMAIL`; if that's blank, the first account created becomes admin.
 
 ## Running it
 
@@ -61,11 +66,14 @@ The "Local" chat option needs [Ollama](https://ollama.com) running on your compu
 
 ### Tests
 
-HTTP smoke tests (standard library only) run against a running instance:
-
 ```
 python -m unittest discover backend/tests        # ATLAS_URL=... to target another host
 ```
+
+- `backend/tests/test_db.py` contains database unit tests that need nothing running.
+- `backend/tests/test_api_smoke.py` contains HTTP smoke tests (standard library only) that run against a running instance. The account test creates a throwaway account and deletes it again.
+
+GitHub Actions (`.github/workflows/build.yml`) runs the static checks, the database tests, the frontend build and a Docker build on every push and pull request.
 
 ## Deploying
 
@@ -84,10 +92,17 @@ The same Docker image runs on any server or host that runs containers. Before go
 ## Project structure
 
 ```
-backend/    Flask API -- slice rendering, region lookup/search, the
-            ontology tree, mesh serving, chat/AI endpoints, accounts.
-  App.py            the whole backend
-  db.py             SQLite account storage
+backend/    Flask API (gunicorn runs App:app)
+  App.py               creates the app and wires everything below together
+  atlas.py             atlas data (memory-mapped volumes, histograms, ontology,
+                       colors), slice rendering, meshes, 3D click volume
+  enrichment.py        region summaries, keywords, related regions (+ AI cache)
+  assistant.py         Ollama / CortexMap / OpenAI answers
+  routes_atlas.py      /api/slice, /api/lookup, /api/search, /api/ontology, meshes...
+  routes_accounts.py   /api/auth/*, /api/me/* (saved regions, history)
+  routes_assistant.py  /api/chat, /api/enrich
+  common.py, extensions.py   shared helpers, rate limiter, login manager
+  db.py                SQLite: accounts, saved regions, history
   voxelize_meshes.py     builds the 3D click volume (run automatically on first start)
   convert_meshes_to_glb.py
                          one-off .obj -> .glb conversion (not run by the app itself)
@@ -99,7 +114,10 @@ frontend/   Vanilla JS + Three.js, built with Vite. Split by concern:
   src/lookup.js          resolving a click into a region (shared by 2D/3D)
   src/inspectorPanel.js  the region-info side panel
   src/chatPanel.js       AI chat + Semantic Region Cloud
-  src/auth.js            sign in / sign up
+  src/auth.js            sign in / create account
+  src/library.js         saved regions, notes, recently viewed (Saved tab)
+  src/urlState.js        shareable links (URL <-> view state)
+  styles.css             design system: tokens, components, responsive layout
 Dockerfile, docker-compose.yml
             Single container: builds the frontend, serves it and the API
             from one Flask app behind gunicorn.
@@ -117,9 +135,10 @@ Dockerfile, docker-compose.yml
 | `GET /api/available_meshes` | Which structures have a 3D mesh on disk |
 | `GET /api/enrich` | AI summary / keywords / related regions for a region |
 | `POST /api/chat` | AI chat (Ollama or OpenAI) |
-| `POST /api/auth/signup`, `/login`, `/logout`, `GET /me` | Accounts |
+| `POST /api/auth/signup`, `/login`, `/logout`, `GET /me`, `DELETE /account` | Accounts |
+| `GET/PUT/DELETE /api/me/saved`, `GET/POST /api/me/history` | Saved regions and recently viewed (signed in) |
 
-See the docstrings at the top of `backend/App.py` for the complete list.
+The complete list is in the `routes_*.py` files.
 
 ## License
 
