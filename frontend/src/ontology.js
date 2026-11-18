@@ -314,15 +314,18 @@ export function highlightTreeByAcronym(acronym){
   function showDropdown(q){
     if(!q || !_allTreeRows.length){ clearDropdown(); return; }
     const qLo = q.toLowerCase();
-    const matches = [];
+    // Exact name/acronym matches first (so "Thalamus" + Enter opens Thalamus,
+    // not "Thalamus, sensory-motor cortex related"), then prefix matches in
+    // tree order. Capped at 30.
+    const exact = [], prefix = [];
     for(const e of _allTreeRows){
       const name  = (e.node.name   || '').toLowerCase();
       const acro  = (e.node.acronym|| '').toLowerCase();
-      const acroHit      = acro === qLo || acro.startsWith(qLo);
-      const nameStartHit = name.startsWith(qLo);
-      if(acroHit || nameStartHit) matches.push(e);
-      if(matches.length >= 30) break;
+      if(name === qLo || acro === qLo) exact.push(e);
+      else if(acro.startsWith(qLo) || name.startsWith(qLo)) prefix.push(e);
+      if(exact.length + prefix.length >= 60) break;
     }
+    const matches = [...exact, ...prefix].slice(0, 30);
 
     if(!matches.length){
       hint.textContent = 'No matches';
