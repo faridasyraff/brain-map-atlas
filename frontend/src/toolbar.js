@@ -83,31 +83,55 @@ import { syncCanvas } from './sliceViewer.js';
 
 // -- Collapsible sidebar --------------------------------------------------------
 // Overlay side panel: click the toggle tab, or clicking any view auto-opens it.
+// Layouts (see the @media blocks at the end of styles.css):
+//   wide  (>=1100px) panel is a docked column, open by default
+//   medium            panel slides over the views, closed by default
+//   phone (<=760px)   panel covers the screen; floating Menu button
 (function(){
   const panel  = document.getElementById('info-panel');
   const toggle = document.getElementById('panel-toggle');
+  const label  = toggle.querySelector('.panel-toggle-label');
+  const isWide  = () => window.matchMedia('(min-width:1100px)').matches;
+  const isPhone = () => window.matchMedia('(max-width:760px)').matches;
+  const STORE_KEY = 'atlas.panelOpen';   // remembers the user's own choice
 
-  function setCollapsed(collapsed){
+  function placeToggle(){
+    const open = !panel.classList.contains('collapsed');
+    // On phones CSS pins the button bottom-right; elsewhere it rides the
+    // panel's left edge when open and the viewport edge when closed.
+    toggle.style.right = (open && !isPhone()) ? panel.offsetWidth + 'px' : '';
+    if(label) label.textContent = (open && isPhone()) ? 'Close' : 'Menu';
+  }
+
+  function setCollapsed(collapsed, remember){
     panel.classList.toggle('collapsed', collapsed);
     toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-    // Sync the toggle's right-edge with the panel's current width.
-    // When collapsed, clear the inline style so CSS can pin it to right:0.
-    if(collapsed){
-      toggle.style.right = '';
-    } else {
-      toggle.style.right = panel.offsetWidth + 'px';
-    }
-    // Canvases should resync after the slide animation finishes so crosshairs
-    // and highlight overlays stay aligned to whatever's visible behind.
+    placeToggle();
+    if(remember){ try{ localStorage.setItem(STORE_KEY, collapsed ? '0' : '1'); }catch(e){} }
+    // Canvases should resync after the slide animation finishes (and, when
+    // docked, after the views change width) so crosshairs and highlight
+    // overlays stay aligned to whatever's visible behind.
+    requestAnimationFrame(()=>Object.keys(views).forEach(v=>syncCanvas(v)));
     setTimeout(()=>{ Object.keys(views).forEach(v=>syncCanvas(v)); }, 340);
   }
   toggle.addEventListener('click', ()=>{
-    setCollapsed(!panel.classList.contains('collapsed'));
+    setCollapsed(!panel.classList.contains('collapsed'), true);
   });
 
-  // Expose a global so other code can open the panel on a view click.
+  // Initial state: the user's last choice if they made one, otherwise open
+  // only where it doesn't cover anything (wide screens). Phones always start
+  // on the views.
+  let saved = null;
+  try{ saved = localStorage.getItem(STORE_KEY); }catch(e){}
+  const startOpen = isPhone() ? false : (saved !== null ? saved === '1' : isWide());
+  setCollapsed(!startOpen, false);
+  window.addEventListener('resize', placeToggle);
+
+  // Called on any view click. On phones the panel would cover the view the
+  // user just tapped, so leave it closed there (the status toast shows what
+  // was selected).
   window.openInfoPanel = ()=>{
-    if(panel.classList.contains('collapsed')) setCollapsed(false);
+    if(!isPhone() && panel.classList.contains('collapsed')) setCollapsed(false, false);
   };
 })();
 

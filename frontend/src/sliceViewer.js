@@ -131,6 +131,34 @@ Object.keys(views).forEach(v=>{
 
   // Double-click to reset zoom on all views
   // dblclick zoom reset removed — use the Reset button instead
+
+  // Touch: two fingers pinch-zoom + pan this view. One finger is left alone
+  // so the page still scrolls on phones, and a tap still fires the normal
+  // click → region lookup.
+  let _pinch=null;
+  const _touchMid=(t,wr)=>({x:(t[0].clientX+t[1].clientX)/2-wr.left-wr.width/2,
+                            y:(t[0].clientY+t[1].clientY)/2-wr.top-wr.height/2});
+  const _touchDist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  s.wrap.addEventListener('touchstart', e=>{
+    if(e.touches.length!==2) return;
+    const wr=s.wrap.getBoundingClientRect();
+    _pinch={dist:_touchDist(e.touches), mid:_touchMid(e.touches,wr),
+            zoom:s.zoom, panX:s.panX, panY:s.panY};
+  },{passive:true});
+  s.wrap.addEventListener('touchmove', e=>{
+    if(!_pinch||e.touches.length!==2) return;
+    e.preventDefault();    // stop the browser zooming the whole page
+    const wr=s.wrap.getBoundingClientRect();
+    const mid=_touchMid(e.touches,wr);
+    const newZoom=Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, _pinch.zoom*_touchDist(e.touches)/_pinch.dist));
+    const scale=newZoom/_pinch.zoom;
+    // Keep the content under the starting midpoint under the fingers.
+    s.panX=(_pinch.panX-_pinch.mid.x)*scale+mid.x;
+    s.panY=(_pinch.panY-_pinch.mid.y)*scale+mid.y;
+    s.zoom=newZoom;
+    applyZoom(v);
+  },{passive:false});
+  s.wrap.addEventListener('touchend', e=>{ if(e.touches.length<2) _pinch=null; });
 });
 
 export function syncCanvas(v){
@@ -335,7 +363,11 @@ Object.keys(views).forEach(v=>{
   });
 });
 
-Promise.all(Object.keys(views).map(v=>loadSlice(v))).then(()=>{
+// loadSliceP (not loadSlice, which returns nothing): wait until the images
+// have actually arrived. Before, "All views loaded" appeared instantly and
+// clicks made before the pictures came in were silently ignored.
+setStatus('Loading all three views…');
+Promise.all(Object.keys(views).map(v=>loadSliceP(v))).then(()=>{
   Object.keys(views).forEach(v=>{ resetZoom(v); syncCanvas(v); });
   setStatus('All views loaded -- click any image to identify regions','ok');
 });

@@ -255,9 +255,16 @@ def main():
     print(f"[remap] {len(sorted_ids)} ids → compact indices 1..{len(sorted_ids)}")
 
     # Save
+    # Both files are written to a temp name and then renamed into place, and
+    # the .json goes last: the app (which may be running while this script
+    # builds the volume in the background) treats "both files exist" as
+    # "ready", so it must never see a half-written file under the real name.
     out_npy = Path(f"{args.out}.npy")
     out_json = Path(f"{args.out}.json")
-    np.save(out_npy, vol)
+    tmp_npy = out_npy.with_name(out_npy.name + ".tmp")
+    with open(tmp_npy, "wb") as fh:
+        np.save(fh, vol)
+    tmp_npy.replace(out_npy)
 
     # Record both coordinate conventions:
     # - volume-axis origin/size: the grid in atlas axis order (A-P, S-I, L-R),
@@ -279,7 +286,9 @@ def main():
         "scene_origin_um": list(scene_origin_um),     # scene (mesh) axis order
         "scene_size_um": list(scene_size_um),
     }
-    out_json.write_text(json.dumps(meta, indent=2))
+    tmp_json = out_json.with_name(out_json.name + ".tmp")
+    tmp_json.write_text(json.dumps(meta, indent=2))
+    tmp_json.replace(out_json)
     print(f"[save] {out_npy}  ({out_npy.stat().st_size/1024/1024:.1f} MB)")
     print(f"[save] {out_json}")
 
