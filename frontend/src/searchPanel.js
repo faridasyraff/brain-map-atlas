@@ -14,6 +14,8 @@ import {
 } from './state.js';
 import { setStatus } from './statusBar.js';
 import { loadSliceP, drawHighlight, syncCanvas, fetchAndDrawHighlight, showNoVoxelNote } from './sliceViewer.js';
+import { initialSelection, initialSlices } from './urlState.js';
+import { resolveParcellation } from './lookup.js';
 import { updatePanel, syncThreeD } from './inspectorPanel.js';
 import { selectTreeNode, highlightTreeByAcronym } from './ontology.js';
 
@@ -238,7 +240,7 @@ export async function selectSearchResult(item,r){
         });
         setSuppressSliderReload(false);
         setLastParcIdx(null);
-        setLastHighlight({type:'group_indices', indices:idxList});
+        setLastHighlight({type:'group_indices', indices:idxList, label:r.group_name||label});
 
         // Drive the full inspector via updatePanel so enrichment fires for
         // the group. No single parcellation_index for a group, so we synthesize
@@ -294,7 +296,7 @@ export async function selectSearchResult(item,r){
       });
       setSuppressSliderReload(false);
       setLastParcIdx(null);   // no single index for a group
-      setLastHighlight({type:'group_level', group_level:r.group_level, group_name:r.group_name});
+      setLastHighlight({type:'group_level', group_level:r.group_level, group_name:r.group_name, label:r.group_name});
 
       // Same inspector-via-updatePanel treatment as the term-tree group above.
       updatePanel({
@@ -409,4 +411,28 @@ export async function selectSearchResult(item,r){
     setStatus(`Selected ${label}`,'ok');
     if(window.notifyChatRegion) window.notifyChatRegion(label,{parcellation_index:r.parcellation_index,organ:cData.organ||r.organ,category:cData.category||r.category,division:cData.division||r.division,structure:cData.structure||r.structure,substructure:cData.substructure||r.substructure,xi,yi,zi});
   } catch(err){ setStatus('Search navigation error: '+err.message,'error'); }
+}
+
+// -- Shared links: replay ?region= / ?group= once the views have loaded ------
+// With slice positions in the link, highlight the region in place so the
+// recipient sees exactly the sender's slices; without them, centre on it.
+// Called from main.js once every module has loaded (calling it at import
+// time here would run before sliceViewer.js finished evaluating).
+export async function restoreFromLink(){
+  const sel = initialSelection();
+  if(!sel) return;
+  try{
+    if(sel.type==='single'){
+      if(Object.keys(initialSlices()).length){ await resolveParcellation(sel.parcIdx); return; }
+      const res=await fetch(`${API}/api/resolve_parcellation?pidx=${encodeURIComponent(sel.parcIdx)}`);
+      const d=await res.json();
+      if(!res.ok || !d.matched_label){ setStatus('The region in this link was not found in the atlas.','error'); return; }
+      await selectSearchResult(document.createElement('div'), {...d, is_group:false});
+    } else {
+      const res=await fetch(`${API}/api/resolve_region?name=${encodeURIComponent(sel.name)}`);
+      const r=await res.json();
+      if(!r || !r.matched_label){ setStatus(`"${sel.name}" from this link was not found in the atlas.`,'error'); return; }
+      await selectSearchResult(document.createElement('div'), r);
+    }
+  }catch(e){ setStatus('Could not open the region from this link: '+e.message,'error'); }
 }

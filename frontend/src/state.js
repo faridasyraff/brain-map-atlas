@@ -1,3 +1,4 @@
+import { recordSelection } from './urlState.js';
 // The handful of values that more than one panel/file genuinely needs to
 // read or change. Everything else stays local to whichever file owns it
 // (e.g. colorMode is only used inside sliceViewer.js, so it lives there
@@ -21,7 +22,8 @@ export function setSuppressSliderReload(v) { suppressSliderReload = v; }
 // single:        { type:'single', parcIdx, level }
 // group_indices: { type:'group_indices', indices:[] }
 export let _lastHighlight = null;
-export function setLastHighlight(v) { _lastHighlight = v; }
+// Every selection goes through here, so it's also where the shareable URL is updated.
+export function setLastHighlight(v) { _lastHighlight = v; recordSelection(v); }
 
 // -- Per-view state --------------------------------------------
 // Only the 2D slice views (sagittal/coronal/transverse) are handled here.

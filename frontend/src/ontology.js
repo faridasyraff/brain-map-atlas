@@ -233,7 +233,7 @@ export async function selectTreeNode(node){
     });
     setSuppressSliderReload(false);
     setLastParcIdx(null);
-    setLastHighlight({type:'group_indices', indices:idxList});
+    setLastHighlight({type:'group_indices', indices:idxList, label:termName});
 
     // Populate the inspector for the group. No single parcellation_index to
     // pin colors/metadata on, so we pass through whatever we have from the
