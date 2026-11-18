@@ -7,6 +7,11 @@ services:
       - "5000:5000"
     env_file:
       - backend/.env
+    # Lets the container reach Ollama running on your computer at
+    # http://host.docker.internal:11434 (built in on Docker Desktop; this
+    # line makes it work on Linux too).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       # These three lines create permanent storage folders on your computer
       # that live outside the container. Without them, every time you stop
@@ -16,12 +21,11 @@ services:
       - atlas-data:/app/backend/data
       - atlas-meshes:/app/backend/meshes
       - atlas-logs:/app/backend/logs
-      # These two connect directly to the actual files already sitting on
-      # your computer (made by running voxelize_meshes.py) instead of a
-      # separate storage folder, so the container sees the exact same file
-      # you already generated instead of needing to make its own copy.
-      - ./backend/meshes_volume.npy:/app/backend/meshes_volume.npy
-      - ./backend/meshes_volume.json:/app/backend/meshes_volume.json
+      # No need to run voxelize_meshes.py yourself: on first start the app
+      # generates meshes_volume.npy/.json in the background (~7 minutes,
+      # progress in logs/voxelize.log) and saves it into atlas-data above,
+      # so later restarts reuse it. Everything except clicking inside the 3D
+      # eBrain view works while it's being made.
 
 volumes:
   atlas-data:

@@ -2,15 +2,16 @@
 Allen CCFv3 Brain Atlas – Flask Backend  (full-color edition)
 =============================================================
 
-Volume: 1320 × 800 × 1140 voxels, ASL orientation
-  axis-0 (x): anterior → posterior   size 1320
-  axis-1 (y): superior → inferior     size  800
-  axis-2 (z): left     → right        size 1140
+Volume in memory (SimpleITK reverses the file's axis order): shape
+(1140, 800, 1320)
+  axis-0 (x): left     → right        size 1140   (sagittal slider)
+  axis-1 (y): superior → inferior     size  800   (transverse slider)
+  axis-2 (z): anterior → posterior    size 1320   (coronal slider)
 
 View slice extraction (post-transpose ready for imshow):
-  sagittal   fix x → arr[xi,:,:]        rows=y  cols=z  shape(800,1140)
-  coronal    fix z → arr[:,:,zi].T      rows=y  cols=x  shape(800,1320)
-  transverse fix y → arr[:,yi,:]        rows=x  cols=z  shape(1320,1140)
+  sagittal   fix x → arr[xi,:,:]        rows=y  cols=z  shape(800,1320)
+  coronal    fix z → arr[:,:,zi].T      rows=y  cols=x  shape(800,1140)
+  transverse fix y → arr[:,yi,:]        rows=x  cols=z  shape(1140,1320)
 
 Endpoints
 ─────────
@@ -43,11 +44,12 @@ import numpy as np
 from scipy.ndimage import binary_erosion
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import SimpleITK as sitk
 from pathlib import Path
 from PIL import Image
-from flask import Flask, request, jsonify, send_from_directory, Response
+from flask import Flask, request, jsonify, send_from_directory, Response, abort
+from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_compress import Compress
 from flask_limiter import Limiter
@@ -946,9 +948,9 @@ def get_hex_for_index(parcellation_index, level):
         return '#00d4ff'
 
 # ── Volume dimensions ─────────────────────────────────────────────────────────
-X_MAX = annotation_array.shape[0] - 1   # 1319
-Y_MAX = annotation_array.shape[1] - 1   #  799
-Z_MAX = annotation_array.shape[2] - 1   # 1139
+X_MAX = annotation_array.shape[0] - 1   # 1139 (L-R)
+Y_MAX = annotation_array.shape[1] - 1   #  799 (S-I)
+Z_MAX = annotation_array.shape[2] - 1   # 1319 (A-P)
 
 print(f"Atlas loaded. Shape: {annotation_array.shape}  x:0-{X_MAX}  y:0-{Y_MAX}  z:0-{Z_MAX}")
 
@@ -1144,7 +1146,13 @@ def colorize(annot_slice, level='structure'):
 
 # ── Render a slice to base64 PNG ──────────────────────────────────────────────
 def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=10, fh=8):
-    fig, ax = plt.subplots(figsize=(fw, fh), dpi=100)
+    # A standalone Figure, NOT plt.subplots(): pyplot keeps one shared
+    # "current figure" for the whole process, and gunicorn runs several
+    # threads — two slices rendering at once (every click reloads 2-3 views
+    # in parallel) could draw into each other. A Figure object is private to
+    # this call, so it's safe to use from any thread.
+    fig = Figure(figsize=(fw, fh), dpi=100)
+    ax = fig.subplots()
     ax.imshow(tmpl, cmap='Greys_r', origin='upper')
 
     # ── Color mode: overlay official atlas region colors ──────────────────────
@@ -1161,10 +1169,9 @@ def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=10, fh=8):
               alpha=np.clip(bnd.astype(float) / 225, 0, 1),
               origin='upper')
     ax.axis('off')
-    plt.tight_layout(pad=0)
+    fig.tight_layout(pad=0)
     buf = io.BytesIO()
     fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, facecolor='black')
-    plt.close(fig)
     buf.seek(0)
     raw = buf.read()
     import struct
@@ -1276,7 +1283,7 @@ def _user_public(u):
 @app.route('/api/auth/signup', methods=['POST'])
 @limiter.limit('5 per minute')
 def auth_signup():
-    data = request.get_json(force=True) or {}
+    data = _json_body()
     email = (data.get('email') or '').strip().lower()
     password = data.get('password') or ''
 
@@ -1296,7 +1303,7 @@ def auth_signup():
 @app.route('/api/auth/login', methods=['POST'])
 @limiter.limit('10 per minute')
 def auth_login():
-    data = request.get_json(force=True) or {}
+    data = _json_body()
     email = (data.get('email') or '').strip().lower()
     password = data.get('password') or ''
 
@@ -1327,8 +1334,28 @@ def auth_me():
 
 _DEBUG_ERRORS = _os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
 
+def _json_body():
+    """The request's JSON object, or a 400 if it isn't one. Requires a real
+    `Content-Type: application/json` (the old force=True accepted anything,
+    which also let another website POST here with a plain HTML form)."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        abort(400, description='Request body must be a JSON object')
+    return data
+
 @app.errorhandler(Exception)
 def handle_exception(e):
+    # Normal HTTP errors (400 bad input, 429 rate limited, ...) are not
+    # crashes: pass them through with their real status code. Without this,
+    # this catch-all turned every one of them into a "500 Internal server
+    # error" and logged it as one.
+    if isinstance(e, HTTPException):
+        # Start from the exception's own response so headers like
+        # Retry-After (429) survive; just swap the HTML body for JSON.
+        resp = e.get_response()
+        resp.set_data(_json.dumps({'error': e.description or e.name}))
+        resp.content_type = 'application/json'
+        return resp
     tb = traceback.format_exc()
     error_id = uuid.uuid4().hex[:8]
     log.error(f'[{error_id}] Unhandled exception on {request.method} {request.path} — {e}\n{tb}')
@@ -1435,10 +1462,16 @@ def serve_mesh(struct_id):
 
 @app.route('/api/log_warning', methods=['POST'])
 def log_warning():
-    data  = request.get_json(force=True)
-    kind  = str(data.get('kind',  'click'))
-    label = str(data.get('label', '?'))
-    count = int(data.get('count', 0))
+    data  = _json_body()
+    # Anyone can call this, so keep what reaches the log short and on one
+    # line (a newline in `label` could otherwise fake extra log entries).
+    clean = lambda v, n: re.sub(r'\s+', ' ', str(v))[:n]
+    kind  = clean(data.get('kind',  'click'), 40)
+    label = clean(data.get('label', '?'), 120)
+    try:
+        count = int(data.get('count', 0))
+    except (TypeError, ValueError):
+        count = 0
     log.warning(f'Rapid {kind} — "{label}" blocked after {count} rapid requests')
     return jsonify({'ok': True})
 
@@ -1465,6 +1498,8 @@ def get_slice():
         return jsonify({'error': f'view must be one of {list(VIEW_CFG)}'}), 400
 
     colorize_level = request.args.get('colorize', 'off').lower()
+    if colorize_level not in ('off', 'structure', 'substructure', 'division'):
+        colorize_level = 'structure'
     max_idx = VIEW_CFG[view]['max']
     try:
         idx = int(request.args.get('idx', max_idx // 2))
@@ -1491,7 +1526,7 @@ def get_slice():
 
 @app.route('/api/lookup', methods=['POST'])
 def lookup():
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         view = data['view'].lower()
         idx  = int(data['idx'])
@@ -1594,6 +1629,8 @@ def lookup():
 # GET /api/debug_mesh_alignment?struct_id=672
 @app.route('/api/debug_mesh_alignment')
 def debug_mesh_alignment():
+    if not _DEBUG_ERRORS:   # developer-only diagnostic; hidden unless FLASK_DEBUG=1
+        abort(404)
     try:
         sid = int(request.args.get('struct_id', '672'))  # default = CP
     except ValueError:
@@ -1713,7 +1750,7 @@ def resolve_structure_id():
             return jsonify({'error': 'idx must be an integer'}), 400
         mv = _load_mesh_volume()
         if mv is None:
-            return jsonify({'error': 'mesh volume not loaded'}), 404
+            return _mesh_volume_missing_response()
         idx_to_sid = mv['meta'].get('idx_to_sid', [0])
         if 0 < idx < len(idx_to_sid):
             sid = int(idx_to_sid[idx])
@@ -1866,10 +1903,18 @@ def api_enrich():
     related = _get_related_regions(parcellation_index=pidx,
                                    region_name=matched_name, region_acronym=matched_acro)
 
+    # Say WHY the AI parts are empty when it's a config problem, so the
+    # panel doesn't claim "no summary exists" for a region that has one.
+    ai_note = ''
+    if not summary and not _get_openai_api_key():
+        ai_note = ('AI summaries are turned off: no OPENAI_API_KEY is set in '
+                   'backend/.env.')
+
     return jsonify({
         'parcellation_index': pidx,
         'matched_label':   matched_name,
         'matched_acronym': matched_acro,
+        'ai_note':             ai_note,
         'region_summary':      summary,
         'functional_keywords': keywords,
         'related_regions':     related,
@@ -1978,7 +2023,7 @@ def structures_in_slice():
 
 @app.route('/api/highlight', methods=['POST'])
 def highlight():
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         view   = data['view'].lower()
         idx    = int(data['idx'])
@@ -2040,7 +2085,7 @@ def resolve_acronyms():
     Resolves a list of acronyms to parcellation_indices in one shot.
     Used for Allen-tree container nodes (e.g. Cerebrum) not in name_df.
     """
-    data = request.get_json(force=True)
+    data = _json_body()
     acros = {str(a).lower().strip() for a in (data.get('acronyms') or [])}
     if not acros:
         return jsonify({'parcellation_indices': [], 'count': 0})
@@ -2065,7 +2110,7 @@ def resolve_acronyms():
 
 @app.route('/api/highlight_indices', methods=['POST'])
 def highlight_indices():
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         view    = data['view'].lower()
         idx     = int(data['idx'])
@@ -2101,7 +2146,7 @@ def highlight_indices():
 
 @app.route('/api/region_center_indices', methods=['POST'])
 def region_center_indices():
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         indices = [int(i) for i in data['parcellation_indices']]
     except (KeyError, TypeError, ValueError):
@@ -2135,7 +2180,7 @@ def group_by_term():
     This is the ground-truth grouping path — works for ANY named term
     including container nodes like Cerebrum, Vermal regions, Piriform area.
     """
-    data    = request.get_json(force=True)
+    data    = _json_body()
     name    = (data.get('name')    or '').strip()
     acronym = (data.get('acronym') or '').strip()
 
@@ -2172,7 +2217,7 @@ def highlight_group():
     readable, then draws bright boundary lines on top of the fill so internal
     region separations remain clearly visible.
     """
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         view       = data['view'].lower()
         idx        = int(data['idx'])
@@ -2227,6 +2272,8 @@ def highlight_group():
 
 @app.route('/api/debug_name')
 def debug_name():
+    if not _DEBUG_ERRORS:   # developer-only diagnostic; hidden unless FLASK_DEBUG=1
+        abort(404)
     name = request.args.get('q','').strip().lower()
     result = {}
     for col in ['organ','category','division','structure','substructure']:
@@ -2253,7 +2300,7 @@ def find_group_level():
     contains the given name, so the frontend can route to the correct group endpoint.
     Returns { group_level, group_name, member_count }.
     """
-    data = request.get_json(force=True)
+    data = _json_body()
     name = (data.get('name') or '').strip()
     if not name:
         return jsonify({'error': 'name required'}), 400
@@ -2301,7 +2348,7 @@ def region_center_group():
     parcellation indices combined).  Returns xi, yi, zi, voxel_count, and the
     group colour.
     """
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         group_lv   = data['group_level']
         group_name = data['group_name'].strip()
@@ -2361,7 +2408,7 @@ def region_center():
     Returns the best slice index for each view so the frontend can navigate to it.
     Also returns per-level colors for the region.
     """
-    data = request.get_json(force=True)
+    data = _json_body()
     try:
         target = int(data['parcellation_index'])
     except (KeyError, TypeError, ValueError):
@@ -2433,7 +2480,10 @@ def search():
     if len(q) < 1:
         return jsonify({'results': [], 'query': q})
 
-    limit   = min(int(request.args.get('limit', 50)), 200)
+    try:
+        limit = max(1, min(int(request.args.get('limit', 50)), 200))
+    except ValueError:
+        return jsonify({'error': 'limit must be an integer'}), 400
     q_lower = q.lower()
 
     import re as _re
@@ -3012,14 +3062,21 @@ def get_ontology():
 
 
 # ── Brain Atlas RAG Chatbot ───────────────────────────────────────────────────
-import shutil as _shutil, threading as _threading
 import urllib.request as _urllib_req
 import urllib.error   as _urllib_err
 
-_chat_ready   = False
-_vectorstore  = None
-_chat_llm     = None
-_kb_documents = []   # raw docs for exact-match fallback
+# Local AI = Ollama (https://ollama.com) running separately. Talked to over
+# its plain HTTP API, so no extra Python packages are needed. Inside Docker,
+# "localhost" is the container itself — point OLLAMA_URL at the host instead
+# (http://host.docker.internal:11434, see .env.example).
+_IN_DOCKER    = Path('/.dockerenv').exists()
+_OLLAMA_URL   = (_os.environ.get('OLLAMA_URL') or
+                 ('http://host.docker.internal:11434' if _IN_DOCKER else 'http://localhost:11434')
+                 ).rstrip('/')
+_OLLAMA_MODEL = _os.environ.get('OLLAMA_MODEL') or 'gemma3:4b'
+
+class _OllamaUnavailable(Exception):
+    pass
 
 # ── CortexMap API integration ─────────────────────────────────────────────────
 # Live deployed orchestrator.  Override via CORTEXMAP_URL env var if needed.
@@ -3142,85 +3199,83 @@ def _cortexmap_get_summaries(region_id):
                 all_pmc_ids.append(pid)
     return '\n\n'.join(text_parts), all_pmc_ids, ''
 
-def _rag_init():
-    global _chat_ready, _vectorstore, _chat_llm, _kb_documents
+class _KbDoc:
+    def __init__(self, content, metadata):
+        self.page_content = content
+        self.metadata = metadata
+
+def _load_kb_documents():
+    """One text document per region in brain_regions_kb.json, used as the
+    local assistant's context. (This used to also build a Chroma vector
+    store + download an embedding model on every start, but nothing ever
+    queried it — the lookup below is, and always was, an exact match on the
+    selected region's name / acronym / parcellation index.)"""
+    kb_file = Path(__file__).parent / 'brain_regions_kb.json'
     try:
-        from langchain_community.llms import Ollama as _Ollama
-        from langchain_chroma import Chroma
-        from langchain_huggingface import HuggingFaceEmbeddings
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-        print("=" * 60)
-        print("Brain Atlas RAG: starting up…")
-        print("Make sure Ollama is running:  ollama serve")
-        print("And the model is pulled:      ollama pull gemma3:4b")
-        print("=" * 60)
-
-        base    = Path(__file__).parent
-        kb_file = base / 'brain_regions_kb.json'
-
-        if not kb_file.exists():
-            print(f"ERROR: {kb_file} not found — chat will be unavailable.")
-            return
-
-        # ── Load knowledge base JSON ──
-        kb = _json.loads(kb_file.read_text('utf-8'))
-        regions = kb.get('regions', [])
-        print(f"Brain Atlas RAG: loaded {len(regions)} regions from brain_regions_kb.json")
-
-        class _Doc:
-            def __init__(self, content, metadata=None):
-                self.page_content = content
-                self.metadata = metadata or {}
-
-        docs = []
-        for r in regions:
-            # Build a rich text document for each region
-            lines = []
-            for field in ['structure','substructure','division','category','organ','acronym']:
-                if r.get(field): lines.append(f"{field.title()}: {r[field]}")
-            if r.get('parcellation_index'):
-                lines.append(f"Parcellation Index: {r['parcellation_index']}")
-            for field in ['function','connectivity','clinical_relevance','notes']:
-                if r.get(field): lines.append(f"\n{field.replace('_',' ').title()}:\n{r[field]}")
-            doc = _Doc('\n'.join(lines), {
-                'structure':           r.get('structure','').lower(),
-                'parcellation_index':  str(r.get('parcellation_index','')),
-                'acronym':             r.get('acronym','').lower(),
-            })
-            docs.append(doc)
-
-        _kb_documents = docs
-
-        # ── Rebuild ChromaDB fresh every restart ──
-        chroma_path = base / 'chroma_db'
-        if chroma_path.exists():
-            _shutil.rmtree(chroma_path)
-            print("Brain Atlas RAG: old ChromaDB deleted — rebuilding…")
-
-        splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
-        chunks   = splitter.split_documents(docs)
-        print(f"Brain Atlas RAG: embedding {len(chunks)} chunks…")
-
-        embeddings  = HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')
-        _vectorstore = Chroma.from_documents(
-            documents=chunks,
-            embedding=embeddings,
-            persist_directory=str(chroma_path)
-        )
-        print("Brain Atlas RAG: vector store ready ✓")
-
-        # ── Connect to Ollama ──
-        _chat_llm   = _Ollama(model='gemma3:4b', temperature=0.3)
-        print("Brain Atlas RAG: connecting to Ollama…")
-        _chat_llm.invoke("Hello")
-        _chat_ready = True
-        print("Brain Atlas RAG: fully ready ✓  Open http://localhost:5000")
-
+        regions = _json.loads(kb_file.read_text('utf-8')).get('regions', [])
     except Exception as e:
-        print(f"Brain Atlas RAG: FAILED — {e}")
+        log.warning(f'local assistant KB load failed: {e}')
+        return []
+    docs = []
+    for r in regions:
+        lines = []
+        for field in ['structure','substructure','division','category','organ','acronym']:
+            if r.get(field): lines.append(f"{field.title()}: {r[field]}")
+        if r.get('parcellation_index'):
+            lines.append(f"Parcellation Index: {r['parcellation_index']}")
+        for field in ['function','connectivity','clinical_relevance','notes']:
+            if r.get(field): lines.append(f"\n{field.replace('_',' ').title()}:\n{r[field]}")
+        docs.append(_KbDoc('\n'.join(lines), {
+            'structure':          str(r.get('structure','')).lower(),
+            'parcellation_index': str(r.get('parcellation_index','')),
+            'acronym':            str(r.get('acronym','')).lower(),
+        }))
+    return docs
 
-_threading.Thread(target=_rag_init, daemon=True).start()
+_kb_documents = _load_kb_documents()
+
+def _ollama_generate(prompt, timeout=120):
+    """Ask the local Ollama server for a completion. Raises
+    _OllamaUnavailable with a user-facing explanation if it can't."""
+    body = _json.dumps({'model': _OLLAMA_MODEL, 'prompt': prompt, 'stream': False,
+                        'options': {'temperature': 0.3}}).encode('utf-8')
+    req = _urllib_req.Request(f'{_OLLAMA_URL}/api/generate', data=body,
+                              headers={'Content-Type': 'application/json'}, method='POST')
+    try:
+        with _urllib_req.urlopen(req, timeout=timeout) as resp:
+            payload = _json.loads(resp.read().decode('utf-8'))
+        return (payload.get('response') or '').strip()
+    except _urllib_err.HTTPError as e:
+        if e.code == 404:
+            raise _OllamaUnavailable(
+                f"Ollama is running but doesn't have the '{_OLLAMA_MODEL}' model. "
+                f"Run: ollama pull {_OLLAMA_MODEL}")
+        raise _OllamaUnavailable(f'Ollama returned HTTP {e.code}.')
+    except TimeoutError:
+        # Reachable but slow — usually the model loading for the first time.
+        raise _OllamaUnavailable(
+            f'The local AI took longer than {timeout}s to answer (the first question '
+            'after starting Ollama can be slow while the model loads). Try again.')
+    except (_urllib_err.URLError, OSError):
+        raise _OllamaUnavailable(_OLLAMA_UNREACHABLE)
+    except (ValueError, AttributeError):
+        # 200 but not Ollama's JSON — OLLAMA_URL points at something else.
+        raise _OllamaUnavailable(
+            f"Something answered at {_OLLAMA_URL}, but it isn't Ollama. Check OLLAMA_URL.")
+
+_OLLAMA_UNREACHABLE = (
+    f"The local AI (Ollama) isn't reachable at {_OLLAMA_URL}. Start it with "
+    f"'ollama serve' (and 'ollama pull {_OLLAMA_MODEL}'), or switch to GPT. "
+    "If Ollama runs somewhere else, set OLLAMA_URL in backend/.env.")
+
+def _ollama_reachable():
+    """Cheap (2 s) check before doing the slower CortexMap lookups that only
+    matter if Ollama can answer afterwards."""
+    try:
+        with _urllib_req.urlopen(f'{_OLLAMA_URL}/api/tags', timeout=2):
+            return True
+    except Exception:
+        return False
 
 def _rag_answer(question, region_name='', parcellation_index='', region_acronym=''):
     """
@@ -3327,12 +3382,12 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
                 f"\"structure\": \"{region_name}\", fill in the fields, then restart the app."
             ), cortexmap_status, []
         return "No region is currently selected. Click a region in the atlas first, then ask your question.", cortexmap_status, []
-    return _chat_llm.invoke(prompt), cortexmap_status, pmc_ids
+    return _ollama_generate(prompt), cortexmap_status, pmc_ids
 
 @app.route('/api/chat', methods=['POST'])
 @limiter.limit('15 per minute')
 def chat():
-    data               = request.get_json(force=True)
+    data               = _json_body()
     question           = (data.get('message') or '').strip()
     region_name        = (data.get('region_name') or '').strip()
     region_acronym     = (data.get('region_acronym') or '').strip()
@@ -3351,33 +3406,36 @@ def chat():
             return _safe_error_response(e)
 
     # ── Route to local Ollama RAG ──────────────────────────────────────────────
-    if not _chat_ready:
-        return jsonify({'answer': 'Still building the knowledge base — please wait a moment and try again.'})
+    if not _ollama_reachable():
+        return jsonify({'answer': _OLLAMA_UNREACHABLE, 'provider': 'ollama',
+                        'error_kind': 'ollama_unavailable'})
     try:
         answer, cortexmap_status, pmc_ids = _rag_answer(question, region_name, parcellation_index, region_acronym)
-
-        # Build a human-readable notice about which data source was used
-        _notices = {
-            'enriched':         None,   # all good — no notice needed
-            'local_only':       None,   # normal local-only path — no notice needed
-            'unreachable':      '⚠ CortexMap could not be reached (network error or route not deployed yet). Ollama is answering from the local knowledge base only.',
-            'region_not_found': 'ℹ This region was not found in CortexMap. Ollama is answering from the local knowledge base.',
-            'generating':       '⏳ CortexMap is fetching papers and generating summaries for this region (auto-queued). Try again in a moment — Ollama is using the local knowledge base for now.',
-            'summaries_error':  '⚠ CortexMap summaries could not be fetched. Ollama is answering from the local knowledge base only.',
-            'no_summaries':     'ℹ CortexMap has no summaries for this region yet. Ollama is answering from the local knowledge base.',
-            'error':            '⚠ CortexMap returned an unexpected error. Ollama is answering from the local knowledge base only.',
-        }
-        notice = _notices.get(cortexmap_status)
-
-        return jsonify({
-            'answer':            answer,
-            'provider':          'ollama',
-            'cortexmap_status':  cortexmap_status,
-            'cortexmap_notice':  notice,        # None when CortexMap worked fine
-            'pmc_sources':       pmc_ids,       # list of PMC IDs for frontend link rendering
-        })
+    except _OllamaUnavailable as e:
+        return jsonify({'answer': str(e), 'provider': 'ollama', 'error_kind': 'ollama_unavailable'})
     except Exception as e:
         return _safe_error_response(e)
+
+    # Build a human-readable notice about which data source was used
+    _notices = {
+        'enriched':         None,   # all good — no notice needed
+        'local_only':       None,   # normal local-only path — no notice needed
+        'unreachable':      '⚠ CortexMap could not be reached (network error or route not deployed yet). Ollama is answering from the local knowledge base only.',
+        'region_not_found': 'ℹ This region was not found in CortexMap. Ollama is answering from the local knowledge base.',
+        'generating':       '⏳ CortexMap is fetching papers and generating summaries for this region (auto-queued). Try again in a moment — Ollama is using the local knowledge base for now.',
+        'summaries_error':  '⚠ CortexMap summaries could not be fetched. Ollama is answering from the local knowledge base only.',
+        'no_summaries':     'ℹ CortexMap has no summaries for this region yet. Ollama is answering from the local knowledge base.',
+        'error':            '⚠ CortexMap returned an unexpected error. Ollama is answering from the local knowledge base only.',
+    }
+    notice = _notices.get(cortexmap_status)
+
+    return jsonify({
+        'answer':            answer,
+        'provider':          'ollama',
+        'cortexmap_status':  cortexmap_status,
+        'cortexmap_notice':  notice,        # None when CortexMap worked fine
+        'pmc_sources':       pmc_ids,       # list of PMC IDs for frontend link rendering
+    })
 
 
 # ── ChatGPT (OpenAI) handler ───────────────────────────────────────────────────
@@ -3486,68 +3544,6 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
     )
     return response.choices[0].message.content.strip()
 
-# ── eBrain volume rendering: serve the annotation array for GPU-side sampling
-# The frontend fetches this once, uploads it as a Data3DTexture, and samples it
-# in a custom fragment shader on each slice-plane quad. This gives pixel-perfect
-# cross-sections matching the 2D PNGs, with zero mesh loading.
-#
-# Downsample stride of 3 (~30µm voxels) gives ~440x267x380 × 2 bytes ≈ 90MB raw.
-# Gzipped over the wire it's usually 15-25MB.
-_VOLUME_CACHE = {}  # stride -> bytes
-
-@app.route('/api/annotation_volume_meta')
-def annotation_volume_meta():
-    stride = int(request.args.get('res', 3))
-    shape  = annotation_array[::stride, ::stride, ::stride].shape
-    return jsonify({
-        'shape': list(shape),              # (X, Y, Z) after stride
-        'stride': stride,
-        'dtype': 'uint16',
-        'original_shape': list(annotation_array.shape),
-        'byte_length': int(np.prod(shape) * 2),
-    })
-
-@app.route('/api/annotation_volume')
-def annotation_volume():
-    stride = int(request.args.get('res', 3))
-    if stride not in _VOLUME_CACHE:
-        vol = annotation_array[::stride, ::stride, ::stride].astype(np.uint16)
-        _VOLUME_CACHE[stride] = np.ascontiguousarray(vol).tobytes()
-    data = _VOLUME_CACHE[stride]
-    resp = Response(data, mimetype='application/octet-stream')
-    resp.headers['Content-Length'] = str(len(data))
-    resp.headers['X-Volume-Stride'] = str(stride)
-    resp.headers['Cache-Control'] = 'public, max-age=86400'  # this data doesn't change while the app is running
-    return resp
-
-# Color lookup table: parcellation_id -> [R,G,B] as uint8 triples.
-# Packed binary (3 bytes per id), zero-filled for missing ids.
-@app.route('/api/annotation_lut')
-def annotation_lut():
-    # Use the structure-level color column from color_df (same indexing as
-    # the annotation volume voxels). This matches how /api/slice colorizes.
-    max_id = int(annotation_array.max()) + 1
-    lut = np.zeros((max_id, 3), dtype=np.uint8)
-    if color_df is not None and 'structure_color' in color_df.columns:
-        for pidx, row in color_df.iterrows():
-            try:
-                pidx_i = int(pidx)
-                if pidx_i < 0 or pidx_i >= max_id: continue
-                hx = str(row.get('structure_color', '')).strip().lstrip('#')
-                if len(hx) == 6:
-                    lut[pidx_i, 0] = int(hx[0:2], 16)
-                    lut[pidx_i, 1] = int(hx[2:4], 16)
-                    lut[pidx_i, 2] = int(hx[4:6], 16)
-            except Exception:
-                pass
-    data = np.ascontiguousarray(lut).tobytes()
-    resp = Response(data, mimetype='application/octet-stream')
-    resp.headers['Content-Length'] = str(len(data))
-    resp.headers['X-LUT-Max-Id']   = str(max_id)
-    resp.headers['Cache-Control'] = 'public, max-age=86400'
-    return resp
-
-
 # ── Mesh-slab approach: list every structure_id we have a mesh file for.
 # Frontend uses this to preload all meshes on eBrain toggle so cross-section
 # slabs are immediately ready regardless of which slice the user visits.
@@ -3571,15 +3567,110 @@ def available_meshes():
 _MESH_VOL = {'array': None, 'meta': None, 'bytes': None}
 _MESH_LUT = {'bytes': None, 'max_id': 0}
 
+# Where the volume lives. The primary location is inside data/, which Docker
+# keeps in the persistent `atlas-data` volume, so it survives restarts. The
+# old location (next to App.py) is still checked so an existing local copy
+# made by running voxelize_meshes.py by hand keeps working.
+_MESH_VOL_PRIMARY = Path(__file__).parent / 'data' / 'meshes_volume'
+_MESH_VOL_LEGACY  = Path(__file__).parent / 'meshes_volume'
+# While voxelize_meshes.py runs, this file holds its pid + start time. It's
+# on disk (not just in memory) so that if gunicorn restarts its worker
+# mid-build, the new worker sees the build already running instead of
+# starting a second one writing to the same files.
+_MESH_VOL_LOCK = _MESH_VOL_PRIMARY.with_suffix('.lock')
+_MESH_VOL_LOG  = Path(__file__).parent / 'logs' / 'voxelize.log'
+
+
+def _mesh_volume_paths():
+    """Return (npy, json) for the first location where BOTH files exist as
+    real files, or None. `is_file()` (not `exists()`) matters: when Docker
+    bind-mounts a path that doesn't exist on the host, it creates an empty
+    directory there, which `exists()` would happily accept."""
+    for stem in (_MESH_VOL_PRIMARY, _MESH_VOL_LEGACY):
+        npy, jsn = stem.with_suffix('.npy'), stem.with_suffix('.json')
+        if npy.is_file() and jsn.is_file():
+            return npy, jsn
+    return None
+
+
+def _voxelizer_job():
+    """(pid, started_at) of a voxelize_meshes.py run that is still alive, or
+    None. A lock left behind by a run that crashed or was killed (or by an
+    earlier container whose pid now belongs to something else) is ignored."""
+    try:
+        pid_s, started_s = _MESH_VOL_LOCK.read_text().split()
+        pid, started = int(pid_s), float(started_s)
+    except (OSError, ValueError):
+        return None
+    proc = _MESH_VOL_PROC['proc']
+    if proc is not None and proc.pid == pid:          # started by this process
+        return (pid, started) if proc.poll() is None else None
+    if Path('/proc').is_dir():                         # Linux / Docker
+        try:
+            alive = b'voxelize_meshes.py' in Path(f'/proc/{pid}/cmdline').read_bytes()
+        except OSError:
+            alive = False
+        return (pid, started) if alive else None
+    # Windows/macOS dev fallback (os.kill(pid, 0) would send Ctrl+C on
+    # Windows): trust the lock only while it's young enough to be a live run.
+    return (pid, started) if _time.time() - started < 30 * 60 else None
+
+
+_MESH_VOL_PROC = {'proc': None}
+
+
+def _ensure_mesh_volume():
+    """If the mesh volume doesn't exist yet, build it in the background by
+    running voxelize_meshes.py as a separate process (takes ~7 minutes).
+    A separate process keeps that CPU-heavy work from slowing down the web
+    server, and the rest of the app works normally in the meantime — only
+    clicking inside the 3D eBrain view waits for it."""
+    import subprocess
+    if _mesh_volume_paths() is not None or _voxelizer_job() is not None:
+        return
+    meshes_dir = Path(__file__).parent / 'meshes'
+    if not any(meshes_dir.glob('*.glb')):
+        print('mesh volume: no meshes on disk, skipping voxelization.')
+        return
+    _MESH_VOL_PRIMARY.parent.mkdir(parents=True, exist_ok=True)
+    print(f'mesh volume: not found, generating in the background (log: logs/{_MESH_VOL_LOG.name})…')
+    with open(_MESH_VOL_LOG, 'w', encoding='utf-8') as log_fh:   # child keeps its own copy
+        proc = subprocess.Popen(
+            # -u: unbuffered, so logs/voxelize.log shows progress as it happens
+            [_sys.executable, '-u', str(Path(__file__).parent / 'voxelize_meshes.py'),
+             '--meshes-dir', str(meshes_dir), '--out', str(_MESH_VOL_PRIMARY)],
+            stdout=log_fh, stderr=subprocess.STDOUT, cwd=str(Path(__file__).parent))
+    _MESH_VOL_PROC['proc'] = proc
+    _MESH_VOL_LOCK.write_text(f'{proc.pid} {_time.time()}')
+
+
+_ensure_mesh_volume()
+
+
+def _mesh_volume_missing_response():
+    job = _voxelizer_job()
+    if job is not None:
+        mins = (_time.time() - job[1]) / 60
+        return jsonify({'error': 'The 3D click volume is still being generated '
+                                 f'(started {mins:.0f} min ago, usually takes ~7). Try again shortly.',
+                        'status': 'generating'}), 503
+    if _MESH_VOL_LOCK.exists():
+        # A run was started but is gone without producing the files.
+        return jsonify({'error': 'Generating the 3D click volume failed — see '
+                                 'logs/voxelize.log. Restart the app to try again.',
+                        'status': 'failed'}), 500
+    return jsonify({'error': 'meshes_volume.npy not found; run voxelize_meshes.py',
+                    'status': 'missing'}), 404
+
 
 def _load_mesh_volume():
     if _MESH_VOL['array'] is not None:
         return _MESH_VOL
-    base = Path(__file__).parent
-    npy  = base / 'meshes_volume.npy'
-    jsn  = base / 'meshes_volume.json'
-    if not npy.exists() or not jsn.exists():
+    paths = _mesh_volume_paths()
+    if paths is None or _voxelizer_job() is not None:   # don't read mid-write
         return None
+    npy, jsn = paths
+    _MESH_VOL_LOCK.unlink(missing_ok=True)   # build finished; lock no longer needed
     arr = np.load(npy)
     meta = json.loads(jsn.read_text())
     _MESH_VOL['array'] = arr
@@ -3596,7 +3687,7 @@ def _load_mesh_volume():
 def mesh_volume_meta():
     mv = _load_mesh_volume()
     if mv is None:
-        return jsonify({'error': 'meshes_volume.npy not found; run voxelize_meshes.py'}), 404
+        return _mesh_volume_missing_response()
     meta = dict(mv['meta'])
     meta['byte_length'] = len(mv['bytes'])
     return jsonify(meta)
@@ -3606,7 +3697,7 @@ def mesh_volume_meta():
 def mesh_volume():
     mv = _load_mesh_volume()
     if mv is None:
-        return jsonify({'error': 'meshes_volume.npy not found'}), 404
+        return _mesh_volume_missing_response()
     resp = Response(mv['bytes'], mimetype='application/octet-stream')
     resp.headers['Content-Length'] = str(len(mv['bytes']))
     resp.headers['Cache-Control'] = 'public, max-age=86400'
@@ -3621,7 +3712,7 @@ def mesh_lut():
     """
     mv = _load_mesh_volume()
     if mv is None:
-        return jsonify({'error': 'mesh volume not loaded'}), 404
+        return _mesh_volume_missing_response()
     if _MESH_LUT['bytes'] is not None:
         resp = Response(_MESH_LUT['bytes'], mimetype='application/octet-stream')
         resp.headers['Content-Length'] = str(len(_MESH_LUT['bytes']))

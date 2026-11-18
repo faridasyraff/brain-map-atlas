@@ -46,3 +46,6 @@ backend/meshes_volume.npy
 backend/meshes_volume.json
 openai_region_cache.json
 *.tmp
+
+# Playwright MCP screenshots/snapshots from local testing
+.playwright-mcp/
