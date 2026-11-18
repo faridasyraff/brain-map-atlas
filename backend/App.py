@@ -42,9 +42,6 @@ from collections import Counter
 from datetime import datetime
 import numpy as np
 from scipy.ndimage import binary_erosion
-import matplotlib
-matplotlib.use('Agg')
-from matplotlib.figure import Figure
 import SimpleITK as sitk
 from pathlib import Path
 from PIL import Image
@@ -1145,39 +1142,38 @@ def colorize(annot_slice, level='structure'):
     return lut[flat].reshape(annot_slice.shape[0], annot_slice.shape[1], 3)
 
 # ── Render a slice to base64 PNG ──────────────────────────────────────────────
-def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=10, fh=8):
-    # A standalone Figure, NOT plt.subplots(): pyplot keeps one shared
-    # "current figure" for the whole process, and gunicorn runs several
-    # threads — two slices rendering at once (every click reloads 2-3 views
-    # in parallel) could draw into each other. A Figure object is private to
-    # this call, so it's safe to use from any thread.
-    fig = Figure(figsize=(fw, fh), dpi=100)
-    ax = fig.subplots()
-    ax.imshow(tmpl, cmap='Greys_r', origin='upper')
+def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=None, fh=None):
+    """Composite one slice into a PNG at the atlas's native resolution:
+      1. the grey template, contrast-stretched to this slice's own min..max
+      2. the region colors at ~70% opacity wherever there is a region
+      3. the region boundary lines on top (black, opacity = boundary/225)
+    This is exactly what the old matplotlib version drew (imshow with the
+    Greys_r / RGBA / Greys layers), done directly with numpy + Pillow — about
+    10x faster, which matters because every click re-renders 2-3 slices.
+    It also needs no shared plotting state, so it's safe across threads.
+    fw/fh are ignored (kept so old call sites still work)."""
+    t = tmpl.astype(np.float32)
+    lo, hi = float(t.min()), float(t.max())
+    grey = (t - lo) * (255.0 / (hi - lo)) if hi > lo else np.zeros_like(t)
+    out = np.repeat(grey[:, :, None], 3, axis=2)              # (H, W, 3) float
 
-    # ── Color mode: overlay official atlas region colors ──────────────────────
     if colorize_level and colorize_level != 'off':
-        rgb = colorize(annot, colorize_level)          # (H, W, 3) uint8
-        rgba = np.concatenate(
-            [rgb, np.where(annot[:, :, None] > 0,
-                           np.full((*annot.shape, 1), 178, dtype=np.uint8),   # alpha ~70%
-                           np.zeros((*annot.shape, 1), dtype=np.uint8))],
-            axis=2)                                    # (H, W, 4) RGBA
-        ax.imshow(rgba, origin='upper', interpolation='nearest')
+        rgb = colorize(annot, colorize_level).astype(np.float32)
+        a = np.where(annot > 0, 178.0 / 255.0, 0.0).astype(np.float32)[:, :, None]
+        out = out * (1.0 - a) + rgb * a
 
-    ax.imshow(bnd, cmap='Greys',
-              alpha=np.clip(bnd.astype(float) / 225, 0, 1),
-              origin='upper')
-    ax.axis('off')
-    fig.tight_layout(pad=0)
+    b = bnd.astype(np.float32)
+    b_lo, b_hi = float(b.min()), float(b.max())
+    # 'Greys' colormap: low values white, high values black
+    b_col = 255.0 * (1.0 - (b - b_lo) / (b_hi - b_lo)) if b_hi > b_lo else np.full_like(b, 255.0)
+    b_a = np.clip(b / 225.0, 0.0, 1.0)[:, :, None]
+    out = out * (1.0 - b_a) + b_col[:, :, None] * b_a
+
+    img = Image.fromarray(np.clip(out + 0.5, 0, 255).astype(np.uint8), 'RGB')
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, facecolor='black')
-    buf.seek(0)
-    raw = buf.read()
-    import struct
-    pw = struct.unpack('>I', raw[16:20])[0]
-    ph = struct.unpack('>I', raw[20:24])[0]
-    return base64.b64encode(raw).decode('utf-8'), pw, ph
+    img.save(buf, format='PNG', compress_level=3)   # 3: much faster than the default 6, ~same size
+    h, w = annot.shape
+    return base64.b64encode(buf.getvalue()).decode('utf-8'), w, h
 
 # ── Flask ─────────────────────────────────────────────────────────────────────
 # static_folder=None turns off Flask's built-in "serve any file in this
@@ -1200,6 +1196,28 @@ CORS(app, origins=_allowed_origins(), supports_credentials=True)
 # asked for compression. The website's own build tools already show the
 # expected saving: the main JS file is 581KB normally but only 151KB
 # compressed — that's the difference this turns on.
+# How long each request spent inside the app, sent as a standard
+# Server-Timing header (browser dev tools show it per request) and logged
+# when slow. Lets you tell "the server was slow" apart from "the request
+# was waiting to be picked up" when something feels laggy.
+from flask import g as _g
+
+@app.before_request
+def _start_timer():
+    _g._t0 = _time.perf_counter()
+
+@app.after_request
+def _add_server_timing(resp):
+    t0 = getattr(_g, '_t0', None)
+    if t0 is not None:
+        ms = (_time.perf_counter() - t0) * 1000
+        resp.headers['Server-Timing'] = f'app;dur={ms:.1f}'
+        if ms > 1000:
+            log.warning(f'slow request: {request.method} {request.path} took {ms:.0f} ms')
+    return resp
+
+# Registered after the timer on purpose: Flask runs after_request hooks in
+# reverse order, so compression happens first and is included in the timing.
 Compress(app)
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
@@ -1210,7 +1228,12 @@ Compress(app)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=['60 per minute'],
+    # One click in the atlas makes ~8 requests (lookup, enrich, mesh, 2-3
+    # slices, 3 highlights), so the old 60/minute cut normal users off after
+    # ~6 clicks (views then showed 'HTTP 429'). 600/minute is ~1 click per
+    # second, sustained. The costly endpoints (chat, AI enrich, login) keep
+    # their own much tighter limits below.
+    default_limits=['600 per minute'],
     storage_uri='memory://',  # Keeps the request counts in this app's own
                                # memory. That's fine as long as you're only
                                # running one copy of the app. If you ever run
@@ -1417,10 +1440,12 @@ def _serve_built_page(filename):
     return send_from_directory(_FRONTEND_DIST, filename)
 
 @app.route('/')
+@limiter.exempt   # static files: not worth rate limiting, and a page load fetches many
 def home_page():
     return _serve_built_page('home.html')
 
 @app.route('/app')
+@limiter.exempt   # static files: not worth rate limiting, and a page load fetches many
 def index():
     return _serve_built_page('index.html')
 
@@ -1435,6 +1460,7 @@ def index():
 # a brand new name instead, and old cached copies just quietly stop being
 # used. That's what max_age (1 year) and "immutable" below are doing.
 @app.route('/assets/<path:filename>')
+@limiter.exempt   # static files: not worth rate limiting, and a page load fetches many
 def frontend_assets(filename):
     response = send_from_directory(_FRONTEND_DIST / 'assets', filename, max_age=31536000)
     response.headers['Cache-Control'] += ', immutable'
@@ -1448,6 +1474,7 @@ def frontend_assets(filename):
 # converts it to .glb right away, and convert_meshes_to_glb.py does the same
 # one-off conversion for files that were already downloaded previously.
 @app.route('/meshes/<int:struct_id>.glb')
+@limiter.exempt   # static files: not worth rate limiting, and a page load fetches many
 def serve_mesh(struct_id):
     meshes_dir = Path(__file__).parent / 'meshes'
     fname = f'{struct_id}.glb'
