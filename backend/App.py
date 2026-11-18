@@ -373,7 +373,6 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
             text = re.sub(r'\([^)]*\)', '', text)
             for raw in re.split(r',|;|\band\b|\u2192|->', text):
                 if _add_related(raw, relationship):
-                    print('related regions parsed', related)
                     return related
 
     row = None
@@ -395,7 +394,6 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
                 break
 
     if row is None:
-        print('related regions parsed', related)
         return related[:limit]
 
     # 2. Child/parent hierarchy matches from the selected row.
@@ -407,7 +405,6 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
         if parent_val and child_val and parent_val not in {'--', 'â€”', '—'}:
             if parent_val.lower() != child_val.lower():
                 if _add_related(parent_val, 'parent'):
-                    print('related regions parsed', related)
                     return related
 
         if parent_val and parent_val not in {'--', 'â€”', '—'}:
@@ -417,7 +414,6 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
                     sib_name = str(sib.get(child, '') or '').strip()
                     if sib_name and sib_name.lower() != row_vals.get(child, '').lower():
                         if _add_related(sib_name, 'sibling'):
-                            print('related regions parsed', related)
                             return related
             except Exception:
                 pass
@@ -428,7 +424,6 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
         if not val or val in {'--', 'â€”', '—'}:
             continue
         if _add_related(val, level):
-            print('related regions parsed', related)
             return related
 
         try:
@@ -440,12 +435,9 @@ def _get_related_regions(parcellation_index=None, region_name='', region_acronym
                     or str(m.get('division', '') or '').strip()
                 )
                 if _add_related(candidate, f'same {level}'):
-                    print('related regions parsed', related)
                     return related
         except Exception:
             pass
-
-    print('related regions parsed', related)
     return related[:limit]
 
 # ── OpenAI-backed generators (for /api/enrich) ────────────────────────────────
@@ -3472,6 +3464,66 @@ def _ollama_reachable():
     except Exception:
         return False
 
+def _atlas_context(region_name='', parcellation_index='', region_acronym=''):
+    """Plain-text facts the atlas itself has about a region, for the local
+    assistant's prompt. Empty string if the region can't be found."""
+    levels = ['organ', 'category', 'division', 'structure', 'substructure']
+    row, pidx, depth = None, None, len(levels)
+    try:
+        pidx = int(parcellation_index) if str(parcellation_index).strip() else None
+    except ValueError:
+        pidx = None
+    if pidx is not None and pidx in name_df.index:
+        row = name_df.loc[pidx]
+    elif region_name:
+        # Matched by name (e.g. a group): any member row works for the levels
+        # ABOVE the match, but must stop at the matched level — the rows
+        # below it describe one particular member, not the group.
+        rn = region_name.lower().strip()
+        for col in ['substructure', 'structure', 'division', 'category']:
+            hits = name_df[name_df[col].fillna('').str.lower() == rn]
+            if not hits.empty:
+                row, depth = hits.iloc[0], levels.index(col) + 1
+                pidx = int(hits.index[0]) if col == 'substructure' else None
+                break
+
+    lines = []
+    if region_name:
+        lines.append(f"Selected region: {region_name}" + (f" ({region_acronym})" if region_acronym else ''))
+    if row is not None:
+        path = []
+        for c in levels[:depth]:
+            v = str(row.get(c) or '').strip()
+            if v and v not in ('—', '--', 'nan') and (not path or path[-1] != v):   # skip repeats
+                path.append(v)
+        if path:
+            lines.append("Position in the Allen hierarchy (broad to specific): " + " > ".join(path))
+    else:
+        term = _name_to_term_id.get((region_name or '').lower()) or _acro_to_term_id.get((region_acronym or '').lower())
+        if term:
+            node = _term_nodes.get(term, {})
+            parent = _term_nodes.get(node.get('parent_label', ''), {})
+            n_children = len(node.get('children', []))
+            lines.append(f"This is a grouping in the Allen hierarchy"
+                         + (f" under {parent.get('name')}" if parent.get('name') else '')
+                         + (f", with {n_children} direct subdivisions" if n_children else '') + ".")
+    if not lines:
+        return ''
+
+    related = _get_related_regions(parcellation_index=pidx, region_name=region_name,
+                                   region_acronym=region_acronym, limit=8)
+    if related:
+        lines.append("Related regions in the atlas: " + "; ".join(
+            f"{r['label']} ({r['relationship']})" for r in related))
+    summary = _get_region_summary(parcellation_index=pidx, region_name=region_name, region_acronym=region_acronym)
+    if summary:
+        lines.append(f"Summary: {summary}")
+    keywords = _get_functional_keywords(parcellation_index=pidx, region_name=region_name, region_acronym=region_acronym)
+    if keywords:
+        lines.append("Functional keywords: " + ", ".join(k['term'] for k in keywords[:12]))
+    return "\n".join(lines)
+
+
 def _rag_answer(question, region_name='', parcellation_index='', region_acronym=''):
     """
     CortexMap-first RAG.
@@ -3555,28 +3607,39 @@ def _rag_answer(question, region_name='', parcellation_index='', region_acronym=
             f"Question: {question}\n"
             "Answer:"
         )
-    elif selected_doc:
-        context = f"=== Local Knowledge Base ===\n{selected_doc}"
-        prompt = (
-            "You are an expert neuroscientist assistant for the Allen MOUSE Brain "
-            "Common Coordinate Framework v3 (CCFv3). Every question is about the "
-            "mouse brain (Mus musculus), never human or any other species. "
-            "Even if the user does not specify, assume mouse.\n\n"
-            "Answer ONLY using the context below.\n"
-            "Do NOT use your own knowledge. Do NOT guess or infer anything not in the context.\n\n"
-            f"Region context:\n{context}\n\n"
-            f"Question: {question}\n"
-            "Answer:"
-        )
     else:
-        if region_name:
-            return (
-                f"I don't have any information about '{region_name}' yet. "
-                f"CortexMap has been notified to generate a summary — try again shortly. "
-                f"To add it locally now, open brain_regions_kb.json, add an entry with "
-                f"\"structure\": \"{region_name}\", fill in the fields, then restart the app."
-            ), cortexmap_status, []
-        return "No region is currently selected. Click a region in the atlas first, then ask your question.", cortexmap_status, []
+        # No literature from CortexMap: answer from what the atlas itself
+        # knows about the region (hierarchy, acronym, related regions, any
+        # cached summary/keywords, and the curated KB entry if there is one).
+        # The curated KB only covers a handful of regions, so the old "KB
+        # only" rule meant the local assistant refused for almost every click.
+        facts = _atlas_context(region_name, parcellation_index, region_acronym)
+        if selected_doc:
+            facts += f"\n\nCurated notes:\n{selected_doc}"
+        if facts:
+            prompt = (
+                "You are a neuroscience assistant for the Allen MOUSE Brain Common "
+                "Coordinate Framework v3 (CCFv3). Every question is about the mouse "
+                "brain (Mus musculus) unless the user clearly says otherwise.\n\n"
+                "The ATLAS FACTS below are authoritative for names, acronyms and where "
+                "the region sits in the hierarchy. For function and connectivity, use "
+                "the facts when they cover it; otherwise you may use well-established "
+                "knowledge of mouse neuroanatomy, and say plainly when something is "
+                "uncertain or not well characterised. Use Allen CCFv3 region names. "
+                "Keep the answer under about 200 words.\n\n"
+                f"ATLAS FACTS\n{facts}\n\n"
+                f"Question: {question}\n"
+                "Answer:"
+            )
+        else:
+            prompt = (
+                "You are a neuroscience assistant for the Allen MOUSE Brain Common "
+                "Coordinate Framework v3 (CCFv3). Assume questions are about the mouse "
+                "brain. No region is selected, so answer generally, use Allen CCFv3 "
+                "region names, and keep it under about 200 words.\n\n"
+                f"Question: {question}\n"
+                "Answer:"
+            )
     return _ollama_generate(prompt), cortexmap_status, pmc_ids
 
 @app.route('/api/chat', methods=['POST'])
