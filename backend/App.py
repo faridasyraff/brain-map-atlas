@@ -185,6 +185,13 @@ def home_page():
 def index():
     return _serve_built_page('index.html')
 
+# The React rewrite, served alongside the current atlas while it's migrated
+# stage by stage. At the end it replaces index.html at /app and this goes.
+@app.route('/next')
+@limiter.exempt
+def react_app():
+    return _serve_built_page('next.html')
+
 # This only hands out files from inside frontend/dist/assets — nothing else
 # on the computer. See the static_folder=None note above for why we're
 # careful never to just hand out "any file you ask for."

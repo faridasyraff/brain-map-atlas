@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@fontsource-variable/instrument-sans";
+
+/* Design tokens — the same palette as the Claude Design canvas and the
+   original styles.css, exposed to Tailwind. `bg-surface`, `text-muted-foreground`,
+   `border-border`, `bg-plane-coronal`, `rounded-md`, ... all come from here.
+   Names follow shadcn/ui's conventions so its components work unchanged. */
+@theme {
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Neutrals */
+  --color-canvas: #000000;            /* image viewports: imaging needs true black */
+  --color-background: #12161b;        /* app chrome */
+  --color-surface: #171c22;           /* panels, headers */
+  --color-raised: #1f252d;            /* inputs, menus */
+  --color-hover: #262d36;
+  --color-border: #2a313b;
+  --color-border-strong: #3b4552;
+  --color-foreground: #e3e8ee;        /* 13.9:1 on surface */
+  --color-muted-foreground: #a0abb8;  /*  7.6:1 on surface */
+  --color-subtle-foreground: #7d8896; /*  4.6:1 on surface (AA) */
+
+  /* Interaction */
+  --color-primary: #e3e8ee;
+  --color-primary-foreground: #12161b;
+  --color-ring: #7ab4ff;
+  --color-link: #8fc0ff;
+
+  /* Status */
+  --color-destructive: #ff8f78;
+  --color-warning: #f0b65e;
+  --color-success: #63d29c;
+
+  /* Data: the four planes (also the 3D slice planes) */
+  --color-plane-sagittal: #4cc3e6;
+  --color-plane-coronal: #b394ff;
+  --color-plane-transverse: #4fd18e;
+  --color-plane-3d: #f0b65e;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+
+  --shadow-menu: 0 12px 32px rgb(0 0 0 / 0.5), 0 0 0 1px #3b4552;
+  --shadow-float: 0 6px 20px rgb(0 0 0 / 0.45);
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "tnum" 1;   /* tabular figures: slice numbers don't jiggle */
+  }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-ring; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

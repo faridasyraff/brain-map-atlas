@@ -4,7 +4,7 @@
 # copy just those finished files into the real app below. Everything else
 # used to build them (all the npm packages, etc.) gets thrown away and never
 # ends up in the final app.
-FROM node:20-slim AS frontend-builder
+FROM node:22-slim AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
