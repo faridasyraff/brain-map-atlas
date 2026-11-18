@@ -55,7 +55,17 @@ Requires [Docker](https://www.docker.com/).
    ```
 3. Open `http://localhost:5000/app`.
 
-The first start downloads ~500MB of atlas data and mesh files, which can take a few minutes. That data is kept in a Docker volume, so restarts after the first one are fast.
+The first start downloads ~500MB of atlas data and mesh files, which can take a few minutes. It then builds the 3D click volume (`meshes_volume.npy`, used for clicking inside eBrain mode) in the background, which takes about 7 more minutes; progress is in `logs/voxelize.log`, and everything else works in the meantime. All of this is kept in Docker volumes, so restarts after the first one are fast. You never need to run `voxelize_meshes.py` by hand.
+
+The "Local" chat option needs [Ollama](https://ollama.com) running on your computer (`ollama serve`, then `ollama pull gemma3:4b`). The container finds it at `host.docker.internal:11434` automatically; set `OLLAMA_URL` in `backend/.env` only if it's somewhere else.
+
+### Tests
+
+HTTP smoke tests (standard library only) run against a running instance:
+
+```
+python -m unittest discover backend/tests        # ATLAS_URL=... to target another host
+```
 
 ## Project structure
 
@@ -64,8 +74,9 @@ backend/    Flask API -- slice rendering, region lookup/search, the
             ontology tree, mesh serving, chat/AI endpoints, accounts.
   App.py            the whole backend
   db.py             SQLite account storage
-  voxelize_meshes.py / convert_meshes_to_glb.py
-                     one-off scripts to prep mesh data (not run by the app itself)
+  voxelize_meshes.py     builds the 3D click volume (run automatically on first start)
+  convert_meshes_to_glb.py
+                         one-off .obj -> .glb conversion (not run by the app itself)
 frontend/   Vanilla JS + Three.js, built with Vite. Split by concern:
   src/sliceViewer.js     the 2D views themselves
   src/threeViewer.js     the 3D viewer + eBrain mode
