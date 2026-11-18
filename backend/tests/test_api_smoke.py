@@ -61,7 +61,7 @@ class CoreViews(unittest.TestCase):
         self.assertEqual(call('/health'), (200, {'status': 'ok'}))
 
     def test_pages_served(self):
-        for path in ('/', '/app'):
+        for path in ('/', '/app', '/next'):
             status, raw = call(path)
             self.assertEqual(status, 200, path)
             self.assertIn(b'<html', raw[:500].lower())
