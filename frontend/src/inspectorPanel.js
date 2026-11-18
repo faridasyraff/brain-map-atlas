@@ -16,12 +16,13 @@ const keywordCloud=document.getElementById('keyword-cloud');
 const relatedRegionList=document.getElementById('related-region-list');
 const swDots={organ:document.getElementById('sw-organ'),category:document.getElementById('sw-category'),division:document.getElementById('sw-division'),structure:document.getElementById('sw-structure'),substructure:document.getElementById('sw-substructure')};
 
-function renderRegionSummary(summary){
+function renderRegionSummary(summary, emptyNote){
   if(!regionSummaryText) return;
   const text=String(summary||'').trim();
   if(!text){
     regionSummaryText.classList.add('region-summary-empty');
-    regionSummaryText.textContent='No functional summary available for this region.';
+    // emptyNote: the server's explanation when the AI is simply not set up.
+    regionSummaryText.textContent=emptyNote||'No functional summary available for this region.';
     return;
   }
   regionSummaryText.classList.remove('region-summary-empty');
@@ -148,7 +149,7 @@ async function _enrichInBackground(pidx, name, acronym){
     // If a newer click already superseded us, don't overwrite its panel.
     if(controller !== _enrichAbort) return;
     if(d.region_summary)      renderRegionSummary(d.region_summary);
-    else                      renderRegionSummary('');
+    else                      renderRegionSummary('', d.ai_note);
     if(Array.isArray(d.functional_keywords)) renderFunctionalKeywords(d.functional_keywords);
     else                      renderFunctionalKeywords([]);
     if(Array.isArray(d.related_regions))     renderRelatedRegions(d.related_regions);

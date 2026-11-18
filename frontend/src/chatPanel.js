@@ -1,7 +1,7 @@
 // The chat panel (local Ollama RAG or OpenAI) plus the "Semantic Region
 // Cloud" — parses region names out of a list-style answer and resolves each
 // one to a clickable atlas chip via /api/resolve_region.
-import { API } from './config.js';
+import { API, escapeHtml, safeColor } from './config.js';
 import { selectSearchResult } from './searchPanel.js';
 
 // -- Chat + Semantic Region Cloud -----------------------------
@@ -133,7 +133,7 @@ import { selectSearchResult } from './searchPanel.js';
         <div class="cloud-title"><span class="cloud-title-dot"></span>Semantic Region Map</div>
         <span class="cloud-count" id="cloud-count-badge">resolving...</span>
       </div>
-      <div class="cloud-topic">${topic.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div class="cloud-topic">${escapeHtml(topic)}</div>
       <div class="cloud-chips" id="cloud-chips-wrap"></div>
       <div class="cloud-footer">
         <span class="cloud-footer-hint">click any chip above to navigate atlas</span>
@@ -152,7 +152,7 @@ import { selectSearchResult } from './searchPanel.js';
       const chip = document.createElement('div');
       chip.className = 'cloud-chip chip-resolving';
       chip.style.cssText = 'background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--text-dim);';
-      chip.innerHTML = `<span class="cloud-chip-dot" style="background:var(--text-dim)"></span>${name}`;
+      chip.innerHTML = `<span class="cloud-chip-dot" style="background:var(--text-dim)"></span>${escapeHtml(name)}`;
       chipsWrap.appendChild(chip);
 
       const r = await resolveRegion(name);
@@ -163,7 +163,7 @@ import { selectSearchResult } from './searchPanel.js';
         chip.classList.remove('chip-resolving');
         chip.className = 'cloud-chip';
         chip.style.cssText = 'background:rgba(80,80,80,.12);border-color:rgba(120,120,120,.3);color:#777;cursor:pointer;';
-        chip.innerHTML = `<span class="cloud-chip-dot" style="background:#555"></span>${name}<span style="font-size:.65em;opacity:.6;margin-left:4px;font-style:italic">not in volume</span>`;
+        chip.innerHTML = `<span class="cloud-chip-dot" style="background:#555"></span>${escapeHtml(name)}<span style="font-size:.65em;opacity:.6;margin-left:4px;font-style:italic">not in volume</span>`;
         // Clicking sets it as current region by name so GPT can answer about it
         chip.addEventListener('click', () => {
           if(window.setCurrentRegion) window.setCurrentRegion({
@@ -177,7 +177,7 @@ import { selectSearchResult } from './searchPanel.js';
       }
 
       // Style with the region's official color
-      const col    = r.structure_color || '#445a72';
+      const col    = safeColor(r.structure_color);
       const colRgb = col.replace('#','');
       const ri = parseInt(colRgb.substring(0,2),16);
       const gi = parseInt(colRgb.substring(2,4),16);
@@ -192,9 +192,9 @@ import { selectSearchResult } from './searchPanel.js';
         : (r.matched_label || r.structure || name);
       const chipLabel2 = chipLabel !== '--' ? chipLabel : name;
       const groupBadge = r.is_group
-        ? `<span style="font-size:.6em;opacity:.6;margin-left:3px">(${r.member_count||''})</span>`
+        ? `<span style="font-size:.6em;opacity:.6;margin-left:3px">(${escapeHtml(r.member_count||'')})</span>`
         : (r.no_voxels ? `<span style="font-size:.65em;opacity:.6;margin-left:4px;font-style:italic">not in volume</span>` : '');
-      chip.innerHTML = `<span class="cloud-chip-dot" style="background:${col};box-shadow:0 0 4px ${col}"></span>${chipLabel2}${groupBadge}`;
+      chip.innerHTML = `<span class="cloud-chip-dot" style="background:${col};box-shadow:0 0 4px ${col}"></span>${escapeHtml(chipLabel2)}${groupBadge}`;
 
       chip.addEventListener('click', () => {
         selectSearchResult(chip, r);
@@ -244,7 +244,9 @@ import { selectSearchResult } from './searchPanel.js';
       // Always show the text answer
       const d = document.createElement('div');
       d.className = 'chat-msg bot';
-      d.innerHTML = badge + answer.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      // escapeHtml also covers quotes and & (the old inline version only
+      // escaped < and >).
+      d.innerHTML = badge + escapeHtml(answer).replace(/\n/g,'<br>');
 
       // Show CortexMap status notice beneath the answer (Ollama only)
       if (_aiProvider !== 'openai' && data.cortexmap_notice) {
@@ -270,9 +272,11 @@ import { selectSearchResult } from './searchPanel.js';
       if (data.pmc_sources && data.pmc_sources.length > 0) {
         const srcDiv = document.createElement('div');
         srcDiv.className = 'pmc-sources';
+        // PMC IDs come from an external service: only accept the real
+        // "PMC12345" shape, then URL-encode/escape what we accept.
         srcDiv.innerHTML = '<span>PubMed Sources (CortexMap):</span>' +
-          data.pmc_sources.map(pid =>
-            `<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/${pid}/" target="_blank" rel="noopener">${pid}</a>`
+          data.pmc_sources.filter(pid => /^PMC\d+$/i.test(String(pid))).map(pid =>
+            `<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/${encodeURIComponent(pid)}/" target="_blank" rel="noopener noreferrer">${escapeHtml(pid)}</a>`
           ).join('');
         d.appendChild(srcDiv);
       }
