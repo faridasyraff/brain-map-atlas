@@ -64,16 +64,18 @@ The first start downloads ~500MB of atlas data and mesh files, which can take a 
 
 The "Local" chat option needs [Ollama](https://ollama.com) running on your computer (`ollama serve`, then `ollama pull gemma3:4b`). The container finds it at `host.docker.internal:11434` automatically; set `OLLAMA_URL` in `backend/.env` only if it's somewhere else.
 
-### Tests
+### Tests and linting
 
 ```
-python -m unittest discover backend/tests        # ATLAS_URL=... to target another host
+pip install -r backend/requirements-dev.txt   # pytest + ruff
+ruff check .                                   # lint (rules in pyproject.toml)
+pytest                                         # all tests
 ```
 
 - `backend/tests/test_db.py` contains database unit tests that need nothing running.
-- `backend/tests/test_api_smoke.py` contains HTTP smoke tests (standard library only) that run against a running instance. The account test creates a throwaway account and deletes it again.
+- `backend/tests/test_api_smoke.py` contains HTTP tests against a running app (`ATLAS_URL`, default `http://localhost:5000`). Without an app they skip themselves; set `ATLAS_REQUIRE_SERVER=1` to make that a failure. The account test creates a throwaway account and deletes it again.
 
-GitHub Actions (`.github/workflows/build.yml`) runs the static checks, the database tests, the frontend build and a Docker build on every push and pull request.
+GitHub Actions (`.github/workflows/build.yml`) runs ruff, pytest, the frontend build and a Docker build on every push and pull request.
 
 ## Deploying
 

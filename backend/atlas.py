@@ -14,7 +14,9 @@ View slice extraction (ready for display):
   transverse fix y -> arr[:,yi,:]                rows=x  cols=z  shape (1140, 1320)
 """
 import sys as _sys
-import io, base64, json
+import io
+import base64
+import json
 import time as _time
 from pathlib import Path
 import numpy as np
@@ -117,7 +119,8 @@ def load_coronal_copy(name, arr):
         for z0 in range(0, Z, 64):            # 64 slices at a time keeps RAM use small
             z1 = min(Z, z0 + 64)
             out[z0:z1] = np.transpose(arr[:, :, z0:z1], (2, 1, 0))
-        out.flush(); del out
+        out.flush()
+        del out
         tmp.replace(npy)
     return np.load(npy, mmap_mode='r')
 
@@ -384,7 +387,7 @@ channels = {}
 for ch in ['red', 'green', 'blue']:
     channels[ch] = {}
 
-for level, col in LEVEL_COLS.items():
+for _level, col in LEVEL_COLS.items():
     r, g, b = hex_to_rgb_cols(color_df[col])
     channels['red'][col]   = r
     channels['green'][col] = g
@@ -451,7 +454,8 @@ print(f"Atlas loaded. Shape: {annotation_array.shape}  x:0-{X_MAX}  y:0-{Y_MAX} 
 # launch takes ~2-5 minutes and subsequent launches are instant.
 def _ensure_meshes():
     import json
-    import urllib.request, urllib.error
+    import urllib.request
+    import urllib.error
     from concurrent.futures import ThreadPoolExecutor, as_completed
     import time
     import trimesh
@@ -492,7 +496,10 @@ def _ensure_meshes():
 
     base = ('https://download.alleninstitute.org/informatics-archive/current-release/'
             'mouse_ccf/annotation/ccf_2017/structure_meshes/')
-    done = [0]; ok = [0]; missing = [0]; started = time.time()
+    done = [0]
+    ok = [0]
+    missing = [0]
+    started = time.time()
 
     def _grab(sid):
         obj_path = meshes_dir / f'{sid}.obj'
@@ -567,9 +574,12 @@ def get_slices(view, idx):
     raise ValueError(f"Unknown view: {view}")
 
 def world_coords(view, idx, col, row):
-    if view == 'sagittal':    return idx, row, col
-    elif view == 'coronal': return col, row, idx
-    elif view == 'transverse': return row, idx, col
+    if view == 'sagittal':
+        return idx, row, col
+    elif view == 'coronal':
+        return col, row, idx
+    elif view == 'transverse':
+        return row, idx, col
     return 0, 0, 0
 
 # Both helpers below answer "which slice(s) contain these regions" using the
