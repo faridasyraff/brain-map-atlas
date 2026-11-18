@@ -363,7 +363,11 @@ Object.keys(views).forEach(v=>{
   });
 });
 
-Promise.all(Object.keys(views).map(v=>loadSlice(v))).then(()=>{
+// loadSliceP (not loadSlice, which returns nothing): wait until the images
+// have actually arrived. Before, "All views loaded" appeared instantly and
+// clicks made before the pictures came in were silently ignored.
+setStatus('Loading all three views…');
+Promise.all(Object.keys(views).map(v=>loadSliceP(v))).then(()=>{
   Object.keys(views).forEach(v=>{ resetZoom(v); syncCanvas(v); });
   setStatus('All views loaded -- click any image to identify regions','ok');
 });

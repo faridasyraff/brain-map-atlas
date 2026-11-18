@@ -56,6 +56,20 @@ class CoreViews(unittest.TestCase):
         self.assertTrue(d['image'].startswith('data:image/png;base64,'))
         self.assertEqual((d['rows'], d['cols']), (800, 1140))   # rows = S-I, cols = L-R
 
+    def test_slice_png_is_native_resolution_and_fast(self):
+        import base64, struct, time
+        idx = 700 + int(time.time()) % 300            # avoid the server's slice cache
+        req = urllib.request.Request(f'{BASE}/api/slice?view=transverse&idx={idx}&colorize=structure')
+        with urllib.request.urlopen(req, timeout=30) as r:
+            timing = r.headers.get('Server-Timing', '')
+            d = json.loads(r.read())
+        png = base64.b64decode(d['image'].split(',', 1)[1])
+        w, h = struct.unpack('>II', png[16:24])
+        self.assertEqual((h, w), (d['rows'], d['cols']))   # 1 image pixel = 1 voxel
+        self.assertTrue(timing.startswith('app;dur='), timing)
+        # Was 300-800 ms with matplotlib; ~60-150 ms now. Generous bound.
+        self.assertLess(float(timing.split('=')[1]), 600)
+
     def test_slice_rejects_unknown_view(self):
         self.assertEqual(call('/api/slice?view=diagonal')[0], 400)
 
@@ -116,6 +130,15 @@ class ErrorHandling(unittest.TestCase):
         status, d = call('/api/does_not_exist')
         self.assertEqual(status, 404)
         self.assertEqual(d['error'], 'Not found')
+
+
+class RateLimit(unittest.TestCase):
+    def test_normal_browsing_is_not_rate_limited(self):
+        # ~10 clicks' worth of requests in a few seconds. The old limit
+        # (60/minute) started answering 429 after ~6 clicks.
+        statuses = {call('/api/lookup', {'view': 'coronal', 'idx': 660,
+                                         'col': 500 + i, 'row': 300})[0] for i in range(80)}
+        self.assertEqual(statuses, {200})
 
 
 class RemovedAndHiddenEndpoints(unittest.TestCase):
