@@ -58,7 +58,11 @@ class CoreViews(unittest.TestCase):
 
     def test_slice_png_is_native_resolution_and_fast(self):
         import base64, struct, time
-        idx = 700 + int(time.time()) % 300            # avoid the server's slice cache
+        idx = 300 + int(time.time()) % 400            # avoid the server's slice cache
+        # Warm the neighbouring slice first: the volumes are memory-mapped, so
+        # right after a restart the first reads come from disk. This test is
+        # about render speed, not cold-disk speed.
+        call(f'/api/slice?view=transverse&idx={idx + 1}&colorize=structure')
         req = urllib.request.Request(f'{BASE}/api/slice?view=transverse&idx={idx}&colorize=structure')
         with urllib.request.urlopen(req, timeout=30) as r:
             timing = r.headers.get('Server-Timing', '')
