@@ -56,11 +56,8 @@ import { syncCanvas } from './sliceViewer.js';
     const delta = startX - e.clientX;   // dragging left = making wider
     const newW  = Math.min(MAX_W, Math.max(MIN_W, startW + delta));
     document.getElementById('info-panel').style.width = newW + 'px';
-    // Keep the toggle button pinned to the panel's left edge when panel is open
-    const toggle = document.getElementById('panel-toggle');
-    if(toggle && !document.getElementById('info-panel').classList.contains('collapsed')){
-      toggle.style.right = newW + 'px';
-    }
+    // (The Menu tab sits in its own grid column now, so it follows the
+    // panel's edge automatically — no need to move it here.)
     // Resyncing canvases after resize keeps highlight overlay aligned
     requestAnimationFrame(()=>Object.keys(views).forEach(v=>syncCanvas(v)));
     // positionSearchDropdown()/positionOntologyDropdown() used to be called
@@ -82,11 +79,11 @@ import { syncCanvas } from './sliceViewer.js';
 })();
 
 // -- Collapsible sidebar --------------------------------------------------------
-// Overlay side panel: click the toggle tab, or clicking any view auto-opens it.
+// Click the Menu tab to show/hide the side panel; clicking a view opens it.
 // Layouts (see the @media blocks at the end of styles.css):
-//   wide  (>=1100px) panel is a docked column, open by default
-//   medium            panel slides over the views, closed by default
-//   phone (<=760px)   panel covers the screen; floating Menu button
+//   tablet+ (>=761px) views | Menu rail | docked panel. Panel starts open
+//                     on wide screens (>=1100px), closed on narrower ones.
+//   phone  (<=760px)  panel covers the screen; floating Menu button
 (function(){
   const panel  = document.getElementById('info-panel');
   const toggle = document.getElementById('panel-toggle');
@@ -97,10 +94,9 @@ import { syncCanvas } from './sliceViewer.js';
 
   function placeToggle(){
     const open = !panel.classList.contains('collapsed');
-    // On phones CSS pins the button bottom-right; elsewhere it rides the
-    // panel's left edge when open and the viewport edge when closed.
-    toggle.style.right = (open && !isPhone()) ? panel.offsetWidth + 'px' : '';
-    if(label) label.textContent = (open && isPhone()) ? 'Close' : 'Menu';
+    // Position is pure CSS (own grid column, or bottom-right on phones).
+    toggle.style.right = '';
+    if(label) label.textContent = !open ? 'Menu' : (isPhone() ? 'Close' : 'Hide');
   }
 
   function setCollapsed(collapsed, remember){
