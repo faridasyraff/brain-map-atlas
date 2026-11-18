@@ -179,6 +179,20 @@ class MeshVolume(unittest.TestCase):
             self.assertEqual(d['status'], 'generating')
 
 
+class ThreeDClick(unittest.TestCase):
+    def test_compact_index_resolves_to_a_region(self):
+        # 3D eBrain clicks sample the mesh volume (compact ids) and resolve
+        # them here. This silently broke once during the module split.
+        status, meta = call('/api/mesh_volume_meta')
+        if status != 200:
+            self.skipTest('3D click volume still being generated')
+        idx = meta['idx_to_sid'].index(672)          # 672 = Caudoputamen
+        status, d = call(f'/api/resolve_structure_id?idx={idx}')
+        self.assertEqual(status, 200)
+        self.assertEqual(d['structure_id'], 672)
+        self.assertIn('Caudoputamen', d['matched_label'])
+
+
 class Assistant(unittest.TestCase):
     def test_local_chat_never_hangs_on_old_placeholder(self):
         status, d = call('/api/chat', {'message': 'What does it do?',
