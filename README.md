@@ -67,6 +67,20 @@ HTTP smoke tests (standard library only) run against a running instance:
 python -m unittest discover backend/tests        # ATLAS_URL=... to target another host
 ```
 
+## Deploying
+
+The same Docker image runs on any server or host that runs containers. Before going live:
+
+- **Size the machine for it.** The app keeps the whole atlas in memory, using about **6.5 GB of RAM**. Use a host with at least **8 GB**; free and small tiers won't start it. Disk needs are about 1.5 GB for the image plus about 0.5 GB of data.
+- **Persistent storage.** Mount persistent disks at `/app/backend/data`, `/app/backend/meshes` and `/app/backend/logs`, as `docker-compose.yml` does. Without them, every redeploy re-downloads about 500 MB, rebuilds the 3D volume and forgets every account.
+- **HTTPS.** Put it behind a reverse proxy or your host's HTTPS, then set these in `backend/.env` (or the host's environment settings):
+  - `TRUST_PROXY_HOPS=1`, so rate limits count per visitor instead of sharing one limit across everyone.
+  - `SESSION_COOKIE_SECURE=1`
+  - `ALLOWED_ORIGINS=https://your-domain`
+- **Secrets.** Set a fresh `SECRET_KEY`. Set `ADMIN_EMAIL`, otherwise the first person to sign up becomes admin. Set `OPENAI_API_KEY` if you want AI summaries and the GPT chat, and put a spending limit on that key.
+- **Local AI is optional.** The "Local" (Ollama) chat only works if Ollama runs somewhere the server can reach (`OLLAMA_URL`); otherwise users can pick GPT.
+- **First start is slow.** It downloads data and builds the 3D volume, about 10 minutes in total. The container's health check allows for this.
+
 ## Project structure
 
 ```

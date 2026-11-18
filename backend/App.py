@@ -157,14 +157,20 @@ _functional_kb = _load_functional_kb()
 # an uncached region takes ~1-3s (blocking on OpenAI), later clicks are instant.
 # The slow work happens in /api/enrich (called asynchronously from the
 # frontend), NOT in /api/lookup — so the click itself never stalls.
-_OPENAI_REGION_CACHE_PATH = Path(__file__).parent / 'openai_region_cache.json'
+# Lives in data/ so Docker keeps it in the persistent atlas-data volume —
+# otherwise every redeploy would throw away the cache and pay OpenAI again.
+_OPENAI_REGION_CACHE_PATH   = Path(__file__).parent / 'data' / 'openai_region_cache.json'
+_OPENAI_REGION_CACHE_LEGACY = Path(__file__).parent / 'openai_region_cache.json'  # old location
 
 def _load_openai_region_cache():
     empty = {'functional_keywords': {}, 'region_summaries': {}}
-    if not _OPENAI_REGION_CACHE_PATH.exists():
+    src = _OPENAI_REGION_CACHE_PATH
+    if not src.exists() and _OPENAI_REGION_CACHE_LEGACY.exists():
+        src = _OPENAI_REGION_CACHE_LEGACY   # read once from the old spot; saves go to data/
+    if not src.exists():
         return empty
     try:
-        data = _json.loads(_OPENAI_REGION_CACHE_PATH.read_text(encoding='utf-8'))
+        data = _json.loads(src.read_text(encoding='utf-8'))
     except Exception as e:
         log.warning(f'AI region cache load failed: {e}')
         return empty
@@ -181,6 +187,7 @@ def _save_openai_region_cache():
         'region_summaries':    _region_summary_cache,
     }
     try:
+        _OPENAI_REGION_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         tmp = _OPENAI_REGION_CACHE_PATH.with_suffix('.tmp')
         tmp.write_text(_json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
         tmp.replace(_OPENAI_REGION_CACHE_PATH)
@@ -1184,6 +1191,19 @@ def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=None, fh=None):
 # able to fetch (the website itself, the 3D meshes, etc.) already has its own
 # specific route written below, so we don't need this catch-all shortcut.
 app = Flask(__name__, static_folder=None)
+
+# Behind a reverse proxy / load balancer (almost every host: Render, Fly,
+# Railway, nginx, Caddy, ...) every request arrives from the proxy's IP, so
+# the rate limiter would put ALL visitors in one shared bucket (e.g. 15 chat
+# messages per minute for the whole site). TRUST_PROXY_HOPS=1 tells the app
+# to read the real visitor IP / https-ness from the proxy's X-Forwarded-*
+# headers. Leave it at 0 when nothing sits in front of the app, otherwise
+# anyone could fake their IP by sending that header themselves.
+_PROXY_HOPS = int(_os.environ.get('TRUST_PROXY_HOPS') or 0)
+if _PROXY_HOPS > 0:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=_PROXY_HOPS, x_proto=_PROXY_HOPS,
+                            x_host=_PROXY_HOPS)
 # supports_credentials lets the browser send the login session cookie along
 # with cross-origin requests (e.g. the Vite dev server on a different port
 # than Flask) — without it, /api/auth/me etc. would never see who's logged in.
@@ -1260,6 +1280,10 @@ if not app.secret_key:
     )
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+# Set SESSION_COOKIE_SECURE=1 once the site is served over https, so the
+# login cookie is never sent over plain http. (Off by default because it
+# would break sign-in on http://localhost.)
+app.config['SESSION_COOKIE_SECURE'] = _os.environ.get('SESSION_COOKIE_SECURE', '').lower() in ('1', 'true', 'yes')
 
 from db import init_db, create_user, get_user_by_email, get_user_by_id, user_count
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
