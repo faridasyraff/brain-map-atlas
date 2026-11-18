@@ -10,6 +10,7 @@ import { views, _lastHighlight, suppressSliderReload } from './state.js';
 import { setStatus } from './statusBar.js';
 import { resolveLookup } from './lookup.js';
 import { _clickCache, _clickPending, _resetClickTracker, _trackRapidClick } from './rateLimiter.js';
+import { recordSlice, initialSlices } from './urlState.js';
 
 const ZOOM_MIN  = 0.5;   // 50%  -- most zoomed out
 const ZOOM_MAX  = 10;    // 1000% -- most zoomed in
@@ -203,6 +204,7 @@ export function loadSlice(v, onDone){
   if(s.abortCtrl) s.abortCtrl.abort();
   s.abortCtrl = new AbortController();
   const myGen = ++s.generation;
+  recordSlice(v, s.idx);   // keep the shareable URL in step with every slice move
   s.loading.style.display='flex'; s.errEl.style.display='none';
   if(s.noVoxelNote) s.noVoxelNote.style.display='none';
   s.img.src=''; s.img.style.opacity='0.3';
@@ -366,8 +368,16 @@ Object.keys(views).forEach(v=>{
 // loadSliceP (not loadSlice, which returns nothing): wait until the images
 // have actually arrived. Before, "All views loaded" appeared instantly and
 // clicks made before the pictures came in were silently ignored.
+// Slice positions from a shared link, if any (clamped to each slider's range).
+for (const [v, idx] of Object.entries(initialSlices())) {
+  const s = views[v]; if (!s) continue;
+  const clamped = Math.min(parseInt(s.slider.max), Math.max(parseInt(s.slider.min), idx));
+  s.idx = clamped; s.slider.value = clamped; s.idxDisp.textContent = clamped;
+}
 setStatus('Loading all three views…');
-Promise.all(Object.keys(views).map(v=>loadSliceP(v))).then(()=>{
+// Resolves once every view has its first image; searchPanel.js waits on it
+// to replay a region from a shared link.
+export const viewsReady = Promise.all(Object.keys(views).map(v=>loadSliceP(v))).then(()=>{
   Object.keys(views).forEach(v=>{ resetZoom(v); syncCanvas(v); });
-  setStatus('All views loaded -- click any image to identify regions','ok');
+  setStatus('Ready. Click any slice to identify a region.','ok');
 });

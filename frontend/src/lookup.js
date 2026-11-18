@@ -30,7 +30,7 @@ export async function resolveLookup(v, col, row, opts = {}){
     // passes its own idx via opts.idxOverride because its atlas slice may
     // differ from wherever the 2D slider is currently parked.
     const lookupIdx = (opts.idxOverride != null) ? opts.idxOverride : s.idx;
-    setStatus(`Querying ${v} view -- col=${col} row=${row}...`);
+    setStatus(`Identifying region…`);
     const res = await fetch(`${API}/api/lookup`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -69,7 +69,7 @@ export async function resolveLookup(v, col, row, opts = {}){
       const viewsToSync = opts.syncAll
         ? Object.keys(views)
         : Object.keys(views).filter(ov=>ov!==v);
-      setStatus(`Syncing views to xi=${data.xi} yi=${data.yi} zi=${data.zi} ...`);
+      setStatus(`Moving views to ${data.matched_label||'the selected region'}…`);
       setSuppressSliderReload(true);
       viewsToSync.forEach(ov=>{
         const os = views[ov]; const newIdx = VIEW_IDX_FROM_WORLD[ov];
@@ -82,7 +82,7 @@ export async function resolveLookup(v, col, row, opts = {}){
       await Promise.all(viewsToSync.map(ov=>loadSliceP(ov)));
     }
     await Promise.all(Object.keys(views).map(vv=>fetchAndDrawHighlight(vv,data.parcellation_index,highlightLevel)));
-    setStatus(`${data.matched_label||data.structure||'parcellation '+data.parcellation_index} -- xi=${data.xi} yi=${data.yi} zi=${data.zi}${opts.skipSync ? '' : ' . all views synced'}`,'ok');
+    setStatus(`Selected ${data.matched_label||data.structure||'region '+data.parcellation_index}${opts.skipSync ? '' : ' in all views'}`,'ok');
 
     if (window.notifyChatRegion){
       const regionName = data.matched_label ||
@@ -106,11 +106,12 @@ window.resolveLookup = resolveLookup; // called by the 3D plane raycast handler
 export async function resolveParcellation(pidx){
   if (!pidx) return;
   try {
-    setStatus(`Resolving parcellation ${pidx}...`);
-    const res = await fetch(`${API}/api/resolve_parcellation?pidx=${pidx}`);
-    if (!res.ok) { setStatus(`resolve HTTP ${res.status}`,'error'); return; }
-    const data = await res.json();
-    if (data.error && !data.parcellation_index){ setStatus('Resolve error: '+data.error,'error'); return; }
+    setStatus('Finding region…');
+    const res = await fetch(`${API}/api/resolve_parcellation?pidx=${encodeURIComponent(pidx)}`);
+    const data = await res.json().catch(() => ({}));
+    // The server answers 200 with an `error` field (and the id echoed back)
+    // for an id it doesn't know, so check `error` on its own.
+    if (!res.ok || data.error || !data.matched_label){ setStatus('That region was not found in the atlas.','error'); return; }
 
     // See the matching comment in resolveLookup above -- this path never
     // calls loadSlice for any view (it doesn't move sliders), so it has to
@@ -138,7 +139,7 @@ export async function resolveParcellation(pidx){
           .find(x => x && x !== '—' && x !== '--') || '';
       window.notifyChatRegion(regionName, {...data, structure: regionName, acronym: regionAcro});
     }
-  } catch(err){ setStatus('Resolve failed: '+err.message,'error'); }
+  } catch(err){ setStatus('Could not load that region: '+err.message,'error'); }
 }
 window.resolveParcellation = resolveParcellation;
 

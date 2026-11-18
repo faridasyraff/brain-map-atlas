@@ -18,31 +18,40 @@ const togglePrompt = document.getElementById('account-toggle-prompt');
 
 let mode = 'login';   // 'login' or 'signup' — which one the open form submits as
 
+// Visibility uses the `hidden` attribute (styled in CSS), so the layout of
+// each block (flex, grid, ...) stays defined in the stylesheet, not here.
+function show(el, visible){ el.hidden = !visible; }
+
+// Other modules (e.g. library.js) listen for this to know who's signed in.
+function announce(user) {
+  window.dispatchEvent(new CustomEvent('auth-change', { detail: { user } }));
+}
+
 function showLoggedOut() {
-  loggedOut.style.display = 'flex';
-  loggedIn.style.display  = 'none';
-  form.style.display      = 'none';
+  show(loggedOut, true); show(loggedIn, false); show(form, false);
+  announce(null);
 }
 
 function showLoggedIn(user) {
   emailEl.textContent = user.email;
-  adminBadge.style.display = user.is_admin ? 'inline' : 'none';
-  loggedOut.style.display = 'none';
-  loggedIn.style.display  = 'flex';
-  form.style.display      = 'none';
+  show(adminBadge, !!user.is_admin);
+  show(loggedOut, false); show(loggedIn, true); show(form, false);
+  announce(user);
 }
+
+// Lets other modules open the sign-in form (e.g. "Sign in to save").
+window.openSignIn = () => openForm('login');
 
 function openForm(newMode) {
   mode = newMode;
   errorEl.textContent = '';
   emailInput.value = '';
   passInput.value = '';
-  submitBtn.textContent = mode === 'login' ? 'Sign in' : 'Sign up';
+  submitBtn.textContent = mode === 'login' ? 'Sign in' : 'Create account';
   togglePrompt.textContent = mode === 'login' ? 'Need an account?' : 'Already have one?';
-  toggleLink.textContent   = mode === 'login' ? 'Sign up' : 'Sign in';
-  loggedOut.style.display = 'none';
-  loggedIn.style.display  = 'none';
-  form.style.display      = 'flex';
+  toggleLink.textContent   = mode === 'login' ? 'Create one' : 'Sign in';
+  passInput.autocomplete   = mode === 'login' ? 'current-password' : 'new-password';
+  show(loggedOut, false); show(loggedIn, false); show(form, true);
   emailInput.focus();
 }
 

@@ -4,17 +4,18 @@
 //
 // Note: this file, ontology.js, and searchPanel.js all use things from each
 // other — see the note at the top of lookup.js for why that's fine here.
-import { API, LEVELS } from './config.js';
+import { API, safeColor } from './config.js';
 import { _allTreeRows } from './state.js';
 import { setStatus } from './statusBar.js';
 import { highlightTreeByAcronym } from './ontology.js';
 import { selectSearchResult } from './searchPanel.js';
+import { copyCurrentLink } from './urlState.js';
+import { onRegionShown } from './library.js';
 
 const rIdx=document.getElementById('r-idx'),rStruct=document.getElementById('r-struct'),rAcro=document.getElementById('r-acro');
 const regionSummaryText=document.getElementById('region-summary-text');
 const keywordCloud=document.getElementById('keyword-cloud');
 const relatedRegionList=document.getElementById('related-region-list');
-const swDots={organ:document.getElementById('sw-organ'),category:document.getElementById('sw-category'),division:document.getElementById('sw-division'),structure:document.getElementById('sw-structure'),substructure:document.getElementById('sw-substructure')};
 
 function renderRegionSummary(summary, emptyNote){
   if(!regionSummaryText) return;
@@ -22,7 +23,7 @@ function renderRegionSummary(summary, emptyNote){
   if(!text){
     regionSummaryText.classList.add('region-summary-empty');
     // emptyNote: the server's explanation when the AI is simply not set up.
-    regionSummaryText.textContent=emptyNote||'No functional summary available for this region.';
+    regionSummaryText.textContent=emptyNote||'No summary for this region yet.';
     return;
   }
   regionSummaryText.classList.remove('region-summary-empty');
@@ -36,26 +37,18 @@ function renderFunctionalKeywords(keywords){
   if(!Array.isArray(keywords)||!keywords.length){
     const empty=document.createElement('span');
     empty.className='keyword-empty';
-    empty.textContent='No functional keyword data available for this region.';
+    empty.textContent='No keywords for this region yet.';
     keywordCloud.appendChild(empty);
     return;
   }
 
-  const weights=keywords.map(k=>Number(k.weight)||0);
-  const min=Math.min(...weights);
-  const max=Math.max(...weights);
-  const spread=max-min||1;
-
-  keywords.forEach(k=>{
+  // Uniform tags, most relevant (highest weight) first.
+  [...keywords].sort((a,b)=>(Number(b.weight)||0)-(Number(a.weight)||0)).forEach(k=>{
     const term=String(k.term||'').trim();
     if(!term) return;
-    const weight=Number(k.weight)||min;
-    const normalized=(weight-min)/spread;
     const chip=document.createElement('span');
     chip.className='keyword-chip';
     chip.textContent=term;
-    chip.style.fontSize=`${0.62+normalized*0.42}rem`;
-    chip.style.opacity=`${0.72+normalized*0.28}`;
     keywordCloud.appendChild(chip);
   });
 }
@@ -85,7 +78,7 @@ function renderRelatedRegions(regions){
   if(!Array.isArray(regions)||!regions.length){
     const empty=document.createElement('span');
     empty.className='related-region-empty';
-    empty.textContent='No related region data available.';
+    empty.textContent='No related regions found.';
     relatedRegionList.appendChild(empty);
     return;
   }
@@ -176,7 +169,12 @@ export function updatePanel(data){
   rIdx.textContent = data.parcellation_index ?? '—';
   rStruct.textContent = name; rStruct.classList.remove('placeholder');
   rAcro.textContent = acronym;
-  LEVELS.forEach(f=>{ const col=data[f+'_color']; if(col&&swDots[f]){ swDots[f].style.background=col; swDots[f].parentElement.style.color=col; } });
+  // The inspector takes on the selected region's own Allen color (the same
+  // structure-level color the 2D slices are painted with).
+  const regionColor = safeColor(data.structure_color || data.division_color || data.category_color, '');
+  const panel = document.getElementById('info-panel');
+  if(regionColor) panel.style.setProperty('--region', regionColor);
+  else panel.style.removeProperty('--region');
 
   // Render whatever enrichment came back with the click. /api/lookup is kept
   // fast — it never calls OpenAI itself — but it DOES return previously-cached
@@ -189,7 +187,7 @@ export function updatePanel(data){
   const haveRelated  = Array.isArray(data.related_regions) && data.related_regions.length > 0;
 
   if(haveSummary)  renderRegionSummary(data.region_summary);
-  else             _showLoadingPlaceholder(regionSummaryText, 'Loading functional summary…');
+  else             _showLoadingPlaceholder(regionSummaryText, 'Loading summary…');
 
   if(haveKeywords) renderFunctionalKeywords(data.functional_keywords);
   else             _showLoadingPlaceholder(keywordCloud, 'Loading keywords…');
@@ -206,6 +204,14 @@ export function updatePanel(data){
     try { _enrichAbort.abort(); } catch(e){}
     _enrichAbort = null;
   }
+
+  // Tell the library what's on screen (Save button state, notes, history).
+  const isGroup = data.parcellation_index == null;
+  onRegionShown(name && name !== '--' ? {
+    kind: isGroup ? 'group' : 'region',
+    ref: isGroup ? name : String(data.parcellation_index),
+    label: name, acronym: acronym !== '--' ? acronym : '', color: regionColor,
+  } : null);
 
   if(acronym&&acronym!=='--') highlightTreeByAcronym(acronym);
 
@@ -300,3 +306,12 @@ export function syncThreeD({ name, acronym, data }){
     console.warn(`[syncThreeD] no match for "${name}" / "${acronym}" and no structure_id`);
   }
 }
+
+// "Copy link": the address bar already describes the current view (see
+// urlState.js), so copying it is all that's needed.
+document.getElementById('copy-link-btn')?.addEventListener('click', async e=>{
+  const btn=e.currentTarget;
+  const ok=await copyCurrentLink();
+  setStatus(ok ? 'Link copied. It reopens this region at these slices.' : 'Could not copy automatically. Copy the address bar instead.', ok ? 'ok' : 'error');
+  if(ok){ btn.textContent='Copied'; setTimeout(()=>{ btn.textContent='Copy link'; }, 1500); }
+});

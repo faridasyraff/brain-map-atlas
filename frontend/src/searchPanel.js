@@ -14,6 +14,8 @@ import {
 } from './state.js';
 import { setStatus } from './statusBar.js';
 import { loadSliceP, drawHighlight, syncCanvas, fetchAndDrawHighlight, showNoVoxelNote } from './sliceViewer.js';
+import { initialSelection, initialSlices } from './urlState.js';
+import { resolveParcellation } from './lookup.js';
 import { updatePanel, syncThreeD } from './inspectorPanel.js';
 import { selectTreeNode, highlightTreeByAcronym } from './ontology.js';
 
@@ -162,7 +164,7 @@ export async function runSearch(q){
       if(r._ontologyOnly && !r._hasChildren){
         // Truly absent from atlas -- greyed out, AI-only
         item.classList.add('unavailable');
-        item.innerHTML=`${dot}<div class="sr-text"><div class="sr-name">${safeLabel}${acroBadge}</div><div class="sr-unavail">(!) Not in CCFv3 annotation volume</div></div>`;
+        item.innerHTML=`${dot}<div class="sr-text"><div class="sr-name">${safeLabel}${acroBadge}</div><div class="sr-unavail">Not shown in the 2D atlas</div></div>`;
         item.addEventListener('mousedown',ev=>{ ev.preventDefault();
           document.querySelectorAll('.search-result-item').forEach(i=>i.classList.remove('active'));
           item.classList.add('active');
@@ -238,13 +240,14 @@ export async function selectSearchResult(item,r){
         });
         setSuppressSliderReload(false);
         setLastParcIdx(null);
-        setLastHighlight({type:'group_indices', indices:idxList});
+        setLastHighlight({type:'group_indices', indices:idxList, label:r.group_name||label});
 
         // Drive the full inspector via updatePanel so enrichment fires for
         // the group. No single parcellation_index for a group, so we synthesize
         // a minimal panel payload with the group's own name/acronym.
         updatePanel({
           parcellation_index: null,
+          structure_color: r.structure_color,
           xi, yi, zi,
           organ: '—', category: '—', division: '—',
           structure: label, substructure: '—',
@@ -266,14 +269,14 @@ export async function selectSearchResult(item,r){
           const hData=await res.json(); if(hData.mask) await drawHighlight(v,hData.mask,myGen);
         }));
         for(const vv of['sagittal','coronal','transverse']){const sv=views[vv];if(sv.lastMask){syncCanvas(vv);await new Promise(res=>{const mi=new Image();mi.onload=()=>{sv.ctx.clearRect(0,0,sv.canvas.width,sv.canvas.height);sv.ctx.drawImage(mi,0,0,sv.canvas.width,sv.canvas.height);res();};mi.onerror=()=>res();mi.src=sv.lastMask;});}}
-        setStatus(`"${label}" -- ${idxList.length} regions . ${cData.voxel_count?.toLocaleString()||'?'} voxels`,'ok');
+        setStatus(`Selected ${label} (${idxList.length} regions)`,'ok');
         return;
       }
       const cRes=await fetch(`${API}/api/region_center_group`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({group_level:r.group_level,group_name:r.group_name})});
       const cData=await cRes.json();
       if(cData.error){
         item.classList.add('unavailable');
-        const unavailNote=document.createElement('div'); unavailNote.className='sr-unavail'; unavailNote.textContent='(!) Region not found in annotation volume';
+        const unavailNote=document.createElement('div'); unavailNote.className='sr-unavail'; unavailNote.textContent='Not shown in the 2D atlas';
         item.querySelector('.sr-text').appendChild(unavailNote);
         setStatus(`"${label}" — no 2D data`,'error');
         showNoVoxelNote(label);
@@ -293,11 +296,12 @@ export async function selectSearchResult(item,r){
       });
       setSuppressSliderReload(false);
       setLastParcIdx(null);   // no single index for a group
-      setLastHighlight({type:'group_level', group_level:r.group_level, group_name:r.group_name});
+      setLastHighlight({type:'group_level', group_level:r.group_level, group_name:r.group_name, label:r.group_name});
 
       // Same inspector-via-updatePanel treatment as the term-tree group above.
       updatePanel({
         parcellation_index: null,
+        structure_color: r.structure_color,
         xi, yi, zi,
         organ: '—', category: '—', division: '—',
         structure: label, substructure: '—',
@@ -325,7 +329,7 @@ export async function selectSearchResult(item,r){
         const sv=views[vv];
         if(sv.lastMask){ syncCanvas(vv); await new Promise(res=>{ const mi=new Image(); mi.onload=()=>{ sv.ctx.clearRect(0,0,sv.canvas.width,sv.canvas.height); sv.ctx.drawImage(mi,0,0,sv.canvas.width,sv.canvas.height); res(); }; mi.onerror=()=>res(); mi.src=sv.lastMask; }); }
       }
-      setStatus(`"${label}" (${r.group_level} group) -- ${cData.member_count} regions . ${cData.voxel_count?.toLocaleString()||'?'} voxels`,'ok');
+      setStatus(`Selected ${label} (${cData.member_count} regions)`,'ok');
       if(window.notifyChatRegion) window.notifyChatRegion(label,{parcellation_index:null,division:r.group_level==='division'?label:'',structure:label,xi,yi,zi});
     } catch(err){ setStatus('Group navigation error: '+err.message,'error'); }
     return;
@@ -337,7 +341,7 @@ export async function selectSearchResult(item,r){
     if(cData.error){
       // Region exists in the atlas metadata but has no voxels -- grey it out
       item.classList.add('unavailable');
-      const unavailNote=document.createElement('div'); unavailNote.className='sr-unavail'; unavailNote.textContent='(!) Region not found in annotation volume';
+      const unavailNote=document.createElement('div'); unavailNote.className='sr-unavail'; unavailNote.textContent='Not shown in the 2D atlas';
       item.querySelector('.sr-text').appendChild(unavailNote);
       setStatus(`"${label}" — no 2D data`,'error');
       showNoVoxelNote(label);
@@ -404,7 +408,43 @@ export async function selectSearchResult(item,r){
       const sv=views[vv];
       if(sv.lastMask){ syncCanvas(vv); await new Promise(res=>{ const mi=new Image(); mi.onload=()=>{ sv.ctx.clearRect(0,0,sv.canvas.width,sv.canvas.height); sv.ctx.drawImage(mi,0,0,sv.canvas.width,sv.canvas.height); res(); }; mi.onerror=()=>res(); mi.src=sv.lastMask; }); }
     }
-    setStatus(`"${label}" -- xi=${xi} yi=${yi} zi=${zi} . ${cData.voxel_count?.toLocaleString()||'?'} voxels`,'ok');
+    setStatus(`Selected ${label}`,'ok');
     if(window.notifyChatRegion) window.notifyChatRegion(label,{parcellation_index:r.parcellation_index,organ:cData.organ||r.organ,category:cData.category||r.category,division:cData.division||r.division,structure:cData.structure||r.structure,substructure:cData.substructure||r.substructure,xi,yi,zi});
   } catch(err){ setStatus('Search navigation error: '+err.message,'error'); }
+}
+
+// -- Open a region by reference ---------------------------------------------
+// Used by shared links and the Saved tab. {kind:'region', ref:<parcellation
+// index>} or {kind:'group', ref:<group name>}. Centres the views on it.
+export async function openRegionRef({kind, ref}){
+  try{
+    if(kind==='region'){
+      const res=await fetch(`${API}/api/resolve_parcellation?pidx=${encodeURIComponent(ref)}`);
+      const d=await res.json();
+      if(!res.ok || !d.matched_label){ setStatus('That region was not found in the atlas.','error'); return false; }
+      await selectSearchResult(document.createElement('div'), {...d, is_group:false});
+    } else {
+      const res=await fetch(`${API}/api/resolve_region?name=${encodeURIComponent(ref)}`);
+      const r=await res.json();
+      if(!r || !r.matched_label){ setStatus(`"${ref}" was not found in the atlas.`,'error'); return false; }
+      await selectSearchResult(document.createElement('div'), r);
+    }
+    return true;
+  }catch(e){ setStatus('Could not open that region: '+e.message,'error'); return false; }
+}
+
+// -- Shared links: replay ?region= / ?group= once the views have loaded ------
+// With slice positions in the link, highlight the region in place so the
+// recipient sees exactly the sender's slices; without them, centre on it.
+// Called from main.js once every module has loaded (calling it at import
+// time here would run before sliceViewer.js finished evaluating).
+export async function restoreFromLink(){
+  const sel = initialSelection();
+  if(!sel) return;
+  if(sel.type==='single' && Object.keys(initialSlices()).length){
+    try{ await resolveParcellation(sel.parcIdx); }
+    catch(e){ setStatus('Could not open the region from this link: '+e.message,'error'); }
+    return;
+  }
+  await openRegionRef(sel.type==='single' ? {kind:'region', ref:sel.parcIdx} : {kind:'group', ref:sel.name});
 }

@@ -233,7 +233,7 @@ export async function selectTreeNode(node){
     });
     setSuppressSliderReload(false);
     setLastParcIdx(null);
-    setLastHighlight({type:'group_indices', indices:idxList});
+    setLastHighlight({type:'group_indices', indices:idxList, label:termName});
 
     // Populate the inspector for the group. No single parcellation_index to
     // pin colors/metadata on, so we pass through whatever we have from the
@@ -241,6 +241,7 @@ export async function selectTreeNode(node){
     // name for Functional Summary / Keywords / Related Regions.
     const groupPanelData = {
       parcellation_index: null,
+      structure_color: node._color,
       xi, yi, zi,
       organ:        '—',
       category:     '—',
@@ -267,7 +268,7 @@ export async function selectTreeNode(node){
     }));
     for(const vv of['sagittal','coronal','transverse']){const sv=views[vv];if(sv.lastMask){syncCanvas(vv);await new Promise(res=>{const mi=new Image();mi.onload=()=>{sv.ctx.clearRect(0,0,sv.canvas.width,sv.canvas.height);sv.ctx.drawImage(mi,0,0,sv.canvas.width,sv.canvas.height);res();};mi.onerror=()=>res();mi.src=sv.lastMask;});}}
     _treeLastKey = key;
-    setStatus(`"${termName}" — ${idxList.length} regions · ${cData.voxel_count?.toLocaleString()||'?'} voxels`,'ok');
+    setStatus(`Selected ${termName} (${idxList.length} regions)`,'ok');
     if(window.notifyChatRegion) window.notifyChatRegion(termName,{parcellation_index:null,structure:termName,xi,yi,zi});
 
   } catch(err) {
@@ -313,15 +314,18 @@ export function highlightTreeByAcronym(acronym){
   function showDropdown(q){
     if(!q || !_allTreeRows.length){ clearDropdown(); return; }
     const qLo = q.toLowerCase();
-    const matches = [];
+    // Exact name/acronym matches first (so "Thalamus" + Enter opens Thalamus,
+    // not "Thalamus, sensory-motor cortex related"), then prefix matches in
+    // tree order. Capped at 30.
+    const exact = [], prefix = [];
     for(const e of _allTreeRows){
       const name  = (e.node.name   || '').toLowerCase();
       const acro  = (e.node.acronym|| '').toLowerCase();
-      const acroHit      = acro === qLo || acro.startsWith(qLo);
-      const nameStartHit = name.startsWith(qLo);
-      if(acroHit || nameStartHit) matches.push(e);
-      if(matches.length >= 30) break;
+      if(name === qLo || acro === qLo) exact.push(e);
+      else if(acro.startsWith(qLo) || name.startsWith(qLo)) prefix.push(e);
+      if(exact.length + prefix.length >= 60) break;
     }
+    const matches = [...exact, ...prefix].slice(0, 30);
 
     if(!matches.length){
       hint.textContent = 'No matches';

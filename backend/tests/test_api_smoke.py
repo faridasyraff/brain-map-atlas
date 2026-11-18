@@ -6,9 +6,10 @@ importing it these tests talk to an already-running server — the Docker
 container or `python App.py`. Standard library only (nothing to install).
 
     docker compose up -d                       # or: python App.py
-    python -m unittest discover backend/tests  # from the repo root
+    pytest                                      # from the repo root
 
-Point them somewhere else with ATLAS_URL=http://host:port.
+Point them somewhere else with ATLAS_URL=http://host:port. Without a
+running app they're skipped (as in CI), unless ATLAS_REQUIRE_SERVER=1.
 They never create accounts or change any data.
 """
 import json
@@ -18,6 +19,21 @@ import urllib.error
 import urllib.request
 
 BASE = os.environ.get('ATLAS_URL', 'http://localhost:5000').rstrip('/')
+
+
+def setUpModule():
+    """Skip this whole file when no app is running (e.g. in CI, which has no
+    atlas data). Set ATLAS_REQUIRE_SERVER=1 to make that a failure instead."""
+    try:
+        with urllib.request.urlopen(BASE + '/health', timeout=5) as r:
+            if r.status == 200:
+                return
+    except Exception:
+        pass
+    msg = f'no running Brain Atlas app at {BASE} (start it, or set ATLAS_URL)'
+    if os.environ.get('ATLAS_REQUIRE_SERVER') == '1':
+        raise RuntimeError(msg)
+    raise unittest.SkipTest(msg)
 
 
 def call(path, body=None, content_type='application/json', method=None, timeout=60):
@@ -57,8 +73,14 @@ class CoreViews(unittest.TestCase):
         self.assertEqual((d['rows'], d['cols']), (800, 1140))   # rows = S-I, cols = L-R
 
     def test_slice_png_is_native_resolution_and_fast(self):
-        import base64, struct, time
-        idx = 700 + int(time.time()) % 300            # avoid the server's slice cache
+        import base64
+        import struct
+        import time
+        idx = 300 + int(time.time()) % 400            # avoid the server's slice cache
+        # Warm the neighbouring slice first: the volumes are memory-mapped, so
+        # right after a restart the first reads come from disk. This test is
+        # about render speed, not cold-disk speed.
+        call(f'/api/slice?view=transverse&idx={idx + 1}&colorize=structure')
         req = urllib.request.Request(f'{BASE}/api/slice?view=transverse&idx={idx}&colorize=structure')
         with urllib.request.urlopen(req, timeout=30) as r:
             timing = r.headers.get('Server-Timing', '')
@@ -126,6 +148,15 @@ class ErrorHandling(unittest.TestCase):
                          content_type='text/plain')
         self.assertEqual(status, 400)
 
+    def test_out_of_range_region_indices_never_500(self):
+        # 1328 used to slip past a range check whose bound had been
+        # overwritten, and crash the histogram lookup.
+        for idx in (1327, 1328, 1329, 10**6, -1):
+            status, _ = call('/api/region_center_indices', {'parcellation_indices': [idx]})
+            self.assertIn(status, (200, 400, 404), idx)
+            status, _ = call('/api/region_center', {'parcellation_index': idx})
+            self.assertIn(status, (200, 404), idx)
+
     def test_unknown_route_is_404_json(self):
         status, d = call('/api/does_not_exist')
         self.assertEqual(status, 404)
@@ -166,6 +197,20 @@ class MeshVolume(unittest.TestCase):
             self.assertEqual(d['status'], 'generating')
 
 
+class ThreeDClick(unittest.TestCase):
+    def test_compact_index_resolves_to_a_region(self):
+        # 3D eBrain clicks sample the mesh volume (compact ids) and resolve
+        # them here. This silently broke once during the module split.
+        status, meta = call('/api/mesh_volume_meta')
+        if status != 200:
+            self.skipTest('3D click volume still being generated')
+        idx = meta['idx_to_sid'].index(672)          # 672 = Caudoputamen
+        status, d = call(f'/api/resolve_structure_id?idx={idx}')
+        self.assertEqual(status, 200)
+        self.assertEqual(d['structure_id'], 672)
+        self.assertIn('Caudoputamen', d['matched_label'])
+
+
 class Assistant(unittest.TestCase):
     def test_local_chat_never_hangs_on_old_placeholder(self):
         status, d = call('/api/chat', {'message': 'What does it do?',
@@ -183,6 +228,66 @@ class Assistant(unittest.TestCase):
         self.assertEqual(status, 200)
         if not d['region_summary']:
             self.assertTrue(d['ai_note'])
+
+
+class Session:
+    """A cookie-keeping client, for the signed-in tests."""
+    def __init__(self):
+        import http.cookiejar
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+    def call(self, path, body=None, method=None):
+        data = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(BASE + path, data=data, method=method or ('POST' if data else 'GET'),
+                                     headers={'Content-Type': 'application/json'} if data else {})
+        try:
+            with self.opener.open(req, timeout=30) as r:
+                return r.status, json.loads(r.read() or b'{}')
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b'{}')
+
+
+class Library(unittest.TestCase):
+    """Saved regions, notes, history and account deletion. Creates a
+    throwaway account and deletes it again at the end."""
+
+    def test_requires_sign_in(self):
+        for path in ('/api/me/saved', '/api/me/history'):
+            self.assertEqual(call(path)[0], 401, path)
+
+    def test_full_flow_and_cleanup(self):
+        import uuid
+        s = Session()
+        email, pw = f'smoke-{uuid.uuid4().hex[:10]}@example.invalid', 'smoke-test-pw-123'
+        self.assertEqual(s.call('/api/auth/signup', {'email': email, 'password': pw})[0], 201)
+        try:
+            item = {'kind': 'region', 'ref': '150', 'label': 'Lateral dorsal nucleus of thalamus',
+                    'acronym': 'LD', 'color': '#ff909f'}
+            status, d = s.call('/api/me/saved', {**item, 'note': '<b>my</b> note'}, method='PUT')
+            self.assertEqual(status, 200)
+            self.assertEqual(d['saved'][0]['note'], '<b>my</b> note')   # stored as plain text
+            self.assertEqual(s.call('/api/me/saved', {**item, 'color': 'red;x'}, method='PUT')[1]['saved'][0]['color'], '')
+            self.assertEqual(s.call('/api/me/saved', {**item, 'kind': 'bogus'}, method='PUT')[0], 400)
+            self.assertEqual(s.call('/api/me/saved', {**item, 'ref': 'abc'}, method='PUT')[0], 400)
+
+            self.assertEqual(s.call('/api/me/history', item)[0], 200)
+            self.assertEqual(s.call('/api/me/history', {**item, 'kind': 'group', 'ref': 'Thalamus', 'label': 'Thalamus'})[0], 200)
+            self.assertEqual([h['ref'] for h in s.call('/api/me/history')[1]['history']][:2], ['Thalamus', '150'])
+
+            # Another user can't see it
+            other = Session()
+            other_email = f'smoke-{uuid.uuid4().hex[:10]}@example.invalid'
+            other.call('/api/auth/signup', {'email': other_email, 'password': pw})
+            self.assertEqual(other.call('/api/me/saved')[1]['saved'], [])
+            other.call('/api/auth/account', {'password': pw}, method='DELETE')
+
+            self.assertEqual(s.call('/api/me/saved', {'kind': 'region', 'ref': '150'}, method='DELETE')[1]['saved'], [])
+            self.assertEqual(s.call('/api/auth/account', {'password': 'wrong-password'}, method='DELETE')[0], 401)
+        finally:
+            self.assertEqual(s.call('/api/auth/account', {'password': pw}, method='DELETE')[0], 200)
+        # Account is really gone
+        self.assertEqual(call('/api/auth/login', {'email': email, 'password': pw})[0], 401)
 
 
 class Accounts(unittest.TestCase):

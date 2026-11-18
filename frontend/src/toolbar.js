@@ -6,30 +6,26 @@ import { views } from './state.js';
 import { syncCanvas } from './sliceViewer.js';
 
 // -- Sidebar tab switcher --------------------------------------
+// Each tab's data-pane="x" shows the element #pane-x. Fires a 'pane-shown'
+// event so panes can refresh lazily (e.g. the Saved tab).
 (function(){
-  const tabs     = document.querySelectorAll('.sidebar-tab');
-  const paneMain = document.getElementById('pane-main');
-  const paneTree = document.getElementById('pane-tree');
-  const statusBar= document.getElementById('status-bar');
+  const tabs = document.querySelectorAll('.sidebar-tab');
 
   function activatePane(paneName) {
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.pane === paneName));
-
-    if (paneName === 'tree') {
-      paneMain.classList.remove('active');
-      paneTree.classList.add('active');
-      // status bar must sit after pane-tree inside info-panel
-      statusBar.parentElement.appendChild(statusBar);
-    } else {
-      paneTree.classList.remove('active');
-      paneMain.classList.add('active');
-      statusBar.parentElement.appendChild(statusBar);
-    }
+    tabs.forEach(t => {
+      const on = t.dataset.pane === paneName;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.sidebar-pane').forEach(p =>
+      p.classList.toggle('active', p.id === 'pane-' + paneName));
+    window.dispatchEvent(new CustomEvent('pane-shown', { detail: { pane: paneName } }));
   }
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => activatePane(tab.dataset.pane));
   });
+  window.showSidebarPane = activatePane;
 })();
 
 // -- Sidebar resize ------------------------------------------------------------
@@ -56,11 +52,8 @@ import { syncCanvas } from './sliceViewer.js';
     const delta = startX - e.clientX;   // dragging left = making wider
     const newW  = Math.min(MAX_W, Math.max(MIN_W, startW + delta));
     document.getElementById('info-panel').style.width = newW + 'px';
-    // Keep the toggle button pinned to the panel's left edge when panel is open
-    const toggle = document.getElementById('panel-toggle');
-    if(toggle && !document.getElementById('info-panel').classList.contains('collapsed')){
-      toggle.style.right = newW + 'px';
-    }
+    // (The Menu tab sits in its own grid column now, so it follows the
+    // panel's edge automatically — no need to move it here.)
     // Resyncing canvases after resize keeps highlight overlay aligned
     requestAnimationFrame(()=>Object.keys(views).forEach(v=>syncCanvas(v)));
     // positionSearchDropdown()/positionOntologyDropdown() used to be called
@@ -82,11 +75,11 @@ import { syncCanvas } from './sliceViewer.js';
 })();
 
 // -- Collapsible sidebar --------------------------------------------------------
-// Overlay side panel: click the toggle tab, or clicking any view auto-opens it.
+// Click the Menu tab to show/hide the side panel; clicking a view opens it.
 // Layouts (see the @media blocks at the end of styles.css):
-//   wide  (>=1100px) panel is a docked column, open by default
-//   medium            panel slides over the views, closed by default
-//   phone (<=760px)   panel covers the screen; floating Menu button
+//   tablet+ (>=761px) views | Menu rail | docked panel. Panel starts open
+//                     on wide screens (>=1100px), closed on narrower ones.
+//   phone  (<=760px)  panel covers the screen; floating Menu button
 (function(){
   const panel  = document.getElementById('info-panel');
   const toggle = document.getElementById('panel-toggle');
@@ -97,10 +90,9 @@ import { syncCanvas } from './sliceViewer.js';
 
   function placeToggle(){
     const open = !panel.classList.contains('collapsed');
-    // On phones CSS pins the button bottom-right; elsewhere it rides the
-    // panel's left edge when open and the viewport edge when closed.
-    toggle.style.right = (open && !isPhone()) ? panel.offsetWidth + 'px' : '';
-    if(label) label.textContent = (open && isPhone()) ? 'Close' : 'Menu';
+    // Position is pure CSS (own grid column, or bottom-right on phones).
+    toggle.style.right = '';
+    if(label) label.textContent = !open ? 'Menu' : (isPhone() ? 'Close' : 'Hide');
   }
 
   function setCollapsed(collapsed, remember){
@@ -144,6 +136,11 @@ function setViewMode(mode){
   currentViewMode=mode;
   viewsArea.classList.remove('focus-sagittal','focus-coronal','focus-transverse','focus-three-d');
   if(mode!=='all') viewsArea.classList.add('focus-'+mode);
+  // The button on the expanded view says how to get back.
+  document.querySelectorAll('.view-cell').forEach(c=>{
+    const b=c.querySelector('.fullscreen-btn');
+    if(b) b.textContent = (mode!=='all' && c.dataset.view===mode) ? 'Show all views' : 'Expand';
+  });
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     // Only 2D views need syncCanvas — the 3D view resizes itself in its animate loop
     const twoDviews = Object.keys(views);  // sagittal, coronal, transverse
