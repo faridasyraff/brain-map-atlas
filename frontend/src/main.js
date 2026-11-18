@@ -1,3 +1,5 @@
+// Self-hosted UI typeface (bundled by Vite; no third-party font request).
+import '@fontsource-variable/instrument-sans';
 // This is the starting point — it just loads every other file so the whole
 // app sets itself up. The order they're listed in below doesn't actually
 // matter (the browser is smart enough to load each file's own requirements

@@ -140,6 +140,11 @@ function setViewMode(mode){
   currentViewMode=mode;
   viewsArea.classList.remove('focus-sagittal','focus-coronal','focus-transverse','focus-three-d');
   if(mode!=='all') viewsArea.classList.add('focus-'+mode);
+  // The button on the expanded view says how to get back.
+  document.querySelectorAll('.view-cell').forEach(c=>{
+    const b=c.querySelector('.fullscreen-btn');
+    if(b) b.textContent = (mode!=='all' && c.dataset.view===mode) ? 'Show all views' : 'Expand';
+  });
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     // Only 2D views need syncCanvas — the 3D view resizes itself in its animate loop
     const twoDviews = Object.keys(views);  // sagittal, coronal, transverse
