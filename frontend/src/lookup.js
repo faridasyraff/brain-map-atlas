@@ -106,11 +106,12 @@ window.resolveLookup = resolveLookup; // called by the 3D plane raycast handler
 export async function resolveParcellation(pidx){
   if (!pidx) return;
   try {
-    setStatus(`Resolving parcellation ${pidx}...`);
-    const res = await fetch(`${API}/api/resolve_parcellation?pidx=${pidx}`);
-    if (!res.ok) { setStatus(`resolve HTTP ${res.status}`,'error'); return; }
-    const data = await res.json();
-    if (data.error && !data.parcellation_index){ setStatus('Resolve error: '+data.error,'error'); return; }
+    setStatus('Finding region…');
+    const res = await fetch(`${API}/api/resolve_parcellation?pidx=${encodeURIComponent(pidx)}`);
+    const data = await res.json().catch(() => ({}));
+    // The server answers 200 with an `error` field (and the id echoed back)
+    // for an id it doesn't know, so check `error` on its own.
+    if (!res.ok || data.error || !data.matched_label){ setStatus('That region was not found in the atlas.','error'); return; }
 
     // See the matching comment in resolveLookup above -- this path never
     // calls loadSlice for any view (it doesn't move sliders), so it has to
@@ -138,7 +139,7 @@ export async function resolveParcellation(pidx){
           .find(x => x && x !== '—' && x !== '--') || '';
       window.notifyChatRegion(regionName, {...data, structure: regionName, acronym: regionAcro});
     }
-  } catch(err){ setStatus('Resolve failed: '+err.message,'error'); }
+  } catch(err){ setStatus('Could not load that region: '+err.message,'error'); }
 }
 window.resolveParcellation = resolveParcellation;
 

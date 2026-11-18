@@ -413,6 +413,26 @@ export async function selectSearchResult(item,r){
   } catch(err){ setStatus('Search navigation error: '+err.message,'error'); }
 }
 
+// -- Open a region by reference ---------------------------------------------
+// Used by shared links and the Saved tab. {kind:'region', ref:<parcellation
+// index>} or {kind:'group', ref:<group name>}. Centres the views on it.
+export async function openRegionRef({kind, ref}){
+  try{
+    if(kind==='region'){
+      const res=await fetch(`${API}/api/resolve_parcellation?pidx=${encodeURIComponent(ref)}`);
+      const d=await res.json();
+      if(!res.ok || !d.matched_label){ setStatus('That region was not found in the atlas.','error'); return false; }
+      await selectSearchResult(document.createElement('div'), {...d, is_group:false});
+    } else {
+      const res=await fetch(`${API}/api/resolve_region?name=${encodeURIComponent(ref)}`);
+      const r=await res.json();
+      if(!r || !r.matched_label){ setStatus(`"${ref}" was not found in the atlas.`,'error'); return false; }
+      await selectSearchResult(document.createElement('div'), r);
+    }
+    return true;
+  }catch(e){ setStatus('Could not open that region: '+e.message,'error'); return false; }
+}
+
 // -- Shared links: replay ?region= / ?group= once the views have loaded ------
 // With slice positions in the link, highlight the region in place so the
 // recipient sees exactly the sender's slices; without them, centre on it.
@@ -421,18 +441,10 @@ export async function selectSearchResult(item,r){
 export async function restoreFromLink(){
   const sel = initialSelection();
   if(!sel) return;
-  try{
-    if(sel.type==='single'){
-      if(Object.keys(initialSlices()).length){ await resolveParcellation(sel.parcIdx); return; }
-      const res=await fetch(`${API}/api/resolve_parcellation?pidx=${encodeURIComponent(sel.parcIdx)}`);
-      const d=await res.json();
-      if(!res.ok || !d.matched_label){ setStatus('The region in this link was not found in the atlas.','error'); return; }
-      await selectSearchResult(document.createElement('div'), {...d, is_group:false});
-    } else {
-      const res=await fetch(`${API}/api/resolve_region?name=${encodeURIComponent(sel.name)}`);
-      const r=await res.json();
-      if(!r || !r.matched_label){ setStatus(`"${sel.name}" from this link was not found in the atlas.`,'error'); return; }
-      await selectSearchResult(document.createElement('div'), r);
-    }
-  }catch(e){ setStatus('Could not open the region from this link: '+e.message,'error'); }
+  if(sel.type==='single' && Object.keys(initialSlices()).length){
+    try{ await resolveParcellation(sel.parcIdx); }
+    catch(e){ setStatus('Could not open the region from this link: '+e.message,'error'); }
+    return;
+  }
+  await openRegionRef(sel.type==='single' ? {kind:'region', ref:sel.parcIdx} : {kind:'group', ref:sel.name});
 }
