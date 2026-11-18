@@ -125,7 +125,7 @@
   <!-- ═══════════════════════════════════════════════════
        RIGHT PANEL — tabbed sidebar
        ═══════════════════════════════════════════════════ -->
-  <div class="info-panel collapsed" id="info-panel" style="position:absolute;">
+  <div class="info-panel collapsed" id="info-panel">
     <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
 
     <!-- ── Account bar ─────────────────────────────────── -->
@@ -239,7 +239,9 @@
     <div id="status-bar">Loading all three views…</div>
   </div><!-- /info-panel -->
 
-  <button class="panel-toggle" id="panel-toggle" title="Toggle side panel" aria-expanded="false">
+  <div class="status-toast" id="status-toast" role="status" aria-live="polite" title="Click to dismiss"></div>
+
+  <button class="panel-toggle" id="panel-toggle" title="Toggle side panel" aria-expanded="false" aria-controls="info-panel">
     <span class="panel-toggle-label">Menu</span>
   </button>
 </div><!-- /root -->
