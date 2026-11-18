@@ -1,0 +1,15 @@
+# Tooling configuration (the app itself is not packaged; see backend/ and
+# frontend/). Dev tools: pip install -r backend/requirements-dev.txt
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["frontend", "documentations", "docs"]
+
+[tool.ruff.lint]
+# Pyflakes (F), pycodestyle errors (E4/E7/E9) and flake8-bugbear (B, likely bugs).
+select = ["E4", "E7", "E9", "F", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "-ra"   # summarise skips/failures at the end

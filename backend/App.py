@@ -13,9 +13,13 @@ This file only creates and configures the app and wires in the pieces:
 
 Run with gunicorn (App:app) — see the Dockerfile — or `python App.py`.
 """
-import json as _json, json, os as _os, traceback, uuid
+import json as _json
+import os as _os
+import traceback
+import uuid
 import time as _time
 from pathlib import Path
+from flask import g as _g
 from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
@@ -23,7 +27,9 @@ from common import (_DEBUG_ERRORS, _allowed_origins, log)
 from flask_compress import Compress
 from db import init_db
 from extensions import limiter, login_manager
-import routes_atlas, routes_accounts, routes_assistant
+import routes_atlas
+import routes_accounts
+import routes_assistant
 
 # ── Flask ─────────────────────────────────────────────────────────────────────
 # static_folder=None turns off Flask's built-in "serve any file in this
@@ -63,7 +69,6 @@ CORS(app, origins=_allowed_origins(), supports_credentials=True)
 # Server-Timing header (browser dev tools show it per request) and logged
 # when slow. Lets you tell "the server was slow" apart from "the request
 # was waiting to be picked up" when something feels laggy.
-from flask import g as _g
 
 @app.before_request
 def _start_timer():

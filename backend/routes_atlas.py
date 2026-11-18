@@ -1,6 +1,10 @@
 """Atlas endpoints: slices, lookups, highlights, search, ontology, meshes
 and the 3D click volume."""
-import io, base64, json as _json, json, re
+import io
+import base64
+import json as _json
+import json
+import re
 from functools import lru_cache
 from pathlib import Path
 import numpy as np
@@ -38,7 +42,8 @@ def log_warning():
     data  = _json_body()
     # Anyone can call this, so keep what reaches the log short and on one
     # line (a newline in `label` could otherwise fake extra log entries).
-    clean = lambda v, n: re.sub(r'\s+', ' ', str(v))[:n]
+    def clean(v, n):
+        return re.sub('\\s+', ' ', str(v))[:n]
     kind  = clean(data.get('kind',  'click'), 40)
     label = clean(data.get('label', '?'), 120)
     try:
@@ -767,14 +772,16 @@ def debug_name():
     name = request.args.get('q','').strip().lower()
     result = {}
     for col in ['organ','category','division','structure','substructure']:
-        if col not in name_df.columns: continue
+        if col not in name_df.columns:
+            continue
         hits = name_df[name_df[col].fillna('').str.lower().str.contains(name, regex=False)]
         if not hits.empty:
             result[col] = hits[col].dropna().unique().tolist()[:20]
     # Also show full rows for exact match
     exact_rows = []
     for col in ['organ','category','division','structure','substructure']:
-        if col not in name_df.columns: continue
+        if col not in name_df.columns:
+            continue
         hits = name_df[name_df[col].fillna('').str.lower() == name]
         for idx, row in hits.iterrows():
             exact_rows.append({'parcellation_index': int(idx), **{c: str(row.get(c,'')) for c in ['organ','category','division','structure','substructure']}})
@@ -1059,7 +1066,7 @@ def search():
                 group_candidates[key]['member_count'] += 1
 
     # Use term tree for accurate leaf counts where available
-    for key, g in group_candidates.items():
+    for _key, g in group_candidates.items():
         term_label = _name_to_term_id.get(g['group_name'].lower())
         if term_label:
             indices = _collect_leaf_indices(term_label)
@@ -1220,9 +1227,12 @@ def search():
         name    = r['matched_label'].lower()
         acro    = r['matched_acronym'].lower()
         no_vox  = 1 if r.get('no_voxels') else 0   # 0 = has voxels (sorts first)
-        if acro == q_lower or name == q_lower:          return (no_vox, 0, name)
-        if acro.startswith(q_lower) or name.startswith(q_lower): return (no_vox, 1, name)
-        if q_lower in acro:                              return (no_vox, 2, name)
+        if acro == q_lower or name == q_lower:
+            return (no_vox, 0, name)
+        if acro.startswith(q_lower) or name.startswith(q_lower):
+            return (no_vox, 1, name)
+        if q_lower in acro:
+            return (no_vox, 2, name)
         return                                                  (no_vox, 3, name)
 
     leaf_results.sort(key=leaf_sort_key)
@@ -1309,7 +1319,9 @@ def resolve_region():
         for col in reversed(hier_cols):
             v = str(row.get(col,'') or '').strip()
             if v and v != '—':
-                most_spec = col; most_name = v; break
+                most_spec = col
+                most_name = v
+                break
         if not most_spec:
             return None
         most_acro = ''
@@ -1381,7 +1393,8 @@ def resolve_region():
             for col in hier_cols:
                 if str(a.get(col,'') or '').strip().lower() == lo:
                     r = leaf_result(parc_idx)
-                    if r: return jsonify(r)
+                    if r:
+                        return jsonify(r)
 
     # ── P3: Exact leaf name match on most-specific column ────────────────────
     for parc_idx in name_df.index:
@@ -1393,7 +1406,8 @@ def resolve_region():
             val = str(row.get(col,'') or '').strip()
             if val.lower() == lo:
                 r = leaf_result(parc_idx)
-                if r: return jsonify(r)
+                if r:
+                    return jsonify(r)
                 break
 
     # ── P4: Term-tree exact name or acronym (finds container groups) ──────────
@@ -1402,7 +1416,8 @@ def resolve_region():
         node = _term_nodes.get(term_label)
         if node and node['children']:
             r = term_node_result(term_label, node)
-            if r: return jsonify(r)
+            if r:
+                return jsonify(r)
 
     # ── P5: Prefix match on group names (≥5 chars) ────────────────────────────
     if len(lo) >= 5:
@@ -1446,7 +1461,8 @@ def resolve_region():
                 val = str(row.get(col,'') or '').strip()
                 if val.lower().startswith(lo):
                     r = leaf_result(parc_idx)
-                    if r: return jsonify(r)
+                    if r:
+                        return jsonify(r)
                     break
 
     # ── P7: Substring match covering >45% of leaf name ───────────────────────
@@ -1460,7 +1476,8 @@ def resolve_region():
                 val = str(row.get(col,'') or '').strip().lower()
                 if val and lo in val and len(lo)/len(val) > 0.45:
                     r = leaf_result(parc_idx)
-                    if r: return jsonify(r)
+                    if r:
+                        return jsonify(r)
                     break
 
     return jsonify({})

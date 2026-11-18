@@ -1,6 +1,7 @@
 """The atlas assistant: local answers via Ollama (with CortexMap research
 summaries when available) and OpenAI GPT answers."""
-import json as _json, json, os as _os
+import json as _json
+import os as _os
 import urllib.request as _urllib_req
 import urllib.error as _urllib_err
 from pathlib import Path
@@ -165,11 +166,13 @@ def _load_kb_documents():
     for r in regions:
         lines = []
         for field in ['structure','substructure','division','category','organ','acronym']:
-            if r.get(field): lines.append(f"{field.title()}: {r[field]}")
+            if r.get(field):
+                lines.append(f"{field.title()}: {r[field]}")
         if r.get('parcellation_index'):
             lines.append(f"Parcellation Index: {r['parcellation_index']}")
         for field in ['function','connectivity','clinical_relevance','notes']:
-            if r.get(field): lines.append(f"\n{field.replace('_',' ').title()}:\n{r[field]}")
+            if r.get(field):
+                lines.append(f"\n{field.replace('_',' ').title()}:\n{r[field]}")
         docs.append(_KbDoc('\n'.join(lines), {
             'structure':          str(r.get('structure','')).lower(),
             'parcellation_index': str(r.get('parcellation_index','')),
@@ -194,19 +197,19 @@ def _ollama_generate(prompt, timeout=120):
         if e.code == 404:
             raise _OllamaUnavailable(
                 f"Ollama is running but doesn't have the '{_OLLAMA_MODEL}' model. "
-                f"Run: ollama pull {_OLLAMA_MODEL}")
-        raise _OllamaUnavailable(f'Ollama returned HTTP {e.code}.')
-    except TimeoutError:
+                f"Run: ollama pull {_OLLAMA_MODEL}") from e
+        raise _OllamaUnavailable(f'Ollama returned HTTP {e.code}.') from e
+    except TimeoutError as e:
         # Reachable but slow — usually the model loading for the first time.
         raise _OllamaUnavailable(
             f'The local AI took longer than {timeout}s to answer (the first question '
-            'after starting Ollama can be slow while the model loads). Try again.')
-    except (_urllib_err.URLError, OSError):
-        raise _OllamaUnavailable(_OLLAMA_UNREACHABLE)
-    except (ValueError, AttributeError):
+            'after starting Ollama can be slow while the model loads). Try again.') from e
+    except (_urllib_err.URLError, OSError) as e:
+        raise _OllamaUnavailable(_OLLAMA_UNREACHABLE) from e
+    except (ValueError, AttributeError) as e:
         # 200 but not Ollama's JSON — OLLAMA_URL points at something else.
         raise _OllamaUnavailable(
-            f"Something answered at {_OLLAMA_URL}, but it isn't Ollama. Check OLLAMA_URL.")
+            f"Something answered at {_OLLAMA_URL}, but it isn't Ollama. Check OLLAMA_URL.") from e
 
 _OLLAMA_UNREACHABLE = (
     f"The local AI (Ollama) isn't reachable at {_OLLAMA_URL}. Start it with "

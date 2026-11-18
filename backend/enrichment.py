@@ -1,7 +1,8 @@
 """Region enrichment: the curated knowledge base, the persistent AI cache,
 functional summaries/keywords, related regions, and the OpenAI generators
 behind /api/enrich."""
-import json as _json, json, re
+import json as _json
+import re
 from collections import Counter
 from pathlib import Path
 from common import (_get_openai_api_key, _load_openai, log)
@@ -66,8 +67,10 @@ def _load_openai_region_cache():
         return empty
     kw = data.get('functional_keywords', {})
     su = data.get('region_summaries', {})
-    if not isinstance(kw, dict): kw = {}
-    if not isinstance(su, dict): su = {}
+    if not isinstance(kw, dict):
+        kw = {}
+    if not isinstance(su, dict):
+        su = {}
     log.info(f'AI region cache loaded: {len(kw)} keyword entries, {len(su)} summaries')
     return {'functional_keywords': kw, 'region_summaries': su}
 

@@ -6,9 +6,10 @@ importing it these tests talk to an already-running server — the Docker
 container or `python App.py`. Standard library only (nothing to install).
 
     docker compose up -d                       # or: python App.py
-    python -m unittest discover backend/tests  # from the repo root
+    pytest                                      # from the repo root
 
-Point them somewhere else with ATLAS_URL=http://host:port.
+Point them somewhere else with ATLAS_URL=http://host:port. Without a
+running app they're skipped (as in CI), unless ATLAS_REQUIRE_SERVER=1.
 They never create accounts or change any data.
 """
 import json
@@ -18,6 +19,21 @@ import urllib.error
 import urllib.request
 
 BASE = os.environ.get('ATLAS_URL', 'http://localhost:5000').rstrip('/')
+
+
+def setUpModule():
+    """Skip this whole file when no app is running (e.g. in CI, which has no
+    atlas data). Set ATLAS_REQUIRE_SERVER=1 to make that a failure instead."""
+    try:
+        with urllib.request.urlopen(BASE + '/health', timeout=5) as r:
+            if r.status == 200:
+                return
+    except Exception:
+        pass
+    msg = f'no running Brain Atlas app at {BASE} (start it, or set ATLAS_URL)'
+    if os.environ.get('ATLAS_REQUIRE_SERVER') == '1':
+        raise RuntimeError(msg)
+    raise unittest.SkipTest(msg)
 
 
 def call(path, body=None, content_type='application/json', method=None, timeout=60):
@@ -57,7 +73,9 @@ class CoreViews(unittest.TestCase):
         self.assertEqual((d['rows'], d['cols']), (800, 1140))   # rows = S-I, cols = L-R
 
     def test_slice_png_is_native_resolution_and_fast(self):
-        import base64, struct, time
+        import base64
+        import struct
+        import time
         idx = 300 + int(time.time()) % 400            # avoid the server's slice cache
         # Warm the neighbouring slice first: the volumes are memory-mapped, so
         # right after a restart the first reads come from disk. This test is
