@@ -139,14 +139,16 @@ function buildAxes(centerLocal, sizeLocal) {
     cvs.width = 192; cvs.height = 64;
     const ctx = cvs.getContext('2d');
     ctx.fillStyle = '#' + col.toString(16).padStart(6, '0');
-    ctx.font = 'italic 34px Georgia, serif';
+    // Same typeface as the rest of the UI (falls back to the system sans if
+    // the web font hasn't finished loading when this is first drawn).
+    ctx.font = '600 28px "Instrument Sans Variable", system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(text, 96, 34);
     const tex = new THREE.CanvasTexture(cvs);
     tex.colorSpace = THREE.SRGBColorSpace;
     const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
     spr.position.copy(pos);
-    const s = len * 0.22;
+    const s = len * 0.18;
     spr.scale.set(s * 3, s, 1);
     axesGroup.add(spr);
   };

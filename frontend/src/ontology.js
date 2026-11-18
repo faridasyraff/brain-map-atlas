@@ -241,6 +241,7 @@ export async function selectTreeNode(node){
     // name for Functional Summary / Keywords / Related Regions.
     const groupPanelData = {
       parcellation_index: null,
+      structure_color: node._color,
       xi, yi, zi,
       organ:        '—',
       category:     '—',
@@ -267,7 +268,7 @@ export async function selectTreeNode(node){
     }));
     for(const vv of['sagittal','coronal','transverse']){const sv=views[vv];if(sv.lastMask){syncCanvas(vv);await new Promise(res=>{const mi=new Image();mi.onload=()=>{sv.ctx.clearRect(0,0,sv.canvas.width,sv.canvas.height);sv.ctx.drawImage(mi,0,0,sv.canvas.width,sv.canvas.height);res();};mi.onerror=()=>res();mi.src=sv.lastMask;});}}
     _treeLastKey = key;
-    setStatus(`"${termName}" — ${idxList.length} regions · ${cData.voxel_count?.toLocaleString()||'?'} voxels`,'ok');
+    setStatus(`Selected ${termName} (${idxList.length} regions)`,'ok');
     if(window.notifyChatRegion) window.notifyChatRegion(termName,{parcellation_index:null,structure:termName,xi,yi,zi});
 
   } catch(err) {

@@ -369,5 +369,5 @@ Object.keys(views).forEach(v=>{
 setStatus('Loading all three views…');
 Promise.all(Object.keys(views).map(v=>loadSliceP(v))).then(()=>{
   Object.keys(views).forEach(v=>{ resetZoom(v); syncCanvas(v); });
-  setStatus('All views loaded -- click any image to identify regions','ok');
+  setStatus('Ready. Click any slice to identify a region.','ok');
 });
