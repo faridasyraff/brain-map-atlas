@@ -185,6 +185,66 @@ class Assistant(unittest.TestCase):
             self.assertTrue(d['ai_note'])
 
 
+class Session:
+    """A cookie-keeping client, for the signed-in tests."""
+    def __init__(self):
+        import http.cookiejar
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+    def call(self, path, body=None, method=None):
+        data = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(BASE + path, data=data, method=method or ('POST' if data else 'GET'),
+                                     headers={'Content-Type': 'application/json'} if data else {})
+        try:
+            with self.opener.open(req, timeout=30) as r:
+                return r.status, json.loads(r.read() or b'{}')
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b'{}')
+
+
+class Library(unittest.TestCase):
+    """Saved regions, notes, history and account deletion. Creates a
+    throwaway account and deletes it again at the end."""
+
+    def test_requires_sign_in(self):
+        for path in ('/api/me/saved', '/api/me/history'):
+            self.assertEqual(call(path)[0], 401, path)
+
+    def test_full_flow_and_cleanup(self):
+        import uuid
+        s = Session()
+        email, pw = f'smoke-{uuid.uuid4().hex[:10]}@example.invalid', 'smoke-test-pw-123'
+        self.assertEqual(s.call('/api/auth/signup', {'email': email, 'password': pw})[0], 201)
+        try:
+            item = {'kind': 'region', 'ref': '150', 'label': 'Lateral dorsal nucleus of thalamus',
+                    'acronym': 'LD', 'color': '#ff909f'}
+            status, d = s.call('/api/me/saved', {**item, 'note': '<b>my</b> note'}, method='PUT')
+            self.assertEqual(status, 200)
+            self.assertEqual(d['saved'][0]['note'], '<b>my</b> note')   # stored as plain text
+            self.assertEqual(s.call('/api/me/saved', {**item, 'color': 'red;x'}, method='PUT')[1]['saved'][0]['color'], '')
+            self.assertEqual(s.call('/api/me/saved', {**item, 'kind': 'bogus'}, method='PUT')[0], 400)
+            self.assertEqual(s.call('/api/me/saved', {**item, 'ref': 'abc'}, method='PUT')[0], 400)
+
+            self.assertEqual(s.call('/api/me/history', item)[0], 200)
+            self.assertEqual(s.call('/api/me/history', {**item, 'kind': 'group', 'ref': 'Thalamus', 'label': 'Thalamus'})[0], 200)
+            self.assertEqual([h['ref'] for h in s.call('/api/me/history')[1]['history']][:2], ['Thalamus', '150'])
+
+            # Another user can't see it
+            other = Session()
+            other_email = f'smoke-{uuid.uuid4().hex[:10]}@example.invalid'
+            other.call('/api/auth/signup', {'email': other_email, 'password': pw})
+            self.assertEqual(other.call('/api/me/saved')[1]['saved'], [])
+            other.call('/api/auth/account', {'password': pw}, method='DELETE')
+
+            self.assertEqual(s.call('/api/me/saved', {'kind': 'region', 'ref': '150'}, method='DELETE')[1]['saved'], [])
+            self.assertEqual(s.call('/api/auth/account', {'password': 'wrong-password'}, method='DELETE')[0], 401)
+        finally:
+            self.assertEqual(s.call('/api/auth/account', {'password': pw}, method='DELETE')[0], 200)
+        # Account is really gone
+        self.assertEqual(call('/api/auth/login', {'email': email, 'password': pw})[0], 401)
+
+
 class Accounts(unittest.TestCase):
     def test_me_anonymous(self):
         self.assertEqual(call('/api/auth/me'), (200, {'user': None}))

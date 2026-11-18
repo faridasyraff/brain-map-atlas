@@ -22,15 +22,25 @@ let mode = 'login';   // 'login' or 'signup' — which one the open form submits
 // each block (flex, grid, ...) stays defined in the stylesheet, not here.
 function show(el, visible){ el.hidden = !visible; }
 
+// Other modules (e.g. library.js) listen for this to know who's signed in.
+function announce(user) {
+  window.dispatchEvent(new CustomEvent('auth-change', { detail: { user } }));
+}
+
 function showLoggedOut() {
   show(loggedOut, true); show(loggedIn, false); show(form, false);
+  announce(null);
 }
 
 function showLoggedIn(user) {
   emailEl.textContent = user.email;
   show(adminBadge, !!user.is_admin);
   show(loggedOut, false); show(loggedIn, true); show(form, false);
+  announce(user);
 }
+
+// Lets other modules open the sign-in form (e.g. "Sign in to save").
+window.openSignIn = () => openForm('login');
 
 function openForm(newMode) {
   mode = newMode;

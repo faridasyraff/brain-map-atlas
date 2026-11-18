@@ -18,6 +18,7 @@ import './ontology.js';
 import './searchPanel.js';
 import './chatPanel.js';
 import './threeViewer.js';
+import './library.js';
 import { viewsReady } from './sliceViewer.js';
 import { restoreFromLink } from './searchPanel.js';
 

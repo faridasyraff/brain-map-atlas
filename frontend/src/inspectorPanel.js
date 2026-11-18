@@ -10,6 +10,7 @@ import { setStatus } from './statusBar.js';
 import { highlightTreeByAcronym } from './ontology.js';
 import { selectSearchResult } from './searchPanel.js';
 import { copyCurrentLink } from './urlState.js';
+import { onRegionShown } from './library.js';
 
 const rIdx=document.getElementById('r-idx'),rStruct=document.getElementById('r-struct'),rAcro=document.getElementById('r-acro');
 const regionSummaryText=document.getElementById('region-summary-text');
@@ -203,6 +204,14 @@ export function updatePanel(data){
     try { _enrichAbort.abort(); } catch(e){}
     _enrichAbort = null;
   }
+
+  // Tell the library what's on screen (Save button state, notes, history).
+  const isGroup = data.parcellation_index == null;
+  onRegionShown(name && name !== '--' ? {
+    kind: isGroup ? 'group' : 'region',
+    ref: isGroup ? name : String(data.parcellation_index),
+    label: name, acronym: acronym !== '--' ? acronym : '', color: regionColor,
+  } : null);
 
   if(acronym&&acronym!=='--') highlightTreeByAcronym(acronym);
 

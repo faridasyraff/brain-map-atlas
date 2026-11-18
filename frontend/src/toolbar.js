@@ -6,30 +6,26 @@ import { views } from './state.js';
 import { syncCanvas } from './sliceViewer.js';
 
 // -- Sidebar tab switcher --------------------------------------
+// Each tab's data-pane="x" shows the element #pane-x. Fires a 'pane-shown'
+// event so panes can refresh lazily (e.g. the Saved tab).
 (function(){
-  const tabs     = document.querySelectorAll('.sidebar-tab');
-  const paneMain = document.getElementById('pane-main');
-  const paneTree = document.getElementById('pane-tree');
-  const statusBar= document.getElementById('status-bar');
+  const tabs = document.querySelectorAll('.sidebar-tab');
 
   function activatePane(paneName) {
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.pane === paneName));
-
-    if (paneName === 'tree') {
-      paneMain.classList.remove('active');
-      paneTree.classList.add('active');
-      // status bar must sit after pane-tree inside info-panel
-      statusBar.parentElement.appendChild(statusBar);
-    } else {
-      paneTree.classList.remove('active');
-      paneMain.classList.add('active');
-      statusBar.parentElement.appendChild(statusBar);
-    }
+    tabs.forEach(t => {
+      const on = t.dataset.pane === paneName;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.sidebar-pane').forEach(p =>
+      p.classList.toggle('active', p.id === 'pane-' + paneName));
+    window.dispatchEvent(new CustomEvent('pane-shown', { detail: { pane: paneName } }));
   }
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => activatePane(tab.dataset.pane));
   });
+  window.showSidebarPane = activatePane;
 })();
 
 // -- Sidebar resize ------------------------------------------------------------

@@ -160,6 +160,7 @@
     <nav class="sidebar-tabs" id="sidebar-tabs" role="tablist" aria-label="Panel sections">
       <button class="sidebar-tab active" data-pane="main" role="tab">Inspector</button>
       <button class="sidebar-tab" data-pane="tree" role="tab">Hierarchy</button>
+      <button class="sidebar-tab" data-pane="saved" role="tab">Saved</button>
     </nav>
 
     <div class="sidebar-pane active" id="pane-main">
@@ -183,7 +184,13 @@
             </div>
           </div>
           <div class="region-actions">
+            <button class="btn btn-secondary btn-sm" id="save-region-btn" aria-pressed="false" disabled>Save</button>
             <button class="btn btn-secondary btn-sm" id="copy-link-btn" title="Copy a link that reopens this exact view">Copy link</button>
+          </div>
+          <div class="region-note" id="region-note-wrap" hidden>
+            <label class="field-label" for="region-note">Your note (private)</label>
+            <textarea class="input textarea" id="region-note" rows="3" maxlength="5000" placeholder="Anything you want to remember about this region"></textarea>
+            <div class="hint" id="region-note-state" aria-live="polite"></div>
           </div>
           <div id="r-idx" hidden>—</div>
 
@@ -227,6 +234,39 @@
       </div>
       <div class="tree-scroll" id="ontology-tree">
         <div class="tree-loading">Loading the Allen CCFv3 hierarchy…</div>
+      </div>
+    </div>
+
+    <div class="sidebar-pane" id="pane-saved">
+      <div class="pane-scroll">
+        <div class="panel-section library-signed-out" id="library-signed-out">
+          <h3 class="library-heading">Keep regions you care about</h3>
+          <p class="library-empty">Sign in to save regions, add private notes to them, and see what you viewed recently.</p>
+          <button class="btn btn-primary btn-sm" type="button" id="library-signin-btn">Sign in</button>
+        </div>
+        <div id="library-signed-in" hidden>
+          <div class="panel-section">
+            <h3 class="library-heading">Saved regions</h3>
+            <ul class="library-list" id="saved-list"></ul>
+          </div>
+          <div class="panel-section">
+            <h3 class="library-heading">Recently viewed</h3>
+            <ul class="library-list" id="history-list"></ul>
+          </div>
+          <div class="panel-section library-danger">
+            <button class="btn btn-ghost btn-sm" id="delete-account-start">Delete account…</button>
+            <div id="delete-account-form" hidden>
+              <p class="library-empty">This permanently deletes your account, saved regions and notes. Enter your password to confirm.</p>
+              <label class="field-label" for="delete-account-password">Password</label>
+              <input class="input" id="delete-account-password" type="password" autocomplete="current-password">
+              <div class="account-error" id="delete-account-error" role="alert"></div>
+              <div class="account-form-row">
+                <button class="btn btn-danger btn-sm" id="delete-account-confirm">Delete account</button>
+                <button class="btn btn-ghost btn-sm" id="delete-account-cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

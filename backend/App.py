@@ -1285,7 +1285,8 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 # would break sign-in on http://localhost.)
 app.config['SESSION_COOKIE_SECURE'] = _os.environ.get('SESSION_COOKIE_SECURE', '').lower() in ('1', 'true', 'yes')
 
-from db import init_db, create_user, get_user_by_email, get_user_by_id, user_count
+from db import (init_db, create_user, get_user_by_email, get_user_by_id, user_count,
+                list_saved, upsert_saved, delete_saved, list_history, add_history, delete_user)
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -1378,6 +1379,81 @@ def auth_me():
     if not current_user.is_authenticated:
         return jsonify({'user': None})
     return jsonify({'user': _user_public(current_user)})
+
+@app.route('/api/auth/account', methods=['DELETE'])
+@login_required
+@limiter.limit('5 per minute')
+def auth_delete_account():
+    """Permanently delete the signed-in account and everything saved with
+    it. Asks for the password again so a stray request can't do it."""
+    data = _json_body()
+    row = get_user_by_id(int(current_user.id))
+    if not row or not check_password_hash(row['password_hash'], data.get('password') or ''):
+        return jsonify({'error': 'Incorrect password'}), 401
+    delete_user(int(current_user.id))
+    logout_user()
+    return jsonify({'ok': True})
+
+
+# ── Per-user library: saved regions (with notes) and recently viewed ─────────
+# kind = 'region' (ref = parcellation index) or 'group' (ref = group name).
+_HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{3,8}$')
+
+def _library_item(data, with_note=False):
+    """Validate a saved/history item from a request body; aborts with 400."""
+    kind = data.get('kind')
+    ref = str(data.get('ref') or '').strip()
+    label = str(data.get('label') or '').strip()
+    if kind not in ('region', 'group'):
+        abort(400, description="kind must be 'region' or 'group'")
+    if kind == 'region' and not ref.isdigit():
+        abort(400, description='ref must be a parcellation index for kind=region')
+    if not ref or len(ref) > 200 or not label or len(label) > 200:
+        abort(400, description='ref and label are required (max 200 characters)')
+    acronym = str(data.get('acronym') or '').strip()[:40]
+    color = str(data.get('color') or '').strip()
+    color = color if _HEX_COLOR.match(color) else ''
+    item = {'kind': kind, 'ref': ref, 'label': label, 'acronym': acronym, 'color': color}
+    if with_note:
+        note = data.get('note')
+        if note is not None:
+            note = str(note)
+            if len(note) > 5000:
+                abort(400, description='note is too long (max 5000 characters)')
+        item['note'] = note
+    return item
+
+@app.route('/api/me/saved', methods=['GET'])
+@login_required
+def my_saved():
+    return jsonify({'saved': list_saved(int(current_user.id))})
+
+@app.route('/api/me/saved', methods=['PUT'])
+@login_required
+def my_saved_put():
+    item = _library_item(_json_body(), with_note=True)
+    upsert_saved(int(current_user.id), **item)
+    return jsonify({'saved': list_saved(int(current_user.id))})
+
+@app.route('/api/me/saved', methods=['DELETE'])
+@login_required
+def my_saved_delete():
+    data = _json_body()
+    kind, ref = data.get('kind'), str(data.get('ref') or '')
+    if not delete_saved(int(current_user.id), kind, ref):
+        return jsonify({'error': 'Not in your saved regions'}), 404
+    return jsonify({'saved': list_saved(int(current_user.id))})
+
+@app.route('/api/me/history', methods=['GET'])
+@login_required
+def my_history():
+    return jsonify({'history': list_history(int(current_user.id))})
+
+@app.route('/api/me/history', methods=['POST'])
+@login_required
+def my_history_add():
+    add_history(int(current_user.id), **_library_item(_json_body()))
+    return jsonify({'ok': True})
 
 _DEBUG_ERRORS = _os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
 
