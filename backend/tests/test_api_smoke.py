@@ -126,6 +126,15 @@ class ErrorHandling(unittest.TestCase):
                          content_type='text/plain')
         self.assertEqual(status, 400)
 
+    def test_out_of_range_region_indices_never_500(self):
+        # 1328 used to slip past a range check whose bound had been
+        # overwritten, and crash the histogram lookup.
+        for idx in (1327, 1328, 1329, 10**6, -1):
+            status, _ = call('/api/region_center_indices', {'parcellation_indices': [idx]})
+            self.assertIn(status, (200, 400, 404), idx)
+            status, _ = call('/api/region_center', {'parcellation_index': idx})
+            self.assertIn(status, (200, 404), idx)
+
     def test_unknown_route_is_404_json(self):
         status, d = call('/api/does_not_exist')
         self.assertEqual(status, 404)

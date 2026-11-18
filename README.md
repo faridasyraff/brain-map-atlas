@@ -71,7 +71,7 @@ python -m unittest discover backend/tests        # ATLAS_URL=... to target anoth
 
 The same Docker image runs on any server or host that runs containers. Before going live:
 
-- **Size the machine for it.** The app keeps the whole atlas in memory, using about **6.5 GB of RAM**. Use a host with at least **8 GB**; free and small tiers won't start it. Disk needs are about 1.5 GB for the image plus about 0.5 GB of data.
+- **Size the machine for it.** The atlas volumes are memory-mapped from disk rather than held in RAM. The app uses about **0.5 GB** at rest, and was load-tested inside a **2 GB** memory limit at around 120–150 ms per click. It needs about **15 GB of disk**: the image, plus about 12 GB of uncompressed volumes written on first start.
 - **Persistent storage.** Mount persistent disks at `/app/backend/data`, `/app/backend/meshes` and `/app/backend/logs`, as `docker-compose.yml` does. Without them, every redeploy re-downloads about 500 MB, rebuilds the 3D volume and forgets every account.
 - **HTTPS.** Put it behind a reverse proxy or your host's HTTPS, then set these in `backend/.env` (or the host's environment settings):
   - `TRUST_PROXY_HOPS=1`, so rate limits count per visitor instead of sharing one limit across everyone.

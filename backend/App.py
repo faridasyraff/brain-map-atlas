@@ -655,18 +655,56 @@ for meta in _METADATA_FILES:
 
 print("── Data check complete ───────────────────────────────────────────────────\n")
 
+# ── Atlas volumes: memory-mapped, not loaded into RAM ───────────────────────
+# The three 10 µm volumes are ~1.2 billion voxels each (≈6 GB together).
+# Instead of holding them in process memory, each is converted once to a
+# plain .npy file in data/npy/ and memory-mapped: the OS reads in only the
+# parts actually used (a few slices per click) and can drop them again under
+# memory pressure, so the app no longer needs a machine with 8 GB of RAM.
+# The first start pays a one-time conversion (a few minutes, ~12 GB of
+# disk: each volume plus a coronal-ordered copy — see load_coronal_copy).
+_NPY_DIR = Path(__file__).parent / 'data' / 'npy'
+
 def load_arr(name):
-    f = abc_cache.get_file_path(directory='Allen-CCF-2020', file_name=name)
-    return sitk.GetArrayFromImage(sitk.ReadImage(f))
+    npy = _NPY_DIR / f'{name}.npy'
+    if not npy.is_file():
+        _NPY_DIR.mkdir(parents=True, exist_ok=True)
+        src = abc_cache.get_file_path(directory='Allen-CCF-2020', file_name=name)
+        print(f"Converting {name} to a memory-mappable file (one-time)…")
+        img = sitk.ReadImage(str(src))
+        tmp = npy.with_name(npy.name + '.tmp')
+        with open(tmp, 'wb') as fh:
+            np.save(fh, sitk.GetArrayViewFromImage(img))   # a view: no second in-RAM copy
+        del img
+        tmp.replace(npy)
+    return np.load(npy, mmap_mode='r')
 
 annotation_array = load_arr('annotation_10')   # (1140, 800, 1320) = (x, y, z)
 template_array   = load_arr('average_template_10')
 boundary_array   = load_arr('annotation_boundary_10')
 
-# Pre-compute which parcellation indices actually have voxels — used to flag
-# "no highlight available" regions in search results.
-_indices_with_voxels = set(np.unique(annotation_array).tolist())
-print(f"Unique parcellation indices with voxels: {len(_indices_with_voxels)}")
+def load_coronal_copy(name, arr):
+    """The same volume stored z-major, shape (z, y, x). A coronal slice is
+    arr[:, :, z] — in the x-major file those voxels are spread over every
+    page, so with memory mapping each coronal slice would touch all ~2.4 GB.
+    In this copy it's one contiguous 1.8 MB block (and already in the
+    rows=y, cols=x orientation the views use). Costs disk, not RAM."""
+    npy = _NPY_DIR / f'{name}_zyx.npy'
+    if not npy.is_file():
+        print(f"Building coronal-ordered copy of {name} (one-time)…")
+        tmp = npy.with_name(npy.name + '.tmp')
+        X, Y, Z = arr.shape
+        out = np.lib.format.open_memmap(tmp, mode='w+', dtype=arr.dtype, shape=(Z, Y, X))
+        for z0 in range(0, Z, 64):            # 64 slices at a time keeps RAM use small
+            z1 = min(Z, z0 + 64)
+            out[z0:z1] = np.transpose(arr[:, :, z0:z1], (2, 1, 0))
+        out.flush(); del out
+        tmp.replace(npy)
+    return np.load(npy, mmap_mode='r')
+
+annotation_zyx = load_coronal_copy('annotation_10', annotation_array)
+template_zyx   = load_coronal_copy('average_template_10', template_array)
+boundary_zyx   = load_coronal_copy('annotation_boundary_10', boundary_array)
 
 # ── Per-axis "which slice has how many voxels of this region" lookup ─────────
 # Finding where to center the view on a region (or a whole group of them, like
@@ -674,25 +712,50 @@ print(f"Unique parcellation indices with voxels: {len(_indices_with_voxels)}")
 # billion-voxel volume on every single click — a few seconds each time, and
 # the biggest groups took close to 10.
 #
-# Instead, we count this ONCE at startup: for every slice along every axis,
-# how many voxels of each parcellation_index are in it. That table
-# (axis_length x number_of_regions, a few MB) lets any future request —
-# one region or hundreds combined — get its answer by adding up a handful of
+# Instead, we count this ONCE: for every slice along every axis, how many
+# voxels of each parcellation_index are in it. That table (axis_length x
+# number_of_regions, a few MB) lets any future request — one region or
+# hundreds combined — get its answer by adding up a handful of
 # already-computed numbers instead of rescanning the volume. Looking up a
 # 339-region group this way takes about a hundredth of a second.
-print("Pre-computing per-slice region histograms (one-time cost, speeds up all future region lookups)…")
-_hist_t0 = _time.time()
-_MAX_PIDX = int(annotation_array.max())
-_x_hist = np.zeros((annotation_array.shape[0], _MAX_PIDX + 1), dtype=np.int32)
-_y_hist = np.zeros((annotation_array.shape[1], _MAX_PIDX + 1), dtype=np.int32)
-_z_hist = np.zeros((annotation_array.shape[2], _MAX_PIDX + 1), dtype=np.int32)
-for _x in range(annotation_array.shape[0]):
-    _x_hist[_x] = np.bincount(annotation_array[_x].ravel(), minlength=_MAX_PIDX + 1)
-for _y in range(annotation_array.shape[1]):
-    _y_hist[_y] = np.bincount(annotation_array[:, _y, :].ravel(), minlength=_MAX_PIDX + 1)
-for _z in range(annotation_array.shape[2]):
-    _z_hist[_z] = np.bincount(annotation_array[:, :, _z].ravel(), minlength=_MAX_PIDX + 1)
-print(f"Region histograms ready in {_time.time() - _hist_t0:.1f}s")
+#
+# All three tables are built in ONE sequential pass over the volume (one
+# x-slab at a time), which is what a memory-mapped file reads fastest, and
+# cached to data/npy/ so later starts skip it entirely.
+def _build_histograms():
+    cache = _NPY_DIR / 'annotation_10_hist.npz'
+    if cache.is_file():
+        h = np.load(cache)
+        return h['x'], h['y'], h['z']
+    print("Building per-slice region histograms (one-time, cached afterwards)…")
+    t0 = _time.time()
+    X, Y, Z = annotation_array.shape
+    k = int(annotation_array.max()) + 1
+    xh = np.zeros((X, k), dtype=np.int32)
+    yh = np.zeros((Y, k), dtype=np.int64)
+    zh = np.zeros((Z, k), dtype=np.int64)
+    rows = np.repeat(np.arange(Y, dtype=np.int64), Z) * k   # flat (y, z) -> y*k
+    cols = np.tile(np.arange(Z, dtype=np.int64), Y) * k     # flat (y, z) -> z*k
+    for x in range(X):
+        v = np.asarray(annotation_array[x], dtype=np.int64).ravel()
+        xh[x] = np.bincount(v, minlength=k)
+        yh += np.bincount(rows + v, minlength=Y * k).reshape(Y, k)
+        zh += np.bincount(cols + v, minlength=Z * k).reshape(Z, k)
+    yh, zh = yh.astype(np.int32), zh.astype(np.int32)
+    tmp = cache.with_name('annotation_10_hist.tmp.npz')
+    np.savez(tmp, x=xh, y=yh, z=zh)
+    tmp.replace(cache)
+    print(f"Region histograms built in {_time.time() - t0:.1f}s")
+    return xh, yh, zh
+
+_x_hist, _y_hist, _z_hist = _build_histograms()
+_MAX_PIDX = _x_hist.shape[1] - 1
+
+# Which parcellation indices actually have voxels — used to flag "no
+# highlight available" regions in search results. Read off the histograms
+# (np.unique over the full volume would make a 2.4 GB sorted copy).
+_indices_with_voxels = set(np.nonzero(_x_hist.sum(axis=0))[0].tolist())
+print(f"Unique parcellation indices with voxels: {len(_indices_with_voxels)}")
 
 # ── Lookup table: parcellation_index → names ──────────────────────────────────
 name_df = abc_cache.get_metadata_dataframe(
@@ -931,13 +994,16 @@ def _build_lut_from_color_df(col_name):
                 pass
     return lut, max_idx
 
-_color_lut_structure,    _MAX_PIDX = _build_lut_from_color_df('structure_color')
+# (The second return value is the color table's size. It used to be assigned
+# to _MAX_PIDX here, silently replacing the histogram bound set above — so
+# the range checks let index 1328 through and /api/region_center_indices
+# crashed with IndexError.)
+_color_lut_structure,    _ = _build_lut_from_color_df('structure_color')
 _color_lut_substructure, _         = _build_lut_from_color_df('substructure_color')
 _color_lut_division,     _         = _build_lut_from_color_df('division_color')
 
 # Default LUT used by colorize() — structure level matches the docs visually
 _color_lut = _color_lut_structure
-_MAX_STRUCT_ID = _MAX_PIDX
 
 print(f"Color LUT built from color_df structure_color: "
       f"{np.any(_color_lut > 0, axis=1).sum()} colored parcellations")
@@ -1068,10 +1134,12 @@ def get_slices(view, idx):
                 boundary_array[xi,:,:],
                 annotation_array[xi,:,:])
     elif view == 'coronal':
+        # From the z-major copies (see load_coronal_copy): same values as
+        # arr[:,:,zi].T, but one contiguous read instead of the whole file.
         zi = max(0, min(idx, Z_MAX))
-        return (template_array[:,:,zi].T,
-                boundary_array[:,:,zi].T,
-                annotation_array[:,:,zi].T)
+        return (template_zyx[zi],
+                boundary_zyx[zi],
+                annotation_zyx[zi])
     elif view == 'transverse':
         yi = max(0, min(idx, Y_MAX))
         return (template_array[:,yi,:],
