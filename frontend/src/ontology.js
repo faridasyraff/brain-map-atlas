@@ -5,7 +5,7 @@
 //
 // Note: this file and inspectorPanel.js/searchPanel.js each use things from
 // the others — see the note at the top of lookup.js for why that's fine.
-import { API } from './config.js';
+import { API, escapeHtml, safeColor } from './config.js';
 import {
   views, setSuppressSliderReload, setLastParcIdx, setLastHighlight,
   _ontologyRoots, _allTreeRows, setOntologyRoots, setAllTreeRows,
@@ -84,7 +84,7 @@ async function loadOntology(){
         if (set) console.log(`[3D] mesh catalog: ${set.size} structures have mesh files`);
       });
     }
-  } catch(e){ ontologyTreeEl.innerHTML=`<div class="tree-err">(!) Could not load ontology: ${e.message}</div>`; }
+  } catch(e){ ontologyTreeEl.innerHTML=`<div class="tree-err">(!) Could not load ontology: ${escapeHtml(e.message)}</div>`; }
 }
 
 function renderOntologyTree(roots){
@@ -345,8 +345,8 @@ export function highlightTreeByAcronym(acronym){
       item.className = 'ontology-dd-item'+(e.node._available===false?' unavailable':'');
       if(e.node._available===false) item.title='No voxels in the CCFv3 annotation volume -- the 2D views won\'t show this structure, though the 3D view may still show an approximate parent shape';
       const color = e.node._color || ('#'+(e.node.color_hex_triplet||'445a72'));
-      const acro  = e.node.acronym ? `<span class="ontology-dd-acro">${e.node.acronym}</span>` : '';
-      item.innerHTML = `<span class="ontology-dd-dot" style="background:${color}"></span><span class="ontology-dd-name">${e.node.name||''}</span>${acro}`;
+      const acro  = e.node.acronym ? `<span class="ontology-dd-acro">${escapeHtml(e.node.acronym)}</span>` : '';
+      item.innerHTML = `<span class="ontology-dd-dot" style="background:${safeColor(color)}"></span><span class="ontology-dd-name">${escapeHtml(e.node.name)}</span>${acro}`;
       item.addEventListener('mousedown', ev=>{
         ev.preventDefault();
         ontologySearchEl.value = '';

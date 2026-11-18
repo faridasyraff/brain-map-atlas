@@ -7,7 +7,7 @@
 //
 // Note: this file, ontology.js, and inspectorPanel.js each use things from
 // the others — see the note at the top of lookup.js for why that's fine.
-import { API } from './config.js';
+import { API, escapeHtml, safeColor } from './config.js';
 import {
   views, highlightLevel, _allTreeRows,
   setSuppressSliderReload, setLastParcIdx, setLastHighlight,
@@ -69,6 +69,34 @@ searchClear.addEventListener('click',()=>{
 });
 searchInput.addEventListener('blur',()=>{ setTimeout(clearSearchDropdown,150); });
 
+// Keyboard: ↑/↓ move through results, Enter opens the highlighted one (or
+// the first, same as the hierarchy search box), Escape closes the list.
+searchInput.addEventListener('keydown',async e=>{
+  if(e.key==='Escape'){ clearTimeout(searchTimer); clearSearchDropdown(); return; }
+  // Enter while the debounced search for the latest text hasn't run yet:
+  // run it now so Enter picks from results for what's actually typed,
+  // not from the previous (shorter) query's list.
+  if(e.key==='Enter' && searchTimer!==null && searchStatus.textContent==='Searching...'){
+    e.preventDefault();
+    clearTimeout(searchTimer); searchTimer=null;
+    const q=searchInput.value.trim(); if(!q) return;
+    await runSearch(q);
+  }
+  const items=[...searchDropdown.querySelectorAll('.search-result-item')];
+  if(!items.length || searchDropdown.style.display==='none') return;
+  let i=items.findIndex(it=>it.classList.contains('active'));
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    i = e.key==='ArrowDown' ? Math.min(items.length-1, i+1) : Math.max(0, i-1);
+    items.forEach(it=>it.classList.remove('active'));
+    items[i].classList.add('active');
+    items[i].scrollIntoView({block:'nearest'});
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    items[Math.max(0,i)].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+  }
+});
+
 export async function runSearch(q){
   try{
     const res=await fetch(`${API}/api/search?q=${encodeURIComponent(q)}&limit=50`);
@@ -125,12 +153,16 @@ export async function runSearch(q){
       const item=document.createElement('div'); item.className='search-result-item'; item.dataset.parcIdx=r.parcellation_index||'';
       const label=r.matched_label||(r.structure!=='--'?r.structure:(r.division!=='--'?r.division:r.category));
       const acro=r.matched_acronym||r.structure_acronym||r.division_acronym||r.category_acronym||'';
-      const acroBadge=acro?`<span class="sr-acro">${acro}</span>`:'';
+      // Names/acronyms/colors come from the server and the Allen API — escape
+      // them before they go into innerHTML below.
+      const acroBadge=acro?`<span class="sr-acro">${escapeHtml(acro)}</span>`:'';
+      const dot=`<div class="sr-dot" style="background:${safeColor(r.structure_color)}"></div>`;
+      const safeLabel=escapeHtml(label);
 
       if(r._ontologyOnly && !r._hasChildren){
         // Truly absent from atlas -- greyed out, AI-only
         item.classList.add('unavailable');
-        item.innerHTML=`<div class="sr-dot" style="background:${r.structure_color}"></div><div class="sr-text"><div class="sr-name">${label}${acroBadge}</div><div class="sr-unavail">(!) Not in CCFv3 annotation volume</div></div>`;
+        item.innerHTML=`${dot}<div class="sr-text"><div class="sr-name">${safeLabel}${acroBadge}</div><div class="sr-unavail">(!) Not in CCFv3 annotation volume</div></div>`;
         item.addEventListener('mousedown',ev=>{ ev.preventDefault();
           document.querySelectorAll('.search-result-item').forEach(i=>i.classList.remove('active'));
           item.classList.add('active');
@@ -145,13 +177,13 @@ export async function runSearch(q){
         });
       } else if(r._ontologyOnly && r._hasChildren){
         // Has children -- use selectTreeNode which resolves leaf descendants
-        item.innerHTML=`<div class="sr-dot" style="background:${r.structure_color}"></div><div class="sr-text"><div class="sr-name">${label}${acroBadge}</div></div>`;
+        item.innerHTML=`${dot}<div class="sr-text"><div class="sr-name">${safeLabel}${acroBadge}</div></div>`;
         item.addEventListener('mousedown',ev=>{ ev.preventDefault(); searchInput.value=''; clearSearchDropdown(); selectTreeNode(r.node); });
       } else if(r.is_group){
-        item.innerHTML=`<div class="sr-dot" style="background:${r.structure_color}"></div><div class="sr-text"><div class="sr-name">${label}${acroBadge}</div><div class="sr-sub"><span class="sr-group-count">${r.member_count} regions</span></div></div>`;
+        item.innerHTML=`${dot}<div class="sr-text"><div class="sr-name">${safeLabel}${acroBadge}</div><div class="sr-sub"><span class="sr-group-count">${escapeHtml(r.member_count)} regions</span></div></div>`;
         item.addEventListener('mousedown',ev=>{ ev.preventDefault(); searchInput.value=''; clearSearchDropdown(); selectSearchResult(item,r); });
       } else {
-        item.innerHTML=`<div class="sr-dot" style="background:${r.structure_color}"></div><div class="sr-text"><div class="sr-name">${label}${acroBadge}</div></div>`;
+        item.innerHTML=`${dot}<div class="sr-text"><div class="sr-name">${safeLabel}${acroBadge}</div></div>`;
         item.addEventListener('mousedown',ev=>{ ev.preventDefault(); searchInput.value=''; clearSearchDropdown(); selectSearchResult(item,r); });
       }
       searchDropdown.appendChild(item);

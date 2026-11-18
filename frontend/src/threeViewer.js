@@ -204,7 +204,11 @@ async function loadVolumeIfNeeded() {
   VOLUME.loading = (async () => {
     // 1) Metadata — from the mesh-derived volume now.
     const metaRes = await fetch(`${API_BASE}/api/mesh_volume_meta`);
-    if (!metaRes.ok) throw new Error(`meta HTTP ${metaRes.status}`);
+    if (!metaRes.ok) {
+      // The server explains why (e.g. "still being generated") — surface that.
+      const body = await metaRes.json().catch(() => ({}));
+      throw new Error(body.error || `meta HTTP ${metaRes.status}`);
+    }
     const meta = await metaRes.json();
     VOLUME.shape = meta.shape;
     VOLUME.stride = meta.stride;
@@ -1086,7 +1090,12 @@ window.brain3d = {
       loadVolumeIfNeeded().then(() => {
         if (!ebrainMode) return;
         for (const v of Object.keys(slicePlanes)) applyPlaneAppearance(v);
-      }).catch(err => console.error('[ebrain] volume load failed:', err));
+      }).catch(err => {
+        console.error('[ebrain] volume load failed:', err);
+        // Without the volume, clicking inside eBrain does nothing — say why
+        // instead of failing silently.
+        if (ebrainMode) setStatus('eBrain', 'click-to-identify unavailable: ' + err.message);
+      });
     } else {
       // Leaving ebrain mode — clear all pointer-driven state so nothing looks
       // stale (click marker, hover highlight, coord strip, last-click).
@@ -1321,7 +1330,19 @@ canvas.addEventListener('pointerup', (e) => {
   _mouseDownPos = null;
   if (dx*dx + dy*dy > 25) return;  // orbit drag, ignore
   if (!ebrainMode) return;
-  if (!VOLUME.ready) { console.log('[3D click] volume not yet loaded'); return; }
+  if (!VOLUME.ready) {
+    // Retry: the server may have finished generating the volume since the
+    // first attempt (it builds it in the background on a fresh install).
+    setStatus('eBrain', 'loading click volume…');
+    loadVolumeIfNeeded().then(() => {
+      if (!ebrainMode) return;   // user left eBrain while it was loading
+      for (const v of Object.keys(slicePlanes)) applyPlaneAppearance(v);
+      setStatus('eBrain', 'ready — click a slice plane to identify a region');
+    }).catch(err => {
+      if (ebrainMode) setStatus('eBrain', 'click-to-identify unavailable: ' + err.message);
+    });
+    return;
+  }
 
   const rect = canvas.getBoundingClientRect();
   _rayMouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
