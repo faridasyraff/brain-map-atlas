@@ -1,25 +1,30 @@
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { ViewsGrid } from '@/components/atlas/ViewsGrid';
+import { SidePanel } from '@/components/layout/SidePanel';
+import { TopBar } from '@/components/layout/TopBar';
+import { TooltipProvider } from '@/components/ui/icon-button';
+import { PLANES, type Plane } from '@/lib/planes';
 
-/** The React app. Stage 1 of the migration: tooling only. The atlas shell,
- *  panels and viewers move in over the next stages; until then this page
- *  points to the current app. */
+const initialSlices = (): Record<Plane, number> => ({
+  sagittal: PLANES.sagittal.initial,
+  coronal: PLANES.coronal.initial,
+  transverse: PLANES.transverse.initial,
+});
+
+/** The atlas app shell: top bar, the four views, and the side panel. */
 export function App() {
+  const [slices, setSlices] = useState(initialSlices);
+  const [panelOpen, setPanelOpen] = useState(true);
+
   return (
-    <main className="grid min-h-full place-items-center p-6">
-      <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
-        <h1 className="text-xl font-semibold">Brain Atlas Explorer</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The React version is being built here. The current atlas is still the one to use.
-        </p>
-        <div className="mt-5 flex gap-2">
-          <Button asChild variant="primary">
-            <a href="/app">Open the atlas</a>
-          </Button>
-          <Button asChild variant="ghost">
-            <a href="/">Home</a>
-          </Button>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-full flex-col">
+        <TopBar panelOpen={panelOpen} onTogglePanel={() => setPanelOpen((o) => !o)} />
+        <div className="flex min-h-0 flex-1">
+          <ViewsGrid slices={slices} onSliceChange={(plane, idx) => setSlices((s) => ({ ...s, [plane]: idx }))} />
+          {panelOpen && <SidePanel />}
         </div>
       </div>
-    </main>
+    </TooltipProvider>
   );
 }
