@@ -1,25 +1,51 @@
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
+import { SignInDialog } from '@/components/account/AccountMenu';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ViewsGrid } from '@/components/atlas/ViewsGrid';
+import { SidePanel } from '@/components/layout/SidePanel';
+import { TopBar } from '@/components/layout/TopBar';
+import { TooltipProvider } from '@/components/ui/icon-button';
+import { useRecordHistory } from '@/hooks/useLibrary';
+import { useUrlSync } from '@/hooks/useUrlSync';
+import { useUi } from '@/store/ui';
 
-/** The React app. Stage 1 of the migration: tooling only. The atlas shell,
- *  panels and viewers move in over the next stages; until then this page
- *  points to the current app. */
-export function App() {
+export function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: 1, refetchOnWindowFocus: false },
+    },
+  });
+}
+
+/** The atlas: top bar, the four views, and the side panel. */
+export function App({ queryClient }: { queryClient?: QueryClient }) {
+  const [client] = useState(() => queryClient ?? makeQueryClient());
   return (
-    <main className="grid min-h-full place-items-center p-6">
-      <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
-        <h1 className="text-xl font-semibold">Brain Atlas Explorer</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The React version is being built here. The current atlas is still the one to use.
-        </p>
-        <div className="mt-5 flex gap-2">
-          <Button asChild variant="primary">
-            <a href="/app">Open the atlas</a>
-          </Button>
-          <Button asChild variant="ghost">
-            <a href="/">Home</a>
-          </Button>
-        </div>
+    <QueryClientProvider client={client}>
+      <TooltipProvider delayDuration={300}>
+        <Atlas />
+        <SignInDialog />
+        <Toaster theme="dark" position="bottom-left" closeButton toastOptions={{ className: 'font-sans' }} />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+function Atlas() {
+  const panelOpen = useUi((s) => s.panelOpen);
+  useUrlSync();
+  useRecordHistory();
+  return (
+    <div className="flex h-full flex-col">
+      <TopBar />
+      <div className="flex min-h-0 flex-1">
+        <ErrorBoundary area="the atlas views" className="flex-1 p-5">
+          <ViewsGrid />
+        </ErrorBoundary>
+        {panelOpen && <SidePanel />}
       </div>
-    </main>
+    </div>
   );
 }
