@@ -3,8 +3,8 @@
 # final image — this is what keeps secrets, huge downloaded data files, and
 # stuff we don't need out of it.
 
-.git
-.venv
+# Hidden folders (git, virtualenv, editor and tool settings)
+.*
 
 # Secrets — these get added when the container actually starts running
 # (as environment variables), never included when building the image itself.

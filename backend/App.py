@@ -20,7 +20,7 @@ import uuid
 import time as _time
 from pathlib import Path
 from flask import g as _g
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, redirect, send_from_directory
 from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from common import (_DEBUG_ERRORS, _allowed_origins, log)
@@ -185,12 +185,15 @@ def home_page():
 def index():
     return _serve_built_page('index.html')
 
-# The React rewrite, served alongside the current atlas while it's migrated
-# stage by stage. At the end it replaces index.html at /app and this goes.
+# The React app was previewed at /next while it was being built. Links
+# shared from that preview (/next?region=150&sag=707&...) still work: they
+# land on the same view at /app. (302, not 301: browsers would cache a 301
+# forever, and this route may be retired or reused.)
 @app.route('/next')
 @limiter.exempt
-def react_app():
-    return _serve_built_page('next.html')
+def old_preview_link():
+    query = request.query_string.decode('utf-8', 'replace')
+    return redirect('/app' + (f'?{query}' if query else ''), code=302)
 
 # This only hands out files from inside frontend/dist/assets — nothing else
 # on the computer. See the static_folder=None note above for why we're

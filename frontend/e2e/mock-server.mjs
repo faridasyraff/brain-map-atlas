@@ -15,7 +15,7 @@ const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const PORT = Number(process.argv[2] ?? 4173);
 
 // Pages, as App.py routes them.
-const PAGES = { '/': 'home.html', '/next': 'next.html', '/app': 'index.html' };
+const PAGES = { '/': 'home.html', '/app': 'index.html' };
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 // Slice image size per view (cols × rows) and the voxel a slice pixel is.
@@ -201,6 +201,10 @@ createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   try {
     if (url.pathname === '/health') return send(res, 200, 'text/plain', 'ok');
+    if (url.pathname === '/next') {
+      res.writeHead(302, { Location: `/app${url.search}` }); // as App.py
+      return res.end();
+    }
     const mesh = /^\/meshes\/(\d+)\.glb$/.exec(url.pathname);
     if (mesh) return MESHES[mesh[1]] ? send(res, 200, 'model/gltf-binary', MESHES[mesh[1]]) : send(res, 404, 'text/plain', 'no mesh');
     if (url.pathname.startsWith('/api/')) {

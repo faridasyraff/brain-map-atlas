@@ -21,9 +21,9 @@ describe('landing page', () => {
     installFakeApi();
     renderLanding();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('The Allen mouse brain, region by region');
-    expect(screen.getByRole('link', { name: 'Open the atlas' })).toHaveAttribute('href', '/next');
+    expect(screen.getByRole('link', { name: 'Open the atlas' })).toHaveAttribute('href', '/app');
     const hip = screen.getByRole('link', { name: 'Try the hippocampus' }).getAttribute('href')!;
-    expect(hip.startsWith('/next?')).toBe(true);
+    expect(hip.startsWith('/app?')).toBe(true);
     // The atlas reads that link as the group.
     expect(parseLink(hip.slice(hip.indexOf('?'))).ref).toEqual({ kind: 'group', ref: 'Hippocampal formation' });
   });

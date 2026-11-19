@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/next');
+  await page.goto('/app');
   await expect(page.getByRole('img', { name: 'Coronal slice 660' })).toBeVisible();
 });
 

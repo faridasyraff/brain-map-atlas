@@ -105,7 +105,7 @@ describe('Search → selection', () => {
 
   it('restores a shared link, keeping its exact slices', async () => {
     installFakeApi();
-    resetApp('/next?region=150&sag=500&cor=600&tra=300');
+    resetApp('/app?region=150&sag=500&cor=600&tra=300');
     renderApp();
     expect(await within(inspector()).findByRole('heading', { name: 'Lateral dorsal nucleus of thalamus' })).toBeInTheDocument();
     expect(slider('Coronal slice')).toHaveAttribute('aria-valuenow', '600');

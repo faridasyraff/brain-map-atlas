@@ -9,7 +9,7 @@ import { useUi } from '@/store/ui';
 export const testQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
 
 /** Reset shared stores and the address bar between tests. */
-export function resetApp(url = '/next') {
+export function resetApp(url = '/app') {
   useAtlas.setState({ slices: initialSlices(), selection: null });
   useUi.setState({ panelOpen: true, tab: 'inspector', signInMode: null });
   window.history.replaceState(null, '', url);

@@ -4,13 +4,22 @@ An interactive explorer for the Allen Institute's CCFv3 mouse brain atlas: four 
 
 ![All four views showing the hippocampal formation selected, with the AI-generated inspector panel open](docs/screenshots/hero.png)
 
+The home page at `/` introduces the atlas and links straight into it (`/app`).
+
+![The home page: a live coronal section beside the introduction](docs/screenshots/landing.png)
+
 ## Features
 
 ### Four synced views
-- **2D slice views** (sagittal / coronal / transverse) — the annotated CCFv3 volume, colorized by region, with independent zoom/pan per view and click-to-identify on any pixel.
-- **3D mesh viewer** — loads the clicked structure's actual mesh, with live slice planes showing exactly where the three 2D views currently sit in 3D space.
-- **eBrain mode** — an alternate 3D rendering mode: the three slice planes get the real slice image textured onto them, plus an octant cutaway of the brain so you can see the planes intersecting the volume from any angle.
+- **2D slice views** (sagittal / coronal / transverse) — the annotated CCFv3 volume, colorized by region. Click any pixel to identify its region; the other two views move to that point. Each view zooms on its own (wheel toward the cursor, or pinch), pans by dragging, and has a Reset zoom button.
+- **3D mesh viewer** — loads the selected structure's actual mesh, with live slice planes showing exactly where the three 2D views currently sit in 3D space.
+- **eBrain mode** — an alternate 3D mode: the three slice planes are colored by region straight from the 3D label volume, with an octant cutaway that follows the camera so you can see them intersect from any angle. Hover a plane to see the region; click it to identify the region and move every view there.
 - Selecting a region from *any* view (a 2D click, a 3D click, search, or the hierarchy tree) syncs all the others to match.
+
+### On a phone
+Below 768 px the atlas shows one view at a time, with tabs to switch, a slider with − and + buttons, and a sheet at the bottom for the selected region (Save, Copy link, Ask, and the full details).
+
+<img src="docs/screenshots/phone.png" alt="The phone layout: coronal view tab, slice stepper, and the selected region's sheet" width="300">
 
 ### Search
 - Look up a region by name or acronym.
@@ -22,7 +31,7 @@ An interactive explorer for the Allen Institute's CCFv3 mouse brain atlas: four 
 - Structures with no voxels in the annotation volume are greyed out up front, so you're not guessing which parts of the tree are actually clickable.
 
 ### Region inspector
-- Name, acronym, and 3D coordinates for whatever's currently selected.
+- Name, acronym, and where it sits in the hierarchy for whatever's currently selected.
 - AI-generated functional summary, functional keywords, and related regions for the current selection (cached after the first request per region).
 
 ### AI chat
@@ -35,10 +44,10 @@ An interactive explorer for the Allen Institute's CCFv3 mouse brain atlas: four 
 ### Clear signaling when something isn't in this atlas
 Not every structure the Allen ontology names is actually delineated in the CCFv3 annotation volume (2D) or has its own mesh (3D). Rather than looking broken, the app is explicit about it:
 - The hierarchy tree greys out structures with no 2D voxels before you even click.
-- Selecting one shows a note directly on each 2D view (not just a status-bar message easy to miss).
-- In 3D, if a structure has no mesh of its own, the nearest ancestor with one is shown instead, explicitly labeled as a substitute (e.g. "showing parent shape 'ventricular systems' instead") — never silently.
+- Search marks them "Not shown in the 2D atlas", and choosing one explains why nothing moved.
+- In 3D, if a structure has no mesh of its own, the nearest ancestor with one is shown instead, explicitly labeled as a substitute (e.g. "not modeled separately in 3D, showing 'Field CA1'") — never silently.
 
-![All three 2D views showing the "no voxels here" note, and the 3D view separately showing a labeled parent-shape substitute](docs/screenshots/all-views-no-voxel-note.png)
+![The 3D view showing Field CA1's mesh for its pyramidal layer, labeled as a substitute](docs/screenshots/3d-parent-fallback.png)
 
 ### Shareable links
 The address bar always describes the current view: the selected region (or group) and all three slice positions. Opening a copied link restores exactly that view. The inspector's **Copy link** button copies it.
@@ -64,18 +73,34 @@ The first start downloads ~500MB of atlas data and mesh files, which can take a 
 
 The "Local" chat option needs [Ollama](https://ollama.com) running on your computer (`ollama serve`, then `ollama pull gemma3:4b`). The container finds it at `host.docker.internal:11434` automatically; set `OLLAMA_URL` in `backend/.env` only if it's somewhere else.
 
+### Frontend development
+
+```
+cd frontend
+npm ci
+npm run dev        # http://localhost:5173 (/ and /app as in production); /api and /meshes go to the app on :5000
+```
+
 ### Tests and linting
 
 ```
 pip install -r backend/requirements-dev.txt   # pytest + ruff
 ruff check .                                   # lint (rules in pyproject.toml)
 pytest                                         # all tests
+
+cd frontend
+npm run typecheck && npm test && npm run build # TypeScript, Vitest, production build
+npx playwright install chromium                # once
+npm run e2e                                    # end-to-end, against a mock backend
+E2E_BASE_URL=http://localhost:5000 npm run e2e:only   # the same tests against the real app
 ```
 
 - `backend/tests/test_db.py` contains database unit tests that need nothing running.
 - `backend/tests/test_api_smoke.py` contains HTTP tests against a running app (`ATLAS_URL`, default `http://localhost:5000`). Without an app they skip themselves; set `ATLAS_REQUIRE_SERVER=1` to make that a failure. The account test creates a throwaway account and deletes it again.
+- `frontend/src/app/**/*.test.tsx` are component tests (Vitest + Testing Library in jsdom, with a fake API and a stand-in for the WebGL viewer).
+- `frontend/e2e/` are Playwright tests in Chromium, on a desktop window and an emulated phone. The real atlas data is too big for CI, so there they run against `e2e/mock-server.mjs`, which serves the built pages with a tiny stand-in API; they are written to pass against the real app too.
 
-GitHub Actions (`.github/workflows/build.yml`) runs ruff, pytest, the frontend build and a Docker build on every push and pull request.
+GitHub Actions (`.github/workflows/build.yml`) runs ruff, pytest, the frontend checks, the end-to-end tests and a Docker build on every push and pull request.
 
 ## Deploying
 
@@ -108,18 +133,20 @@ backend/    Flask API (gunicorn runs App:app)
   voxelize_meshes.py     builds the 3D click volume (run automatically on first start)
   convert_meshes_to_glb.py
                          one-off .obj -> .glb conversion (not run by the app itself)
-frontend/   Vanilla JS + Three.js, built with Vite. Split by concern:
-  src/sliceViewer.js     the 2D views themselves
-  src/threeViewer.js     the 3D viewer + eBrain mode
-  src/searchPanel.js     region search
-  src/ontology.js        the hierarchy tree
-  src/lookup.js          resolving a click into a region (shared by 2D/3D)
-  src/inspectorPanel.js  the region-info side panel
-  src/chatPanel.js       AI chat + Semantic Region Cloud
-  src/auth.js            sign in / create account
-  src/library.js         saved regions, notes, recently viewed (Saved tab)
-  src/urlState.js        shareable links (URL <-> view state)
-  styles.css             design system: tokens, components, responsive layout
+frontend/   React 19 + TypeScript, Tailwind CSS, Three.js; built with Vite
+  index.html, home.html  the atlas (/app) and the home page (/)
+  src/app/
+    components/atlas/    the 2D views (ViewCell) and the 3D view (ThreeDCell)
+    components/layout/   top bar, side panel, the phone layout (PhoneAtlas)
+    components/…         search, inspector, hierarchy, saved regions, assistant,
+                         accounts, landing page, and ui/ (buttons, dialogs, tabs…)
+    lib/three/BrainViewer.ts   the 3D viewer + eBrain mode (plain TS, no React)
+    lib/navigate.ts      every way of opening a region (search, tree, clicks, links)
+    lib/api.ts           typed calls to the backend
+    store/               app state (Zustand): slices, selection, panels
+    hooks/               slices, highlights, zoom/pan, shareable links, accounts…
+    styles/globals.css   design tokens (colors, type, radii)
+  e2e/                   Playwright tests and the mock backend they run against
 Dockerfile, docker-compose.yml
             Single container: builds the frontend, serves it and the API
             from one Flask app behind gunicorn.
