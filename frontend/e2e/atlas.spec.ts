@@ -4,7 +4,7 @@ import { expect, realBackend, regionHeading, test } from './fixtures';
 const slider = (page: Page, name: string) => page.getByRole('slider', { name: `${name} slice` });
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/next');
+  await page.goto('/app');
   await expect(page.getByRole('img', { name: 'Coronal slice 660' })).toBeVisible();
 });
 

@@ -9,7 +9,13 @@ test('the landing page shows a real section and opens the atlas on the hippocamp
   await expect.poll(() => hero.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
 
   await page.getByRole('link', { name: 'Try the hippocampus' }).click();
-  await expect(page).toHaveURL(/\/next\?/);
+  await expect(page).toHaveURL(/\/app\?/);
+  await expect(regionHeading(page)).toHaveText(/Hippocampal formation/);
+});
+
+test('links from the old /next preview open the same view at /app', async ({ page }) => {
+  await page.goto('/next?group=Hippocampal%20formation');
+  await expect(page).toHaveURL(/\/app\?/);
   await expect(regionHeading(page)).toHaveText(/Hippocampal formation/);
 });
 

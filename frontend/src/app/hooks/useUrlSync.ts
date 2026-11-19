@@ -26,7 +26,7 @@ export function parseLink(search: string) {
 
 /**
  * Shareable links: the address bar always describes the view
- * (/next?region=150&sag=707&cor=660&tra=319, or ?group=Thalamus&…), and
+ * (/app?region=150&sag=707&cor=660&tra=319, or ?group=Thalamus&…), and
  * opening such a link restores it. Mount once.
  */
 export function useUrlSync() {

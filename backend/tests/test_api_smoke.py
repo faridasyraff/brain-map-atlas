@@ -61,10 +61,20 @@ class CoreViews(unittest.TestCase):
         self.assertEqual(call('/health'), (200, {'status': 'ok'}))
 
     def test_pages_served(self):
-        for path in ('/', '/app', '/next'):
+        for path in ('/', '/app', '/next'):   # /next redirects to /app
             status, raw = call(path)
             self.assertEqual(status, 200, path)
             self.assertIn(b'<html', raw[:500].lower())
+
+    def test_old_preview_links_redirect_to_app(self):
+        import http.client
+        from urllib.parse import urlsplit
+        conn = http.client.HTTPConnection(urlsplit(BASE).netloc, timeout=10)
+        conn.request('GET', '/next?region=150&sag=707&group=Hippocampal%20formation')
+        r = conn.getresponse()
+        self.assertEqual(r.status, 302)
+        self.assertTrue(r.getheader('Location').endswith('/app?region=150&sag=707&group=Hippocampal%20formation'))
+        conn.close()
 
     def test_slice_renders_png(self):
         status, d = call('/api/slice?view=coronal&idx=660&colorize=structure')

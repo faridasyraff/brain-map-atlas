@@ -1,12 +1,31 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+/** In `npm run dev`, the same page routes as backend/App.py. */
+const appRoutes: Plugin = {
+  name: 'app-routes',
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      const [path, query = ''] = (req.url ?? '').split('?');
+      const q = query ? `?${query}` : '';
+      if (path === '/') req.url = `/home.html${q}`;
+      else if (path === '/app') req.url = `/index.html${q}`;
+      else if (path === '/next') {
+        res.writeHead(302, { Location: `/app${q}` });
+        res.end();
+        return;
+      }
+      next();
+    });
+  },
+};
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [appRoutes, react(), tailwindcss()],
   resolve: {
     // `@/components/...` -> src/app/components/... (the React app)
     alias: { '@': here('./src/app') },
@@ -23,11 +42,8 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        main: here('./index.html'),   // current atlas   -> /app
-        home: here('./home.html'),    // landing page    -> /
-        // The React rewrite, built alongside the current app while it's
-        // migrated stage by stage -> /next. Replaces index.html at the end.
-        next: here('./next.html'),
+        main: here('./index.html'),   // the atlas      -> /app
+        home: here('./home.html'),    // landing page   -> /
       },
     },
   },

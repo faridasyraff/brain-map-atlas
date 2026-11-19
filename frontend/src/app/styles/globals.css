@@ -2,7 +2,7 @@
 @import "@fontsource-variable/instrument-sans";
 
 /* Design tokens — the same palette as the design mockups and the
-   original styles.css, exposed to Tailwind. `bg-surface`, `text-muted-foreground`,
+   original vanilla app's styles, exposed to Tailwind. `bg-surface`, `text-muted-foreground`,
    `border-border`, `bg-plane-coronal`, `rounded-md`, ... all come from here.
    Names follow shadcn/ui's conventions so its components work unchanged. */
 @theme {

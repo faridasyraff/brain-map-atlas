@@ -14,7 +14,9 @@ export interface PlaneConfig {
   initial: number;
 }
 
-// Ranges match the current app (index.html). The colors live in the theme
+// Ranges: the stretch of each axis with brain tissue in it, inside the
+// volume's full 1140 × 800 × 1320 (kept from the original app; slices
+// outside are empty). The colors live in the theme
 // (globals.css) as plane-sagittal / plane-coronal / plane-transverse / plane-3d.
 export const PLANES: Record<Plane, PlaneConfig> = {
   sagittal: { id: 'sagittal', label: 'Sagittal', axis: 'L–R', axisTitle: 'left to right', min: 51, max: 1087, initial: 570 },
