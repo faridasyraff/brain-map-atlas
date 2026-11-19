@@ -8,12 +8,17 @@ import {
   getRegion,
   groupByTerm,
   groupCenterByLevel,
+  lookupPoint,
   regionCenter,
+  resolveStructureIdx,
   resolveRegionName,
   searchRegions,
+  type Center,
   type OntologyNode,
+  type RegionDetails,
   type SearchResult,
 } from './api';
+import type { Plane } from './planes';
 import { isHexColor, type Selection } from './selection';
 import { useAtlas } from '@/store/atlas';
 
@@ -72,10 +77,9 @@ export async function openSearchResult(r: SearchResult): Promise<boolean> {
   }
 }
 
-/** A selection for one region by its index, without moving any view. */
-export async function selectionForRegion(pidx: number): Promise<Selection> {
-  const d = await getRegion(pidx);
-  if (d.error || !d.matched_label) throw new Error('That region was not found in the atlas.');
+/** A region selection from the details the backend returns for it. */
+function regionSelection(d: RegionDetails & { structure_id?: number }): Selection {
+  const pidx = d.parcellation_index;
   return {
     kind: 'region',
     ref: String(pidx),
@@ -83,8 +87,100 @@ export async function selectionForRegion(pidx: number): Promise<Selection> {
     acronym: d.matched_acronym,
     color: color(d.structure_color),
     pidx,
+    structureId: d.structure_id || undefined,
     highlight: { type: 'region', pidx },
   };
+}
+
+/** A selection for one region by its index, without moving any view. */
+export async function selectionForRegion(pidx: number): Promise<Selection> {
+  const d = await getRegion(pidx);
+  if (d.error || !d.matched_label) throw new Error('That region was not found in the atlas.');
+  return regionSelection({ ...d, parcellation_index: pidx });
+}
+
+const notARegion = (d: { parcellation_index?: number; error?: string; matched_label?: string }) =>
+  !d.parcellation_index || !!d.error || !d.matched_label || d.matched_label === '—';
+
+const outsideBrain = () =>
+  toast('No region there', { id: 'no-region', description: 'That point is outside the annotated brain.' });
+
+// Only the latest click counts: a slow answer to an earlier click is dropped.
+let clickSeq = 0;
+
+/** A click on a 2D slice: select the region under it and move the other two views to it. */
+export async function identifyAt(plane: Plane, idx: number, col: number, row: number): Promise<boolean> {
+  const seq = ++clickSeq;
+  try {
+    const d = await lookupPoint(plane, idx, col, row);
+    if (seq !== clickSeq) return false;
+    if (notARegion(d)) {
+      outsideBrain();
+      return false;
+    }
+    useAtlas.getState().select(regionSelection(d), d, plane);
+    return true;
+  } catch (err) {
+    if (seq === clickSeq) fail('that point', err);
+    return false;
+  }
+}
+
+/** A click on a 3D slice plane (eBrain mode). */
+export interface PlanePick {
+  view: Plane;
+  /** Hit point in mesh space (µm): x = A–P, y = S–I, z = L–R. */
+  local: { x: number; y: number; z: number };
+  /** Label of the mesh-derived volume at that point (0 = empty). */
+  voxel: number;
+}
+
+const ATLAS_UM = 10; // annotation voxel size
+// annotation_10 is (x = L–R, y = S–I, z = A–P) = (1140, 800, 1320) voxels.
+const ATLAS_MAX = { xi: 1139, yi: 799, zi: 1319 };
+
+/**
+ * Identify a 3D plane click and move all views there. Inside the 2D atlas the
+ * annotation is the ground truth (/api/lookup); meshes reach past it (e.g.
+ * cerebellum), so outside it the mesh volume's label is resolved instead and
+ * the views move to that region's center.
+ */
+export async function identifyPick({ view, local, voxel }: PlanePick): Promise<boolean> {
+  if (!voxel) return false;
+  const seq = ++clickSeq;
+  const xi = Math.round(local.z / ATLAS_UM); // L–R
+  const yi = Math.round(local.y / ATLAS_UM); // S–I
+  const zi = Math.round(local.x / ATLAS_UM); // A–P
+  const inside = xi >= 0 && xi <= ATLAS_MAX.xi && yi >= 0 && yi <= ATLAS_MAX.yi && zi >= 0 && zi <= ATLAS_MAX.zi;
+  try {
+    if (inside) {
+      // Inverse of the backend's world_coords() for each view.
+      const [idx, col, row] =
+        view === 'sagittal' ? [xi, zi, yi] : view === 'coronal' ? [zi, xi, yi] : [yi, zi, xi];
+      const d = await lookupPoint(view, idx, col, row);
+      if (seq !== clickSeq) return false;
+      if (notARegion(d)) {
+        outsideBrain();
+        return false;
+      }
+      useAtlas.getState().select(regionSelection(d), d);
+      return true;
+    }
+    const d = await resolveStructureIdx(voxel);
+    if (notARegion(d)) throw new Error('That region was not found in the atlas.');
+    const clamp = (v: number, hi: number) => Math.max(0, Math.min(hi, v));
+    const center: Center = await regionCenter(d.parcellation_index).catch(() => ({
+      xi: clamp(xi, ATLAS_MAX.xi),
+      yi: clamp(yi, ATLAS_MAX.yi),
+      zi: clamp(zi, ATLAS_MAX.zi),
+    }));
+    if (seq !== clickSeq) return false;
+    useAtlas.getState().select(regionSelection(d), center, view);
+    return true;
+  } catch (err) {
+    if (seq === clickSeq) fail('that point', err);
+    return false;
+  }
 }
 
 /** Open a saved/history/linked reference. `keepSlices` highlights it without moving the views. */

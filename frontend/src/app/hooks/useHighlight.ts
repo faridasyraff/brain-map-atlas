@@ -4,10 +4,10 @@ import type { Plane } from '@/lib/planes';
 import { highlightKey, type Highlight } from '@/lib/selection';
 
 /** The overlay marking the selection on one slice (null when nothing is selected). */
-export function useHighlight(plane: Plane, idx: number, highlight: Highlight | undefined) {
+export function useHighlight(plane: Plane, idx: number, highlight: Highlight | undefined, enabled = true) {
   return useQuery({
     queryKey: ['highlight', plane, idx, highlight ? highlightKey(highlight) : null],
-    enabled: !!highlight,
+    enabled: enabled && !!highlight,
     staleTime: Infinity, // a given slice + selection always looks the same
     queryFn: ({ signal }) => {
       const h = highlight!;

@@ -110,6 +110,22 @@ export function installFakeApi(opts: { signedIn?: boolean } = {}): FakeApi {
         });
       case 'GET /api/ontology':
         return json({ msg: ONTOLOGY });
+      case 'GET /api/available_meshes':
+        // LD (155) has no mesh of its own: the 3D view falls back to Thalamus.
+        return json({ structure_ids: [997, 549, 672] });
+      case 'POST /api/lookup': {
+        // Left part of any slice is LD; the rest is outside the brain.
+        const col = Number(body?.col);
+        const hitCol = col < 500;
+        const r = REGIONS[150]!;
+        return json({
+          view: body?.view, idx: body?.idx, col, row: body?.row, xi: 707, yi: 319, zi: 660,
+          parcellation_index: hitCol ? 150 : 0, structure_id: hitCol ? 155 : 0,
+          ...(hitCol
+            ? { matched_label: r.name, matched_acronym: r.acronym, structure_color: r.color, division: r.division }
+            : { error: 'No region for index 0' }),
+        });
+      }
 
       case 'GET /api/auth/me':
         return json({ user: state.user });
