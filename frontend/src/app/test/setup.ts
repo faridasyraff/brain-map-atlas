@@ -16,3 +16,8 @@ globalThis.ResizeObserver ??= class {
 Element.prototype.scrollIntoView = function () {
   return Promise.resolve() as unknown as void;
 };
+
+// jsdom has no WebGL: the 3D view gets a recording stand-in (see fakeViewer.ts).
+vi.mock('@/lib/three/BrainViewer', () => import('./fakeViewer'));
+// jsdom has no canvas contexts; say so quietly instead of logging "Not implemented".
+HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext;

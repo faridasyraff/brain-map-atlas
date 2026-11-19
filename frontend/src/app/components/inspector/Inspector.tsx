@@ -4,13 +4,13 @@ import { toast } from 'sonner';
 import { Bookmark, BookmarkCheck, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toLibraryItem, useLibrary } from '@/hooks/useLibrary';
-import { getEnrichment, getRegion, HIERARCHY_LEVELS, searchRegions } from '@/lib/api';
+import { useEnrichment } from '@/hooks/useEnrichment';
+import { useRegionActions } from '@/hooks/useRegionActions';
+import { getRegion, HIERARCHY_LEVELS, searchRegions } from '@/lib/api';
 import { openSearchResult } from '@/lib/navigate';
-import type { Selection } from '@/lib/selection';
+import { isBlank, type Selection } from '@/lib/selection';
 import { useAtlas } from '@/store/atlas';
-import { useUi } from '@/store/ui';
 
-const blank = (v: unknown) => !v || v === '—' || v === '--' || v === 'nan';
 
 /** Details of the selected region: identity, hierarchy, summary, keywords, related regions. */
 export function Inspector() {
@@ -33,14 +33,10 @@ function RegionDetails({ selection }: { selection: Selection }) {
     enabled: selection.pidx !== null,
     staleTime: Infinity,
   });
-  const enrich = useQuery({
-    queryKey: ['enrich', selection.pidx, selection.label, selection.acronym],
-    queryFn: ({ signal }) => getEnrichment({ pidx: selection.pidx, name: selection.label, acronym: selection.acronym }, signal),
-    staleTime: 10 * 60_000,
-  });
+  const enrich = useEnrichment(selection);
 
   const path = details.data
-    ? HIERARCHY_LEVELS.map((l) => details.data[l]).filter((v, i, arr): v is string => !blank(v) && arr.indexOf(v) === i)
+    ? HIERARCHY_LEVELS.map((l) => details.data[l]).filter((v, i, arr): v is string => !isBlank(v) && arr.indexOf(v) === i)
     : [];
   const color = selection.color ?? 'var(--color-border-strong)';
 
@@ -53,7 +49,7 @@ function RegionDetails({ selection }: { selection: Selection }) {
           <div className="min-w-0">
             <h2 className="text-[22px] font-semibold leading-tight tracking-tight">{selection.label}</h2>
             <p className="mt-2 flex flex-wrap items-center gap-2">
-              {!blank(selection.acronym) && (
+              {!isBlank(selection.acronym) && (
                 <abbr title="Acronym" className="rounded-sm border border-border-strong px-2 py-0.5 text-xs font-semibold no-underline">
                   {selection.acronym}
                 </abbr>
@@ -132,43 +128,21 @@ function RegionDetails({ selection }: { selection: Selection }) {
 
 /** Save (with a private note) and Copy link. */
 function Actions({ selection }: { selection: Selection }) {
-  const lib = useLibrary();
-  const openSignIn = useUi((s) => s.openSignIn);
-  const saved = lib.find(selection);
-
-  async function toggleSave() {
-    if (!lib.signedIn) {
-      openSignIn('signin');
-      return;
-    }
-    const item = toLibraryItem(selection);
-    if (saved) await lib.unsave.mutateAsync(item).then(() => toast.success(`Removed ${selection.label} from saved regions`));
-    else await lib.save.mutateAsync(item).then(() => toast.success(`Saved ${selection.label}`));
-  }
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied', { description: 'It reopens this region at these slices.' });
-    } catch {
-      toast.error('Could not copy automatically', { description: 'Copy the address bar instead.' });
-    }
-  }
-
+  const { saved, signedIn, pending, toggleSave, copyLink } = useRegionActions(selection);
   return (
     <>
       <div className="mt-4 flex gap-2">
         <Button
           size="sm"
           aria-pressed={!!saved}
-          title={lib.signedIn ? undefined : 'Sign in to save regions and keep notes'}
-          disabled={lib.save.isPending || lib.unsave.isPending}
-          onClick={() => void toggleSave().catch((e: Error) => toast.error('Could not update saved regions', { description: e.message }))}
+          title={signedIn ? undefined : 'Sign in to save regions and keep notes'}
+          disabled={pending}
+          onClick={toggleSave}
         >
           {saved ? <BookmarkCheck /> : <Bookmark />}
           {saved ? 'Saved' : 'Save'}
         </Button>
-        <Button size="sm" onClick={() => void copyLink()}>
+        <Button size="sm" onClick={copyLink}>
           <Link2 />
           Copy link
         </Button>

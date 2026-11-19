@@ -15,6 +15,8 @@ export interface Selection {
   color?: string;
   pidx: number | null;
   memberCount?: number;
+  /** Allen structure id, when known: the fallback for finding its 3D mesh. */
+  structureId?: number;
   highlight: Highlight;
 }
 
@@ -29,5 +31,8 @@ export function highlightKey(h: Highlight): string {
       return `l:${h.level}:${h.name}`;
   }
 }
+
+/** An empty name or acronym, including the atlas's placeholders. */
+export const isBlank = (v: unknown) => !v || v === '—' || v === '--' || v === 'nan';
 
 export const isHexColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v);

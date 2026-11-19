@@ -19,7 +19,7 @@ function useDebounced<T>(value: T, ms: number): T {
 }
 
 /** Region search: a combobox over /api/search (single regions and groups). */
-export function SearchBox() {
+export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen?: () => void } = {}) {
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -47,6 +47,7 @@ export function SearchBox() {
     if (!r) return;
     setOpen(false);
     setText('');
+    onChosen?.();
     await openSearchResult(r);
   }
 
@@ -82,7 +83,7 @@ export function SearchBox() {
           : `No regions match "${text.trim()}"`;
 
   return (
-    <div role="search" className="relative max-w-xl flex-1">
+    <div role="search" className={cn('relative flex-1', !inDialog && 'max-w-xl')}>
       <label htmlFor="region-search" className="sr-only">
         Find a region
       </label>
@@ -98,7 +99,8 @@ export function SearchBox() {
         autoComplete="off"
         spellCheck={false}
         placeholder="Find a region by name or acronym"
-        className="pl-9 pr-10"
+        className={cn('pl-9', inDialog ? 'h-11 pr-3' : 'pr-10')}
+        autoFocus={inDialog}
         value={text}
         onChange={(e) => {
           setText(e.target.value);
@@ -108,9 +110,11 @@ export function SearchBox() {
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
       />
+      {!inDialog && (
       <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border-strong px-1.5 text-xs text-muted-foreground">
         /
       </kbd>
+      )}
 
       {showList && (
         <div className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-md bg-raised shadow-menu">

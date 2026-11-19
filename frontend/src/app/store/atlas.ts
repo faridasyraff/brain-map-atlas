@@ -25,8 +25,8 @@ interface AtlasState {
   selection: Selection | null;
   setSlice: (plane: Plane, idx: number) => void;
   setSlices: (slices: Partial<Slices>) => void;
-  /** Select a region/group. With `center`, all views move to show it. */
-  select: (selection: Selection | null, center?: Center) => void;
+  /** Select a region/group. With `center`, the views move to show it (all but `keep`, if given). */
+  select: (selection: Selection | null, center?: Center, keep?: Plane) => void;
 }
 
 /** Shared atlas state: where each view is, and what's selected. */
@@ -42,6 +42,11 @@ export const useAtlas = create<AtlasState>()((set) => ({
       }
       return { slices: next };
     }),
-  select: (selection, center) =>
-    set((s) => ({ selection, slices: center ? slicesFromCenter(center) : s.slices })),
+  select: (selection, center, keep) =>
+    set((s) => {
+      if (!center) return { selection };
+      const slices = slicesFromCenter(center);
+      if (keep) slices[keep] = s.slices[keep];
+      return { selection, slices };
+    }),
 }));

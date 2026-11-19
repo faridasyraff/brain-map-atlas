@@ -22,12 +22,15 @@ async function request<T>(path: string, init: RequestInit & { json?: unknown } =
     },
     body: json !== undefined ? JSON.stringify(json) : rest.body,
   });
-  const body: unknown = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = (body as { error?: unknown }).error;
-    throw new ApiError(typeof msg === 'string' ? msg : `Request failed (HTTP ${res.status})`, res.status);
-  }
-  return body as T;
+  await ensureOk(res);
+  return (await res.json().catch(() => ({}))) as T;
+}
+
+/** Throw an ApiError for a non-2xx response, with the server's own message when it sent one. */
+async function ensureOk(res: Response) {
+  if (res.ok) return;
+  const body = (await res.json().catch(() => ({}))) as { error?: unknown };
+  throw new ApiError(typeof body.error === 'string' ? body.error : `Request failed (HTTP ${res.status})`, res.status);
 }
 
 const get = <T>(path: string, signal?: AbortSignal) => request<T>(path, { signal });
@@ -137,6 +140,51 @@ export interface Enrichment {
 
 export const getEnrichment = (p: { pidx?: number | null; name: string; acronym?: string }, signal?: AbortSignal) =>
   get<Enrichment>(`/api/enrich?${qs({ pidx: p.pidx, name: p.name, acronym: p.acronym })}`, signal);
+
+// --- Identifying a point ---------------------------------------------------------
+
+/** The region under one slice pixel (POST /api/lookup), plus that pixel's 3D voxel. */
+export type LookupResult = RegionDetails &
+  Center & {
+    /** 0 = outside the brain. */
+    parcellation_index: number;
+    /** Allen structure id (0 when unknown); a hint for the 3D mesh. */
+    structure_id?: number;
+  };
+
+export const lookupPoint = (view: Plane, idx: number, col: number, row: number, signal?: AbortSignal) =>
+  post<LookupResult>('/api/lookup', { view, idx, col, row }, signal);
+
+/** Region details for a 3D mesh-volume voxel value (eBrain clicks outside the 2D atlas). */
+export const resolveStructureIdx = (idx: number, signal?: AbortSignal) =>
+  get<RegionDetails & { structure_id?: number }>(`/api/resolve_structure_id?${qs({ idx })}`, signal);
+
+// --- 3D: meshes and the eBrain volume -------------------------------------------
+
+export const getAvailableMeshes = () =>
+  get<{ structure_ids: number[] }>('/api/available_meshes').then((r) => new Set(r.structure_ids));
+
+export interface MeshVolumeMeta {
+  /** [X, Y, Z] voxel counts (Z varies fastest in the binary). */
+  shape: [number, number, number];
+  stride: number;
+  original_shape: [number, number, number];
+  scene_origin_um?: [number, number, number] | null;
+  scene_size_um?: [number, number, number] | null;
+}
+
+export const getMeshVolumeMeta = () => get<MeshVolumeMeta>('/api/mesh_volume_meta');
+
+async function binary(path: string): Promise<ArrayBuffer> {
+  const res = await fetch(path);
+  await ensureOk(res);
+  return res.arrayBuffer();
+}
+
+/** The mesh-derived label volume: uint16 per voxel, C order. */
+export const getMeshVolume = () => binary('/api/mesh_volume');
+/** RGB triplets, one per label value. */
+export const getMeshLut = () => binary('/api/mesh_lut');
 
 // --- Ontology (the Allen hierarchy tree) ------------------------------------
 

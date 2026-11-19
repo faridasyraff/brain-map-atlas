@@ -1,42 +1,30 @@
-import { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import { SignInDialog } from '@/components/account/AccountMenu';
+import type { QueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ViewsGrid } from '@/components/atlas/ViewsGrid';
+import { PhoneAtlas } from '@/components/layout/PhoneAtlas';
+import { Providers } from '@/components/Providers';
 import { SidePanel } from '@/components/layout/SidePanel';
 import { TopBar } from '@/components/layout/TopBar';
-import { TooltipProvider } from '@/components/ui/icon-button';
 import { useRecordHistory } from '@/hooks/useLibrary';
+import { usePhoneLayout } from '@/hooks/useMediaQuery';
 import { useUrlSync } from '@/hooks/useUrlSync';
 import { useUi } from '@/store/ui';
 
-export function makeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: 1, refetchOnWindowFocus: false },
-    },
-  });
-}
-
-/** The atlas: top bar, the four views, and the side panel. */
+/** The atlas: top bar, the four views, and the side panel (one view at a time on a phone). */
 export function App({ queryClient }: { queryClient?: QueryClient }) {
-  const [client] = useState(() => queryClient ?? makeQueryClient());
   return (
-    <QueryClientProvider client={client}>
-      <TooltipProvider delayDuration={300}>
-        <Atlas />
-        <SignInDialog />
-        <Toaster theme="dark" position="bottom-left" closeButton toastOptions={{ className: 'font-sans' }} />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Providers queryClient={queryClient}>
+      <Atlas />
+    </Providers>
   );
 }
 
 function Atlas() {
   const panelOpen = useUi((s) => s.panelOpen);
+  const phone = usePhoneLayout();
   useUrlSync();
   useRecordHistory();
+  if (phone) return <PhoneAtlas />;
   return (
     <div className="flex h-full flex-col">
       <TopBar />

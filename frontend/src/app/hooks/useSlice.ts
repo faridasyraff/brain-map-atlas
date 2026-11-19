@@ -12,10 +12,11 @@ export type SliceState =
  * the older one, so a slow response can never replace a newer image. While
  * loading, the previous image stays on screen (no flash to black).
  */
-export function useSlice(view: Plane, idx: number): SliceState {
+export function useSlice(view: Plane, idx: number, enabled = true): SliceState {
   const [state, setState] = useState<SliceState>({ status: 'loading', data: null });
 
   useEffect(() => {
+    if (!enabled) return; // hidden view: catch up when shown again
     const ctrl = new AbortController();
     setState((s) => ({ status: 'loading', data: s.data }));
     fetchSlice(view, idx, ctrl.signal)
@@ -26,7 +27,7 @@ export function useSlice(view: Plane, idx: number): SliceState {
         setState((s) => ({ status: 'error', data: s.data, error }));
       });
     return () => ctrl.abort();
-  }, [view, idx]);
+  }, [view, idx, enabled]);
 
   return state;
 }
