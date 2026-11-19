@@ -12,13 +12,15 @@ docker compose up -d --no-build        # `up --build` needs an extra permission 
 # Frontend (in frontend/)
 npm run typecheck && npm test && npm run build
 npm run dev                            # Vite; proxies /api and /meshes to :5000
+npm run e2e                            # build + Playwright vs e2e/mock-server.mjs (as CI)
+E2E_BASE_URL=http://localhost:5000 npm run e2e:only   # same tests vs the real app
 
 # Backend checks (repo root)
 ruff check .                           # or `python -m ruff check .` if ruff isn't on PATH
 ATLAS_REQUIRE_SERVER=1 pytest          # HTTP smoke tests need the app running
 ```
 
-Run all of these before every commit. Also check the UI in a real browser against the real backend, not just in jsdom. If the Playwright MCP hangs, run playwright-core from `%LOCALAPPDATA%\npm-cache\_npx\e41f203b7505f1fb\node_modules` (Chromium 1234) in a Node script with a timeout.
+Run all of these before every commit. Also check the UI in a real browser against the real backend, not just in jsdom. The e2e suite against the real app covers that. For one-off checks, if the Playwright MCP hangs, use playwright-core from `%LOCALAPPDATA%\npm-cache\_npx\e41f203b7505f1fb\node_modules` in a Node script with a timeout. `@playwright/test` is pinned to 1.62.1 to match the Chromium 1234 already installed here.
 
 ## Architecture
 
@@ -54,5 +56,5 @@ Design reference: https://claude.ai/artifact/WBKdhmUP66mhSw1ETbUiVL
 1. ✅ Setup  2. ✅ App shell  3. ✅ Search, inspector, hierarchy, accounts, assistant, shareable links
 4. ✅ Viewers: click a slice to identify a region (POST /api/lookup) and move the other views to it; zoom/pan/pinch per 2D view with a Reset button; 3D viewer ported to TS (slice planes, region mesh with parent fallback, eBrain mode + plane click)
 5. ✅ Landing page + phone layout from the canvas
-6. Playwright e2e tests in CI
+6. ✅ Playwright e2e tests in CI (`frontend/e2e/`: desktop + Pixel 7 projects; tests must hold for both the mock and real data)
 7. `/app` serves the React app; delete the vanilla files; update the README and screenshots

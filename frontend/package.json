@@ -8,7 +8,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/vitest.mjs run",
-    "test:watch": "node scripts/vitest.mjs"
+    "test:watch": "node scripts/vitest.mjs",
+    "e2e": "npm run build && playwright test",
+    "e2e:only": "playwright test"
   },
   "dependencies": {
     "@fontsource-variable/instrument-sans": "^5.3.0",
@@ -29,6 +31,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@tailwindcss/vite": "^4.3.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
