@@ -32,4 +32,7 @@ export function highlightKey(h: Highlight): string {
   }
 }
 
+/** An empty name or acronym, including the atlas's placeholders. */
+export const isBlank = (v: unknown) => !v || v === '—' || v === '--' || v === 'nan';
+
 export const isHexColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v);

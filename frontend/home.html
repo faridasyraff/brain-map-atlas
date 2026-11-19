@@ -7,82 +7,9 @@
 <meta name="description" content="Explore the Allen CCFv3 mouse brain atlas in linked 2D sections and 3D, identify any region with a click, and ask an assistant what it does.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%2312161b%22/%3E%3Cellipse cx=%2216%22 cy=%2216%22 rx=%2211%22 ry=%228.5%22 fill=%22none%22 stroke=%22%234cc3e6%22 stroke-width=%222.5%22/%3E%3Cpath d=%22M16 8v16%22 stroke=%22%23b190ff%22 stroke-width=%222%22/%3E%3C/svg%3E">
 <title>Brain Atlas Explorer</title>
-<link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/home.css">
 </head>
-<body class="home-body">
-
-<header class="home-nav">
-  <a href="/" class="home-brand">Brain Atlas</a>
-
-  <!-- Same element IDs as the atlas sidebar's account bar — auth.js drives both. -->
-  <div id="account-bar" class="home-account">
-    <div class="account-logged-out" id="account-logged-out">
-      <button class="btn btn-ghost" id="account-signin-btn">Sign in</button>
-      <button class="btn btn-secondary" id="account-signup-btn">Create account</button>
-    </div>
-    <div class="account-logged-in" id="account-logged-in" hidden>
-      <span class="account-email" id="account-email">—</span>
-      <span class="badge" id="account-admin-badge" hidden>Admin</span>
-      <button class="btn btn-ghost" id="account-logout-btn">Sign out</button>
-    </div>
-  </div>
-</header>
-
-<main class="home-main">
-  <section class="home-hero">
-    <div class="home-copy">
-      <h1>The Allen mouse brain, region by region</h1>
-      <p class="home-lede">
-        Browse the Allen CCFv3 reference atlas in linked sagittal, coronal and
-        transverse sections alongside a 3D model. Click any point to identify
-        the region, search every structure by name or acronym, and ask the
-        assistant what a region does.
-      </p>
-      <a href="/app" class="btn btn-primary btn-lg">Open the atlas</a>
-
-      <dl class="plane-legend">
-        <div><dt><span class="plane-swatch" style="--c:var(--plane-sagittal)"></span>Sagittal</dt><dd>Side view, stepping left to right</dd></div>
-        <div><dt><span class="plane-swatch" style="--c:var(--plane-coronal)"></span>Coronal</dt><dd>Front view, stepping front to back</dd></div>
-        <div><dt><span class="plane-swatch" style="--c:var(--plane-transverse)"></span>Transverse</dt><dd>Top view, stepping top to bottom</dd></div>
-        <div><dt><span class="plane-swatch" style="--c:var(--plane-3d)"></span>3D</dt><dd>The selected region inside the whole brain</dd></div>
-      </dl>
-    </div>
-
-    <figure class="home-figure">
-      <div class="home-plate" id="home-plate">
-        <img id="home-slice" alt="Coronal section of the mouse brain, colored by Allen region" hidden>
-        <p class="home-plate-msg" id="home-plate-msg">Loading a section from the atlas…</p>
-      </div>
-      <figcaption>Coronal section 660 of 1,320 from the Allen CCFv3 annotation, colored by structure.</figcaption>
-    </figure>
-  </section>
-</main>
-
-<footer class="home-footer">
-  Atlas data: Allen Mouse Brain Common Coordinate Framework v3 (CCFv3), Allen Institute for Brain Science.
-</footer>
-
-<!-- Sign in / create account dialog, opened from the header buttons -->
-<div class="account-form home-dialog" id="account-form" hidden>
-  <div class="account-modal-backdrop" id="account-modal-backdrop"></div>
-  <div class="home-dialog-card" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title">
-    <h2 class="home-dialog-title" id="account-dialog-title">Your account</h2>
-    <label class="field-label" for="account-email-input">Email</label>
-    <input class="input" id="account-email-input" type="email" autocomplete="email">
-    <label class="field-label" for="account-password-input">Password</label>
-    <input class="input" id="account-password-input" type="password" autocomplete="current-password">
-    <div class="account-error" id="account-error" role="alert"></div>
-    <div class="home-dialog-actions">
-      <button class="btn btn-ghost" id="account-cancel-btn">Cancel</button>
-      <button class="btn btn-primary" id="account-submit-btn">Sign in</button>
-    </div>
-    <div class="account-toggle-mode" id="account-toggle-mode">
-      <span id="account-toggle-prompt">Need an account?</span> <a href="#" id="account-toggle-link">Create one</a>
-    </div>
-  </div>
-</div>
-
-<script type="module" src="/src/home.js"></script>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/app/landing.tsx"></script>
 </body>
 </html>
