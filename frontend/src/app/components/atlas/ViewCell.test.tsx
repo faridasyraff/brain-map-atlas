@@ -1,16 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@/components/ui/icon-button';
+import { renderWithProviders } from '@/test/render';
 import { stubSliceApi } from '@/test/fetch';
 import { ViewCell } from './ViewCell';
 
 function renderCell(props: Partial<React.ComponentProps<typeof ViewCell>> = {}) {
   const onIdxChange = vi.fn();
   const onToggleExpand = vi.fn();
-  render(
-    <TooltipProvider>
-      <ViewCell plane="coronal" idx={660} onIdxChange={onIdxChange} expanded={false} onToggleExpand={onToggleExpand} {...props} />
-    </TooltipProvider>,
+  renderWithProviders(
+    <ViewCell plane="coronal" idx={660} onIdxChange={onIdxChange} expanded={false} onToggleExpand={onToggleExpand} {...props} />,
   );
   return { onIdxChange, onToggleExpand };
 }

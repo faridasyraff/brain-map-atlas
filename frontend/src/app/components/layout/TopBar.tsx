@@ -1,15 +1,13 @@
-import { useEffect, useRef } from 'react';
-import { PanelRightClose, PanelRightOpen, Search } from 'lucide-react';
+import { useEffect } from 'react';
+import { PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { AccountMenu } from '@/components/account/AccountMenu';
+import { SearchBox } from '@/components/search/SearchBox';
 import { IconButton } from '@/components/ui/icon-button';
-import { Input } from '@/components/ui/input';
+import { useUi } from '@/store/ui';
 
-interface TopBarProps {
-  panelOpen: boolean;
-  onTogglePanel: () => void;
-}
-
-export function TopBar({ panelOpen, onTogglePanel }: TopBarProps) {
-  const searchRef = useRef<HTMLInputElement>(null);
+export function TopBar() {
+  const panelOpen = useUi((s) => s.panelOpen);
+  const togglePanel = useUi((s) => s.togglePanel);
 
   // "/" focuses search from anywhere, unless you're already typing somewhere.
   useEffect(() => {
@@ -18,7 +16,7 @@ export function TopBar({ panelOpen, onTogglePanel }: TopBarProps) {
       const typing = t?.closest('input, textarea, select, [contenteditable="true"]');
       if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
-        searchRef.current?.focus();
+        document.getElementById('region-search')?.focus();
       }
     }
     window.addEventListener('keydown', onKey);
@@ -34,28 +32,10 @@ export function TopBar({ panelOpen, onTogglePanel }: TopBarProps) {
         </svg>
         Brain Atlas
       </a>
-
-      <div role="search" className="relative max-w-xl flex-1">
-        <label htmlFor="region-search" className="sr-only">
-          Find a region
-        </label>
-        <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          ref={searchRef}
-          id="region-search"
-          type="search"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Find a region by name or acronym"
-          className="pl-9 pr-10"
-        />
-        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border-strong px-1.5 text-xs text-muted-foreground">
-          /
-        </kbd>
-      </div>
-
+      <SearchBox />
       <div className="ml-auto flex items-center gap-1">
-        <IconButton label={panelOpen ? 'Hide side panel' : 'Show side panel'} aria-pressed={panelOpen} onClick={onTogglePanel}>
+        <AccountMenu />
+        <IconButton label={panelOpen ? 'Hide side panel' : 'Show side panel'} aria-pressed={panelOpen} onClick={togglePanel}>
           {panelOpen ? <PanelRightClose /> : <PanelRightOpen />}
         </IconButton>
       </div>

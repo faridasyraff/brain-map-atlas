@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { IconButton } from '@/components/ui/icon-button';
 import { Slider } from '@/components/ui/slider';
+import { useHighlight } from '@/hooks/useHighlight';
 import { useSlice } from '@/hooks/useSlice';
 import { PLANE_COLOR_CLASS, PLANES, type Plane } from '@/lib/planes';
+import type { Highlight } from '@/lib/selection';
 import { cn } from '@/lib/utils';
 
 interface ViewCellProps {
@@ -12,29 +14,46 @@ interface ViewCellProps {
   onIdxChange: (idx: number) => void;
   expanded: boolean;
   onToggleExpand: () => void;
+  /** The current selection's overlay, if any. */
+  highlight?: Highlight;
 }
 
-/** One 2D slice view: header (name, slice slider, actions), the slice image, and a coordinate strip. */
-export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand }: ViewCellProps) {
+/** Where an `object-fit: contain` image actually draws inside its box. */
+function containedRect(box: DOMRect, natW: number, natH: number) {
+  const scale = Math.min(box.width / natW, box.height / natH);
+  const w = natW * scale;
+  const h = natH * scale;
+  return { left: box.left + (box.width - w) / 2, top: box.top + (box.height - h) / 2, w, h };
+}
+
+/** One 2D slice view: header (name, slice slider, actions), the slice with the
+ *  selection overlaid, and a coordinate strip. */
+export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, highlight }: ViewCellProps) {
   const cfg = PLANES[plane];
   const color = PLANE_COLOR_CLASS[plane];
   const slice = useSlice(plane, idx);
+  const mask = useHighlight(plane, idx, highlight);
 
   // While dragging, the number follows the thumb; the image only reloads on
-  // release (onValueCommit), like the current app — no request per pixel.
+  // release (onValueCommit) — no request per pixel of drag.
   const [draft, setDraft] = useState(idx);
-  useEffect(() => setDraft(idx), [idx]);
+  useEffect(() => {
+    setDraft(idx);
+  }, [idx]);
 
   const [hover, setHover] = useState<{ col: number; row: number } | null>(null);
   const data = slice.data;
 
   function trackPointer(e: React.PointerEvent<HTMLImageElement>) {
     if (!data) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const col = Math.floor(((e.clientX - r.left) / r.width) * data.cols);
-    const row = Math.floor(((e.clientY - r.top) / r.height) * data.rows);
+    const r = containedRect(e.currentTarget.getBoundingClientRect(), data.cols, data.rows);
+    const col = Math.floor(((e.clientX - r.left) / r.w) * data.cols);
+    const row = Math.floor(((e.clientY - r.top) / r.h) * data.rows);
     setHover(col >= 0 && row >= 0 && col < data.cols && row < data.rows ? { col, row } : null);
   }
+
+  // Slice and overlay share one box and `object-contain`, so they always line up.
+  const layer = 'absolute inset-3 block h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain select-none';
 
   return (
     <section aria-label={`${cfg.label} view`} className="flex min-h-0 min-w-0 flex-col bg-canvas">
@@ -65,10 +84,7 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand }: 
         </span>
       </header>
 
-      {/* flex (not grid): a flex item's height is definite, so the image's
-          max-h-full can resolve against it and the slice never overflows
-          onto the coordinate strip below. */}
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-3">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         {data && (
           <img
             src={data.image}
@@ -76,14 +92,14 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand }: 
             draggable={false}
             onPointerMove={trackPointer}
             onPointerLeave={() => setHover(null)}
-            className={cn(
-              'block max-h-full max-w-full select-none object-contain transition-opacity',
-              slice.status === 'loading' && 'opacity-40',
-            )}
+            className={cn(layer, 'transition-opacity', slice.status === 'loading' && 'opacity-40')}
           />
         )}
+        {data && highlight && mask.data && slice.status === 'ready' && (
+          <img src={mask.data.mask} alt="" aria-hidden draggable={false} className={cn(layer, 'pointer-events-none')} />
+        )}
         {slice.status === 'loading' && !data && (
-          <p role="status" className="text-xs text-muted-foreground">
+          <p role="status" className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
             Loading slice…
           </p>
         )}
