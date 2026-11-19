@@ -15,6 +15,8 @@ export interface Selection {
   color?: string;
   pidx: number | null;
   memberCount?: number;
+  /** Allen structure id, when known: the fallback for finding its 3D mesh. */
+  structureId?: number;
   highlight: Highlight;
 }
 

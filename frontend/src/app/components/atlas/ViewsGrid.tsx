@@ -22,9 +22,12 @@ export function ViewsGrid() {
         expanded ? 'grid-cols-1 grid-rows-1' : 'grid-cols-2 grid-rows-2',
       )}
     >
-      {PLANE_ORDER.filter(shown).map((plane) => (
+      {/* Every view stays mounted (hidden when another is expanded), so the 3D
+          scene and each view's zoom survive expanding and collapsing. */}
+      {PLANE_ORDER.map((plane) => (
         <ViewCell
           key={plane}
+          hidden={!shown(plane)}
           plane={plane}
           idx={slices[plane]}
           onIdxChange={(idx) => setSlice(plane, idx)}
@@ -33,7 +36,7 @@ export function ViewsGrid() {
           highlight={highlight}
         />
       ))}
-      {shown('three-d') && <ThreeDCell expanded={expanded === 'three-d'} onToggleExpand={() => toggle('three-d')} />}
+      <ThreeDCell hidden={!shown('three-d')} expanded={expanded === 'three-d'} onToggleExpand={() => toggle('three-d')} />
     </main>
   );
 }
