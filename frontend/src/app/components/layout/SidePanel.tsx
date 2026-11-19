@@ -1,41 +1,43 @@
+import { Assistant } from '@/components/assistant/Assistant';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { HierarchyTree } from '@/components/hierarchy/HierarchyTree';
+import { Inspector } from '@/components/inspector/Inspector';
+import { SavedPanel } from '@/components/library/SavedPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUi, type PanelTab } from '@/store/ui';
 
-/** The right-hand panel: Inspector / Hierarchy / Saved tabs over the
- *  assistant. Structure only for now — each tab's contents move over in
- *  stage 3 of the migration. */
+/** The right-hand panel: Inspector / Hierarchy / Saved tabs over the assistant. */
 export function SidePanel() {
+  const tab = useUi((s) => s.tab);
+  const setTab = useUi((s) => s.setTab);
   return (
     <aside aria-label="Region details" className="flex w-[380px] shrink-0 flex-col border-l border-border bg-surface">
-      <Tabs defaultValue="inspector" className="flex min-h-0 flex-[3_1_0] flex-col">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as PanelTab)} className="flex min-h-0 flex-[3_1_0] flex-col">
         <TabsList aria-label="Panel sections">
           <TabsTrigger value="inspector">Inspector</TabsTrigger>
           <TabsTrigger value="hierarchy">Hierarchy</TabsTrigger>
           <TabsTrigger value="saved">Saved</TabsTrigger>
         </TabsList>
-        <TabsContent value="inspector" className="p-5">
-          <EmptyState title="No region selected" body="Click any slice to identify a region, or search for one." />
+        <TabsContent value="inspector">
+          <ErrorBoundary area="the inspector">
+            <Inspector />
+          </ErrorBoundary>
         </TabsContent>
-        <TabsContent value="hierarchy" className="p-5">
-          <EmptyState title="Allen CCFv3 hierarchy" body="The browsable structure tree moves here next." />
+        {/* The tree manages its own scrolling (filter box stays put). */}
+        <TabsContent value="hierarchy" className="overflow-hidden">
+          <ErrorBoundary area="the hierarchy">
+            <HierarchyTree />
+          </ErrorBoundary>
         </TabsContent>
-        <TabsContent value="saved" className="p-5">
-          <EmptyState title="Saved regions" body="Sign in to save regions, add notes, and see what you viewed recently." />
+        <TabsContent value="saved">
+          <ErrorBoundary area="your saved regions">
+            <SavedPanel />
+          </ErrorBoundary>
         </TabsContent>
       </Tabs>
-
-      <section aria-label="Assistant" className="flex min-h-0 flex-[2_1_0] flex-col border-t border-border">
-        <h2 className="px-5 pb-2 pt-3 text-sm font-semibold">Assistant</h2>
-        <p className="px-5 text-sm text-muted-foreground">Ask about the selected region. Coming over with the inspector.</p>
-      </section>
+      <ErrorBoundary area="the assistant" className="border-t border-border p-5">
+        <Assistant />
+      </ErrorBoundary>
     </aside>
-  );
-}
-
-function EmptyState({ title, body }: { title: string; body: string }) {
-  return (
-    <div>
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <p className="mt-1 max-w-[48ch] text-sm text-muted-foreground">{body}</p>
-    </div>
   );
 }

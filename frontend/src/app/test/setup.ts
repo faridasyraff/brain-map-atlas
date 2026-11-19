@@ -9,3 +9,10 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 };
+
+// Behave like current Chrome, where scrollIntoView() returns a Promise.
+// (jsdom has no scrollIntoView at all.) An effect that accidentally returned
+// it crashed the whole app in real browsers while every test passed.
+Element.prototype.scrollIntoView = function () {
+  return Promise.resolve() as unknown as void;
+};
