@@ -5,7 +5,9 @@ import { useAtlas } from '@/store/atlas';
 import { ThreeDCell } from './ThreeDCell';
 import { ViewCell } from './ViewCell';
 
-/** The 2×2 grid of views. "Expand" shows one view alone; the same button brings the grid back. */
+/** The workbench: the 3D brain on the stage, the three slices in a strip
+ *  below it. "Expand" fills the stage with one view; the same button brings
+ *  the workbench back. */
 export function ViewsGrid() {
   const slices = useAtlas((s) => s.slices);
   const setSlice = useAtlas((s) => s.setSlice);
@@ -15,28 +17,28 @@ export function ViewsGrid() {
   const shown = (id: ViewId) => expanded === null || expanded === id;
 
   return (
-    <main
-      aria-label="Atlas views"
-      className={cn(
-        'grid min-h-0 min-w-0 flex-1 gap-px bg-border',
-        expanded ? 'grid-cols-1 grid-rows-1' : 'grid-cols-2 grid-rows-2',
-      )}
-    >
+    <main aria-label="Atlas views" className="flex min-h-0 min-w-0 flex-1 flex-col gap-px bg-border">
       {/* Every view stays mounted (hidden when another is expanded), so the 3D
           scene and each view's zoom survive expanding and collapsing. */}
-      {PLANE_ORDER.map((plane) => (
-        <ViewCell
-          key={plane}
-          hidden={!shown(plane)}
-          plane={plane}
-          idx={slices[plane]}
-          onIdxChange={(idx) => setSlice(plane, idx)}
-          expanded={expanded === plane}
-          onToggleExpand={() => toggle(plane)}
-          highlight={highlight}
-        />
-      ))}
       <ThreeDCell hidden={!shown('three-d')} expanded={expanded === 'three-d'} onToggleExpand={() => toggle('three-d')} />
+      <div
+        hidden={expanded === 'three-d'}
+        className={cn('grid min-h-0 gap-px', expanded ? 'flex-1 grid-cols-1' : 'h-[38%] shrink-0 grid-cols-3')}
+      >
+        {PLANE_ORDER.map((plane) => (
+          <ViewCell
+            key={plane}
+            hidden={!shown(plane)}
+            plane={plane}
+            idx={slices[plane]}
+            onIdxChange={(idx) => setSlice(plane, idx)}
+            expanded={expanded === plane}
+            onToggleExpand={() => toggle(plane)}
+            highlight={highlight}
+            compact={!expanded}
+          />
+        ))}
+      </div>
     </main>
   );
 }

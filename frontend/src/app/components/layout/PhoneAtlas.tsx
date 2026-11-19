@@ -27,7 +27,9 @@ const VIEWS: ViewId[] = [...PLANE_ORDER, 'three-d'];
 
 /** A panel that slides up from the bottom (a full-width dialog). */
 const SHEET =
-  'left-0 right-0 top-auto bottom-0 flex h-[85dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-b-none rounded-t-xl p-0';
+  'left-0 right-0 top-auto bottom-0 flex h-[85dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-b-none rounded-t-xl p-0 ' +
+  // Slides up from below the screen (drawer curve) and back down faster.
+  'data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out';
 
 /**
  * The phone layout: one view at a time (tabs), its slice stepper, and a sheet
@@ -93,7 +95,7 @@ function PhoneHeader() {
   const [searching, setSearching] = useState(false);
   return (
     <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border bg-surface pl-4 pr-2">
-      <BrandMark size={22} className="mr-auto text-base" />
+      <BrandMark className="mr-auto text-base" />
       <IconButton label="Find a region" className="size-11 [&_svg]:size-5" onClick={() => setSearching(true)}>
         <Search />
       </IconButton>

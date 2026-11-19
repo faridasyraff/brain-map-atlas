@@ -13,7 +13,8 @@ export function IconButton({ label, children, ...props }: ButtonProps & { label:
       <Tooltip.Portal>
         <Tooltip.Content
           sideOffset={6}
-          className="z-50 rounded-md bg-raised px-2 py-1 text-xs text-foreground shadow-menu"
+          // Grows out of its trigger on the first, delayed open; later ones (instant-open) just appear.
+          className="z-50 origin-(--radix-tooltip-content-transform-origin) rounded-md bg-raised px-2 py-1 text-xs text-foreground shadow-menu data-[state=delayed-open]:animate-tooltip-in"
         >
           {label}
         </Tooltip.Content>

@@ -11,7 +11,7 @@ export const testQueryClient = () => new QueryClient({ defaultOptions: { queries
 /** Reset shared stores and the address bar between tests. */
 export function resetApp(url = '/app') {
   useAtlas.setState({ slices: initialSlices(), selection: null });
-  useUi.setState({ panelOpen: true, tab: 'inspector', signInMode: null });
+  useUi.setState({ panelOpen: true, indexOpen: true, tab: 'inspector', signInMode: null });
   window.history.replaceState(null, '', url);
 }
 

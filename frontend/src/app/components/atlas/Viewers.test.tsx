@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { installFakeApi } from '@/test/fakeApi';
 import { liveViewer } from '@/test/fakeViewer';
@@ -76,20 +76,21 @@ describe('2D views: zoom', () => {
     renderApp();
     await sliceShown('Transverse', 400);
     const vp = viewport('transverse');
-    const zoomOut = screen.getByRole('status', { name: 'Transverse zoom' });
-    expect(zoomOut).toHaveTextContent('100%');
+    // In the strip, the zoom readout appears once the slice is zoomed.
+    expect(screen.queryByRole('status', { name: 'Transverse zoom' })).not.toBeInTheDocument();
 
     for (let i = 0; i < 5; i++) fireEvent.wheel(vp, { deltaY: -100, clientX: 200, clientY: 100 });
+    const zoomOut = screen.getByRole('status', { name: 'Transverse zoom' });
     expect(Number.parseInt(zoomOut.textContent ?? '', 10)).toBeGreaterThan(150);
     // Zoomed toward (200, 100): that point is still under the cursor.
     const [, x, y, z] = /translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)/.exec(vp.firstElementChild!.getAttribute('style')!)!.map(Number);
     expect((200 - x!) / z!).toBeCloseTo(200);
     expect((100 - y!) / z!).toBeCloseTo(100);
 
-    const reset = screen.getAllByRole('button', { name: 'Reset zoom' })[2]!;
+    const reset = within(screen.getByRole('region', { name: 'Transverse view' })).getByRole('button', { name: 'Reset zoom' });
     await userEvent.click(reset);
-    expect(zoomOut).toHaveTextContent('100%');
-    expect(reset).toBeDisabled();
+    expect(vp.firstElementChild).toHaveStyle({ transform: 'translate(0px, 0px) scale(1)' });
+    expect(screen.queryByRole('status', { name: 'Transverse zoom' })).not.toBeInTheDocument();
   });
 
   it('two-finger pinch zooms; lifting a finger is not a click', async () => {
@@ -127,6 +128,29 @@ describe('3D view', () => {
     await waitFor(() => expect(v.setCatalog.mock.lastCall?.[0].available).toEqual(new Set([997, 549, 672])));
   });
 
+  it('pins a label beside the region once the camera has arrived', async () => {
+    installFakeApi();
+    renderApp();
+    await waitFor(() => expect(liveViewer()).toBeDefined());
+    const v = liveViewer()!;
+    press(viewport('coronal'), 50, 50);
+    release(viewport('coronal'), 50, 50);
+    await waitFor(() => expect(v.showRegion).toHaveBeenLastCalledWith(expect.objectContaining({ acronym: 'LD' })));
+    act(() => v.events.onStatus({ acronym: 'LD', name: 'Lateral dorsal nucleus of thalamus' }));
+    const line = within(screen.getByRole('region', { name: '3D view' })).getByText('Lateral dorsal nucleus of thalamus', { selector: '[role=status] span' });
+    const statusLine = line.closest('[role=status]')!;
+
+    // Flying in: no label yet, the status line is visible.
+    act(() => v.events.onAnchor?.({ x: 100, y: 80, settled: false }));
+    expect(statusLine).not.toHaveClass('sr-only');
+    // Arrived: the label shows and the status line is left to screen readers.
+    act(() => v.events.onAnchor?.({ x: 100, y: 80, settled: true }));
+    expect(statusLine).toHaveClass('sr-only');
+    // Region gone: back to the plain status line.
+    act(() => v.events.onAnchor?.(null));
+    expect(statusLine).not.toHaveClass('sr-only');
+  });
+
   it('eBrain: a click on a plane identifies the region and moves all views', async () => {
     const api = installFakeApi();
     renderApp();
@@ -142,7 +166,7 @@ describe('3D view', () => {
     await waitFor(() => expect(useAtlas.getState().selection?.acronym).toBe('LD'));
     expect(api.calls('/api/lookup')[0]?.body).toEqual({ view: 'coronal', idx: 400, col: 250, row: 300 });
     expect(useAtlas.getState().slices).toEqual({ sagittal: 707, coronal: 660, transverse: 319 });
-    expect(screen.getByText(/coronal · 4000, 3000, 2500/)).toBeInTheDocument();
+    expect(screen.getByText(/coronal plane at 4000, 3000, 2500/)).toBeInTheDocument();
   });
 
   it('eBrain: a posterior click (A–P beyond the L–R width) still uses the annotation', async () => {

@@ -98,7 +98,7 @@ export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
         autoComplete="off"
         spellCheck={false}
-        placeholder="Find a region by name or acronym"
+        placeholder="Find a region"
         className={cn('pl-9', inDialog ? 'h-11 pr-3' : 'pr-10')}
         autoFocus={inDialog}
         value={text}
@@ -143,12 +143,11 @@ export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen
                 className={cn(
                   'flex min-h-9 cursor-pointer items-center gap-2 rounded-sm px-2 py-1',
                   i === active && 'bg-hover shadow-[inset_2px_0_0_var(--color-ring)]',
-                  r.no_voxels && 'opacity-55',
                 )}
               >
                 <span
                   aria-hidden
-                  className="size-2 shrink-0 rounded-[2px]"
+                  className={cn('size-2 shrink-0 rounded-[2px]', r.no_voxels && 'opacity-50')}
                   style={{ background: isHexColor(r.structure_color) ? r.structure_color : 'var(--color-border-strong)' }}
                 />
                 <span className="min-w-0 flex-1">

@@ -103,7 +103,7 @@ export function HierarchyTree() {
           id="tree-filter"
           type="search"
           autoComplete="off"
-          placeholder="Name or acronym; Enter opens the first match"
+          placeholder="Name or acronym"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           onKeyDown={(e) => {
@@ -123,10 +123,10 @@ export function HierarchyTree() {
               <button
                 type="button"
                 onClick={() => pick(n)}
-                className={cn('flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-hover', !n._available && 'opacity-55')}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-hover"
               >
-                <Dot color={n._color} />
-                <span className="min-w-0 flex-1 truncate text-sm">{n.name}</span>
+                <Dot color={n._color} dim={!n._available} />
+                <span className={cn('min-w-0 flex-1 truncate text-sm', !n._available && 'text-subtle-foreground')}>{n.name}</span>
                 <span className="text-xs text-subtle-foreground">{n.acronym}</span>
               </button>
             </li>
@@ -183,10 +183,15 @@ function TreeNode({ node, depth, expanded, activeId, activeRef, onToggle, onPick
           type="button"
           onClick={() => onPick(node)}
           title={node._available ? undefined : 'No voxels in the 2D atlas'}
-          className={cn('flex min-w-0 flex-1 items-center gap-2 text-left', !node._available && 'opacity-55')}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
-          <Dot color={node._color} />
-          <span className={cn('min-w-0 flex-1 truncate text-sm', active ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground')}>
+          <Dot color={node._color} dim={!node._available} />
+          <span
+            className={cn(
+              'min-w-0 flex-1 truncate text-sm',
+              active ? 'font-semibold text-foreground' : node._available ? 'text-muted-foreground hover:text-foreground' : 'text-subtle-foreground hover:text-muted-foreground',
+            )}
+          >
             {node.name}
           </span>
           <span className="shrink-0 text-xs text-subtle-foreground">{node.acronym}</span>
@@ -203,6 +208,7 @@ function TreeNode({ node, depth, expanded, activeId, activeRef, onToggle, onPick
   );
 }
 
-function Dot({ color }: { color: string }) {
-  return <span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: isHexColor(color) ? color : 'var(--color-border-strong)' }} />;
+/** The region's Allen colour; dimmed for regions with no voxels in the 2D atlas. */
+function Dot({ color, dim }: { color: string; dim?: boolean }) {
+  return <span aria-hidden className={cn('size-2 shrink-0 rounded-[2px]', dim && 'opacity-50')} style={{ background: isHexColor(color) ? color : 'var(--color-border-strong)' }} />;
 }

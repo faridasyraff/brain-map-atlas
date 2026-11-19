@@ -125,7 +125,7 @@ function BotMessage({ reply, question }: { reply: ChatReply; question: string })
       {/* Rendered as text (React escapes it), never as HTML. */}
       <span className="whitespace-pre-line">{reply.answer}</span>
       {reply.cortexmap_notice && (
-        <p className="mt-2 rounded-r-sm border-l-2 border-warning bg-raised px-3 py-2 text-xs text-muted-foreground">{reply.cortexmap_notice}</p>
+        <p className="mt-2 rounded-md border border-warning/40 bg-raised px-3 py-2 text-xs text-muted-foreground">{reply.cortexmap_notice}</p>
       )}
       {sources.length > 0 && (
         <p className="mt-2 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
@@ -178,11 +178,11 @@ function RegionMap({ answer }: { answer: string }) {
             onClick={() => result && void openSearchResult(result)}
             title={result === null ? 'Not found in the atlas' : undefined}
             className={cn(
-              'inline-flex h-7 items-center gap-1.5 rounded-full border border-border-strong px-3 text-xs',
-              result ? 'hover:bg-hover' : 'opacity-55',
+              'inline-flex h-7 items-center gap-2 rounded-md border border-border-strong px-3 text-xs',
+              result ? 'pressable hover:bg-hover' : 'border-dashed text-subtle-foreground',
             )}
           >
-            <span aria-hidden className="size-1.5 rounded-full" style={{ background: isHexColor(result?.structure_color) ? result.structure_color : 'var(--color-subtle-foreground)' }} />
+            <span aria-hidden className="size-2 rounded-[2px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14)]" style={{ background: isHexColor(result?.structure_color) ? result.structure_color : 'var(--color-subtle-foreground)' }} />
             {result ? (result.group_name ?? result.matched_label) : name}
           </button>
         ))}

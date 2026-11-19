@@ -42,10 +42,9 @@ function RegionDetails({ selection }: { selection: Selection }) {
 
   return (
     <article aria-label={`${selection.label} details`}>
-      <div aria-hidden className="h-1 transition-colors" style={{ background: color }} />
       <div className="p-5">
-        <div className="flex items-start gap-3.5">
-          <span aria-hidden className="mt-0.5 size-9 shrink-0 rounded-lg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14)]" style={{ background: color }} />
+        <div className="flex items-start gap-4">
+          <span aria-hidden className="mt-0.5 size-9 shrink-0 rounded-md shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14)]" style={{ background: color }} />
           <div className="min-w-0">
             <h2 className="text-[22px] font-semibold leading-tight tracking-tight">{selection.label}</h2>
             <p className="mt-2 flex flex-wrap items-center gap-2">
@@ -88,11 +87,11 @@ function RegionDetails({ selection }: { selection: Selection }) {
 
         <Section title="Keywords">
           {enrich.data?.functional_keywords.length ? (
-            <ul className="flex flex-wrap gap-1.5">
+            <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
               {[...enrich.data.functional_keywords]
                 .sort((a, b) => b.weight - a.weight)
                 .map((k) => (
-                  <li key={k.term} className="rounded-sm bg-raised px-2.5 py-1 text-xs">
+                  <li key={k.term}>
                     {k.term}
                   </li>
                 ))}
@@ -111,7 +110,7 @@ function RegionDetails({ selection }: { selection: Selection }) {
                   type="button"
                   title={`${r.relationship}: ${r.label}`}
                   onClick={() => openRelated(r.query || r.label)}
-                  className="h-7 rounded-full border border-border-strong px-3 text-xs transition-colors hover:bg-hover"
+                  className="min-h-7 rounded-md border border-border-strong px-3 py-1 text-left text-xs pressable hover:bg-hover"
                 >
                   {r.label}
                 </button>
@@ -180,7 +179,7 @@ function NoteEditor({ selection, initial }: { selection: Selection; initial: str
         maxLength={5000}
         value={text}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Anything you want to remember about this region"
+        placeholder="Your note"
         className="w-full resize-y rounded-md border border-border-strong bg-background px-3 py-2 text-sm placeholder:text-subtle-foreground focus-visible:border-ring focus-visible:outline-none"
       />
       <p aria-live="polite" className="mt-1 min-h-4 text-xs text-subtle-foreground">

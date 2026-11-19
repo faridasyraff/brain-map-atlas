@@ -24,15 +24,17 @@ interface ViewCellProps {
   hidden?: boolean;
   /** Phone layout: just the slice (the slider lives below it, outside this view). */
   phone?: boolean;
+  /** In the strip under the 3D stage: a tighter header. */
+  compact?: boolean;
 }
 
 /** The zoom readout and its Reset button. */
-function ZoomControls({ label, transform, onReset, large }: { label: string; transform: ViewTransform; onReset: () => void; large?: boolean }) {
+function ZoomControls({ label, transform, onReset, large, compact }: { label: string; transform: ViewTransform; onReset: () => void; large?: boolean; compact?: boolean }) {
   const { zoom } = transform;
   return (
     <>
       <output
-        className={cn('min-w-11 text-right text-xs text-subtle-foreground', (zoom <= ZOOM_MIN || zoom >= ZOOM_MAX) && 'text-foreground')}
+        className={cn('min-w-11 text-right font-condensed text-xs text-subtle-foreground', compact && 'min-w-8', (zoom <= ZOOM_MIN || zoom >= ZOOM_MAX) && 'text-foreground')}
         aria-label={`${label} zoom`}
       >
         {Math.round(zoom * 100)}%
@@ -55,7 +57,7 @@ function containedRect(box: DOMRect, natW: number, natH: number) {
 /** One 2D slice view: header (name, slice slider, zoom, actions), the slice
  *  with the selection overlaid, and a coordinate strip. Click the slice to
  *  identify a region; wheel/pinch to zoom, drag to pan. */
-export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, highlight, hidden, phone }: ViewCellProps) {
+export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, highlight, hidden, phone, compact }: ViewCellProps) {
   const cfg = PLANES[plane];
   const color = PLANE_COLOR_CLASS[plane];
   // A hidden view (another one is expanded) loads nothing until shown again.
@@ -67,6 +69,7 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, hi
   const [hover, setHover] = useState<{ col: number; row: number } | null>(null);
   const data = slice.data;
   const imgRef = useRef<HTMLImageElement>(null);
+  const expandRef = useRef<HTMLButtonElement>(null);
 
   /** The slice pixel under a client point (null outside the image). The
    *  image's box includes the zoom transform, so this works at any zoom. */
@@ -93,7 +96,7 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, hi
   return (
     <section aria-label={`${cfg.label} view`} hidden={hidden} className="flex min-h-0 min-w-0 flex-1 flex-col bg-canvas">
       {!phone && (
-      <header className="flex h-11 shrink-0 items-center gap-3 border-b border-border bg-surface pl-3.5 pr-2">
+      <header className={cn('flex h-11 shrink-0 items-center border-b border-border bg-surface pr-1.5', compact ? 'gap-2 pl-3' : 'gap-3 pl-3.5')}>
         <span className="flex items-center gap-2 text-sm font-semibold">
           <span aria-hidden className={cn('size-2 rounded-[2px]', color.bg)} />
           {cfg.label}
@@ -107,15 +110,27 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, hi
           onValueChange={([v]) => v !== undefined && setDraft(v)}
           onValueCommit={([v]) => v !== undefined && onIdxChange?.(v)}
         />
-        <output className="min-w-10 text-[13px] font-medium" aria-live="off">
+        <output className="min-w-8 font-condensed text-[13px] font-medium" aria-live="off">
           {draft}
         </output>
-        <span className="text-xs text-subtle-foreground max-xl:hidden" title={`Slider moves ${cfg.axisTitle}`}>
+        <span className={cn('text-xs text-subtle-foreground max-xl:hidden', compact && 'hidden')} title={`Slider moves ${cfg.axisTitle}`}>
           {cfg.axis}
         </span>
         <span className="ml-auto flex items-center gap-0.5">
-          <ZoomControls label={cfg.label} transform={view.transform} onReset={view.reset} />
-          <IconButton label={expanded ? 'Show all views' : `Expand ${cfg.label.toLowerCase()} view`} onClick={onToggleExpand}>
+          {/* In the strip, zoom controls appear once the slice is zoomed, leaving the slider room. */}
+          {(!compact || !isIdentity(view.transform)) && (
+            <ZoomControls
+              label={cfg.label}
+              transform={view.transform}
+              compact={compact}
+              onReset={() => {
+                view.reset();
+                // In the strip the controls disappear at 100%: keep keyboard focus nearby.
+                if (compact) expandRef.current?.focus();
+              }}
+            />
+          )}
+          <IconButton ref={expandRef} label={expanded ? 'Show all views' : `Expand ${cfg.label.toLowerCase()} view`} onClick={onToggleExpand}>
             {expanded ? <Minimize2 /> : <Maximize2 />}
           </IconButton>
         </span>

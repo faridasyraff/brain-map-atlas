@@ -1,5 +1,6 @@
-// The 3D view: the whole-brain shell, the selected region's mesh, and one
-// plane per 2D view that follows its slider. eBrain mode paints the planes
+// The 3D view: the whole-brain shell (drawn as glass), the selected region's
+// mesh, and one plane per 2D view that follows its slider. Picking a region
+// flies the camera to it and reports a screen anchor for the page's label. eBrain mode paints the planes
 // from a label volume (so they can be clicked to identify a region) and
 // cuts away the octant of the shell facing the camera.
 //
@@ -15,8 +16,33 @@ import type { PlanePick } from '../navigate';
 import { PLANE_ORDER, PLANES, type Plane } from '../planes';
 
 const MESH_BASE = '/meshes/';
-const SHELL_OPACITY = 0.28;
-const REGION_OPACITY = 0.85;
+const REGION_OPACITY = 0.9;
+const FLY_MS = 450; // happens on every pick, so it stays short
+
+/** Glass: nearly clear where the surface faces you, brighter toward the
+ *  silhouette, so the outline reads without hiding the region inside. */
+const GLASS_VERT = /* glsl */ `
+varying vec3 vNormal;
+varying vec3 vView;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vNormal = normalize(normalMatrix * normal);
+  vView = normalize(-mv.xyz);
+  gl_Position = projectionMatrix * mv;
+}`;
+const GLASS_FRAG = /* glsl */ `
+uniform vec3 uColor;
+uniform float uFace;
+uniform float uEdge;
+varying vec3 vNormal;
+varying vec3 vView;
+void main() {
+  float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vView)));
+  gl_FragColor = vec4(uColor, mix(uFace, uEdge, pow(rim, 2.4)));
+  #include <colorspace_fragment>
+}`;
+
+const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const CLICK_SLOP_SQ = 25; // px²: more movement than this is an orbit, not a click
 
 type Vec3 = { x: number; y: number; z: number };
@@ -29,6 +55,10 @@ export interface BrainViewerEvents {
   /** Mesh-space point under the pointer on a plane (eBrain only), or null. */
   onHover: (p: Vec3 | null) => void;
   onPick: (pick: PlanePick) => void;
+  /** Where the selected region sits on the canvas (CSS px), for a pinned
+   *  label; null when there is none or it is behind the camera. `settled` is
+   *  false while the camera flies to a newly picked region. */
+  onAnchor?: (a: { x: number; y: number; settled: boolean } | null) => void;
 }
 export interface MeshCatalogMaps {
   available: Set<number> | null;
@@ -39,9 +69,9 @@ export interface MeshCatalogMaps {
 // Each plane is perpendicular to one axis of the mesh frame (x = A–P,
 // y = S–I, z = L–R; µm); the slider range maps linearly onto the shell's box.
 const SLICE_AXIS: Record<Plane, { axis: 'x' | 'y' | 'z'; color: number }> = {
-  sagittal: { axis: 'z', color: 0x00d4ff },
-  coronal: { axis: 'x', color: 0xb47aff },
-  transverse: { axis: 'y', color: 0x00e676 },
+  sagittal: { axis: 'z', color: 0x6aa6c4 },
+  coronal: { axis: 'x', color: 0x9c8cc4 },
+  transverse: { axis: 'y', color: 0x74ae8e },
 };
 
 interface PlaneObj {
@@ -172,11 +202,25 @@ export class BrainViewer {
     sagittal: new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
   };
   private clipSigns = { x: 1, y: 1, z: 1 };
-  private shell: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhysicalMaterial> | null = null;
+  private shell: THREE.Mesh<THREE.BufferGeometry, THREE.Material> | null = null;
+  private readonly shellGlass = new THREE.ShaderMaterial({
+    vertexShader: GLASS_VERT,
+    fragmentShader: GLASS_FRAG,
+    uniforms: { uColor: { value: new THREE.Color('#c9d1d2') }, uFace: { value: 0.03 }, uEdge: { value: 0.5 } },
+    transparent: true,
+    depthWrite: false,
+    // The y-flip turns the shell inside out: BackSide is its outer surface.
+    side: THREE.BackSide,
+  });
+  /** eBrain: an opaque shell with the camera's octant cut away. */
+  private readonly shellSolid = new THREE.MeshPhysicalMaterial({ color: 0x8f9899, roughness: 0.7, metalness: 0, side: THREE.DoubleSide });
   private region: THREE.Mesh | null = null;
+  /** A point on the region's surface (mesh frame) that the label points at. */
+  private anchor: THREE.Vector3 | null = null;
+  private lastAnchor = '';
   private bounds: Bounds | null = null;
   private home: { position: THREE.Vector3; target: THREE.Vector3 } | null = null;
-  private tween: { fromPos: THREE.Vector3; fromTarget: THREE.Vector3; toPos: THREE.Vector3; toTarget: THREE.Vector3; t0: number } | null = null;
+  private tween: { fromPos: THREE.Vector3; fromTarget: THREE.Vector3; toPos: THREE.Vector3; toTarget: THREE.Vector3; t0: number; ms: number } | null = null;
   private slices: Record<Plane, number> = { sagittal: PLANES.sagittal.initial, coronal: PLANES.coronal.initial, transverse: PLANES.transverse.initial };
   private ebrain = false;
   private volume: VolumeData | null = null;
@@ -203,7 +247,7 @@ export class BrainViewer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.localClippingEnabled = true;
-    this.scene.background = new THREE.Color(0x0e1012);
+    this.scene.background = new THREE.Color(0x101415);
     this.camera.position.set(14000, 8000, 18000);
 
     this.controls = new OrbitControls(this.camera, canvas);
@@ -215,11 +259,12 @@ export class BrainViewer {
     this.controls.addEventListener('start', stopTween);
     this.cleanup.push(() => this.controls.removeEventListener('start', stopTween));
 
-    this.scene.add(new THREE.AmbientLight(0x3a3428, 0.35));
+    // Near-neutral light, so the Allen colours read true.
+    this.scene.add(new THREE.AmbientLight(0x30363a, 0.6));
     const lights: [number, number, [number, number, number]][] = [
-      [0xfff0d4, 1.1, [1, 1.3, 1]],
-      [0x6a88b0, 0.45, [-1, 0.3, -0.8]],
-      [0xc89f65, 0.5, [0, -1, 0.5]],
+      [0xf2efe8, 1.15, [1, 1.3, 1]],
+      [0x8fa3b0, 0.45, [-1, 0.3, -0.8]],
+      [0x9a9286, 0.35, [0, -1, 0.5]],
     ];
     for (const [color, intensity, pos] of lights) {
       const l = new THREE.DirectionalLight(color, intensity);
@@ -271,15 +316,18 @@ export class BrainViewer {
     this.clearRegion();
     if (!target) {
       this.regionStatus('—', 'Select a region to see it in 3D');
+      this.recenter();
       return;
     }
     if (target.structureId === ROOT_STRUCTURE_ID) {
-      this.regionStatus(target.acronym, `${target.name} · the whole brain, shown as the outline`);
+      this.regionStatus(target.acronym, `${target.name}: the whole brain, shown as the outline`);
+      this.recenter();
       return;
     }
     const res = resolveMeshId(target.structureId, this.catalog.available, this.catalog.parentOf);
     if (res.kind === 'none') {
-      this.regionStatus(target.acronym, `${target.name} · no 3D model for this structure or any parent`);
+      this.regionStatus(target.acronym, `${target.name}: no 3D model for this structure or any parent`);
+      this.recenter();
       return;
     }
     this.status(target.acronym, `Loading ${target.name}…`);
@@ -291,26 +339,24 @@ export class BrainViewer {
       }
       this.region = mesh;
       this.root.add(mesh);
+      this.anchor = surfaceAnchor(mesh.geometry);
+      this.flyTo(mesh);
       if (res.substitute) {
         const parent = this.catalog.nameOf(res.id) ?? `structure ${res.id}`;
-        this.regionStatus(target.acronym, `${target.name} · not modeled separately in 3D, showing “${parent}”`);
+        this.regionStatus(target.acronym, `${target.name}: not modeled separately in 3D, showing “${parent}”`);
       } else {
         this.regionStatus(target.acronym, target.name);
       }
     } catch {
-      if (seq === this.loadSeq) this.regionStatus(target.acronym, `${target.name} · no 3D model to display`);
+      if (seq === this.loadSeq) {
+        this.regionStatus(target.acronym, `${target.name}: no 3D model to display`);
+        this.recenter();
+      }
     }
   }
 
   recenter() {
-    if (!this.home) return;
-    this.tween = {
-      fromPos: this.camera.position.clone(),
-      fromTarget: this.controls.target.clone(),
-      toPos: this.home.position.clone(),
-      toTarget: this.home.target.clone(),
-      t0: performance.now(),
-    };
+    if (this.home) this.moveCamera(this.home.position, this.home.target);
   }
 
   setShellVisible(visible: boolean) {
@@ -337,6 +383,9 @@ export class BrainViewer {
     for (const fn of this.cleanup) fn();
     this.controls.dispose();
     disposeTree(this.scene);
+    // Whichever shell material isn't on the mesh right now isn't in the scene.
+    this.shellGlass.dispose();
+    this.shellSolid.dispose();
     // Each plane's other material (glass or volume) isn't in the scene right now.
     for (const v of PLANE_ORDER) {
       this.planes[v]?.preview.dispose();
@@ -384,8 +433,6 @@ export class BrainViewer {
       depthWrite: !isShell,
       // The y-flip turns the shell inside out: BackSide is its outer surface.
       side: isShell ? THREE.BackSide : THREE.FrontSide,
-      emissive: new THREE.Color(isShell ? color : 0x000000),
-      emissiveIntensity: isShell ? 0.35 : 0,
     });
     found.removeFromParent();
     return found;
@@ -393,11 +440,14 @@ export class BrainViewer {
 
   private async initShell() {
     try {
-      const mesh = (await this.loadMesh(ROOT_STRUCTURE_ID, '#e8ecf2', SHELL_OPACITY, true)) as NonNullable<BrainViewer['shell']>;
+      const mesh = (await this.loadMesh(ROOT_STRUCTURE_ID, '#c9d1d2', 1, true)) as NonNullable<BrainViewer['shell']>;
       if (this.disposed) {
         disposeTree(mesh);
         return;
       }
+      // Its loaded material is replaced by the glass / solid pair (see applyAppearance).
+      mesh.material.dispose();
+      mesh.material = this.shellGlass;
       this.shell = mesh;
       this.root.add(mesh);
       this.frame(mesh);
@@ -411,6 +461,7 @@ export class BrainViewer {
       for (const v of PLANE_ORDER) this.placePlane(v);
       this.applyAppearance();
       this.home = { position: this.camera.position.clone(), target: this.controls.target.clone() };
+      if (this.region) this.flyTo(this.region); // it loaded before the shell
       // (A region requested meanwhile loads on its own and reports its own status.)
       if (!this.target) this.regionStatus('—', 'Select a region to see it in 3D');
     } catch {
@@ -444,7 +495,9 @@ export class BrainViewer {
         new THREE.BufferGeometry().setFromPoints([dir.clone().multiplyScalar(-len), dir.clone().multiplyScalar(len)]),
         new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.3, depthTest: false }),
       );
-    g.add(line(new THREE.Vector3(1, 0, 0), 0xc89f65), line(new THREE.Vector3(0, 1, 0), 0x8fa8c8), line(new THREE.Vector3(0, 0, 1), 0x8aa882));
+    // Axes are reference, not content: one muted grey (the planes carry colour).
+    const AXIS = 0x87918f;
+    g.add(line(new THREE.Vector3(1, 0, 0), AXIS), line(new THREE.Vector3(0, 1, 0), AXIS), line(new THREE.Vector3(0, 0, 1), AXIS));
     const label = (text: string, pos: THREE.Vector3, color: number) => {
       const cvs = document.createElement('canvas');
       cvs.width = 192;
@@ -452,7 +505,7 @@ export class BrainViewer {
       const ctx = cvs.getContext('2d');
       if (!ctx) return;
       ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
-      ctx.font = '600 28px "Instrument Sans Variable", system-ui, sans-serif';
+      ctx.font = '500 26px "Archivo Variable", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(text, 96, 34);
@@ -465,12 +518,12 @@ export class BrainViewer {
       g.add(spr);
     };
     const off = len * 1.08;
-    label('Ant', new THREE.Vector3(-off, 0, 0), 0x8aa882);
-    label('Post', new THREE.Vector3(off, 0, 0), 0x8aa882);
-    label('Sup', new THREE.Vector3(0, -off, 0), 0x8fa8c8);
-    label('Inf', new THREE.Vector3(0, off, 0), 0x8fa8c8);
-    label('Left', new THREE.Vector3(0, 0, -off), 0xc89f65);
-    label('Right', new THREE.Vector3(0, 0, off), 0xc89f65);
+    label('Ant', new THREE.Vector3(-off, 0, 0), AXIS);
+    label('Post', new THREE.Vector3(off, 0, 0), AXIS);
+    label('Sup', new THREE.Vector3(0, -off, 0), AXIS);
+    label('Inf', new THREE.Vector3(0, off, 0), AXIS);
+    label('Left', new THREE.Vector3(0, 0, -off), AXIS);
+    label('Right', new THREE.Vector3(0, 0, off), AXIS);
     this.root.add(g);
   }
 
@@ -591,31 +644,73 @@ export class BrainViewer {
         p.preview.opacity = this.ebrain ? 0 : 0.18;
       }
     }
-    const mat = this.shell?.material;
-    if (!mat) return;
+    if (!this.shell) return;
     if (this.ebrain) {
-      mat.color.set(0xeef0f4);
-      mat.opacity = 1;
-      mat.transparent = false;
-      mat.depthWrite = true;
-      mat.side = THREE.DoubleSide;
-      mat.emissiveIntensity = 0;
-      mat.roughness = 0.6;
       this.updateClipPlanes();
-      mat.clippingPlanes = [this.clip.coronal, this.clip.transverse, this.clip.sagittal];
-      mat.clipIntersection = true; // cut only where all three agree: one octant
+      this.shellSolid.clippingPlanes = [this.clip.coronal, this.clip.transverse, this.clip.sagittal];
+      this.shellSolid.clipIntersection = true; // cut only where all three agree: one octant
+      this.shell.material = this.shellSolid;
     } else {
-      mat.color.set(0xe8ecf2);
-      mat.opacity = SHELL_OPACITY;
-      mat.transparent = true;
-      mat.depthWrite = false;
-      mat.side = THREE.BackSide;
-      mat.emissiveIntensity = 0.35;
-      mat.roughness = 0.55;
-      mat.clippingPlanes = [];
-      mat.clipIntersection = false;
+      this.shell.material = this.shellGlass;
     }
-    mat.needsUpdate = true;
+  }
+
+  // --- Camera ------------------------------------------------------------------
+
+  /** Glide to a pose (instantly under reduced motion). */
+  private moveCamera(position: THREE.Vector3, target: THREE.Vector3) {
+    if (prefersReducedMotion()) {
+      this.tween = null;
+      this.camera.position.copy(position);
+      this.controls.target.copy(target);
+      return;
+    }
+    this.tween = {
+      fromPos: this.camera.position.clone(),
+      fromTarget: this.controls.target.clone(),
+      toPos: position.clone(),
+      toTarget: target.clone(),
+      t0: performance.now(),
+      ms: FLY_MS,
+    };
+  }
+
+  /** Turn toward a newly picked region and come a little closer, keeping the
+   *  current viewing angle and enough of the brain around it for context. */
+  private flyTo(mesh: THREE.Object3D) {
+    if (!this.home) return;
+    mesh.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(mesh);
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const radius = box.getSize(new THREE.Vector3()).length() / 2;
+    const fit = radius / Math.sin(((this.camera.fov * Math.PI) / 180) / 2);
+    const homeDist = this.home.position.distanceTo(this.home.target);
+    const dist = THREE.MathUtils.clamp(fit * 1.6, homeDist * 0.55, homeDist);
+    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+    this.moveCamera(center.clone().addScaledVector(dir, dist), center);
+  }
+
+  /** Tell the page where the region's anchor is on screen (only when it moved). */
+  private emitAnchor() {
+    const on = this.events.onAnchor;
+    if (!on) return;
+    let next: { x: number; y: number; settled: boolean } | null = null;
+    if (this.anchor && this.region) {
+      const v = this.region.localToWorld(this.anchor.clone()).project(this.camera);
+      // In front of the camera and inside the canvas (else no label at all).
+      if (v.z < 1 && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1) {
+        next = {
+          x: Math.round((v.x * 0.5 + 0.5) * this.canvas.clientWidth * 2) / 2,
+          y: Math.round((-v.y * 0.5 + 0.5) * this.canvas.clientHeight * 2) / 2,
+          settled: !this.tween,
+        };
+      }
+    }
+    const key = next ? `${next.x},${next.y},${next.settled}` : '';
+    if (key === this.lastAnchor) return;
+    this.lastAnchor = key;
+    on(next);
   }
 
   private planeWorld(v: Plane) {
@@ -727,7 +822,7 @@ export class BrainViewer {
 
   private placeMarker(world: THREE.Vector3, view: Plane) {
     if (!this.marker) {
-      const mat = (opacity: number) => new THREE.MeshBasicMaterial({ color: 0xffb74a, transparent: true, opacity, depthTest: false });
+      const mat = (opacity: number) => new THREE.MeshBasicMaterial({ color: 0xc4a46a, transparent: true, opacity, depthTest: false });
       this.marker = new THREE.Mesh(new THREE.SphereGeometry(45, 16, 12), mat(0.95));
       this.marker.renderOrder = 999;
       this.ring = new THREE.Mesh(new THREE.TorusGeometry(80, 6, 8, 32), mat(0.85));
@@ -750,6 +845,7 @@ export class BrainViewer {
     this.root.remove(this.region);
     disposeTree(this.region);
     this.region = null;
+    this.anchor = null;
   }
 
   // --- Render loop ---------------------------------------------------------------
@@ -767,8 +863,8 @@ export class BrainViewer {
       this.camera.updateProjectionMatrix();
     }
     if (this.tween) {
-      const k = Math.min(1, (performance.now() - this.tween.t0) / 600);
-      const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      const k = Math.min(1, (performance.now() - this.tween.t0) / this.tween.ms);
+      const ease = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2; // ease-in-out (cubic)
       this.camera.position.lerpVectors(this.tween.fromPos, this.tween.toPos, ease);
       this.controls.target.lerpVectors(this.tween.fromTarget, this.tween.toTarget, ease);
       if (k === 1) this.tween = null;
@@ -776,5 +872,28 @@ export class BrainViewer {
     this.controls.update();
     if (this.ebrain && this.followCamera()) this.updateClipPlanes();
     this.renderer.render(this.scene, this.camera);
+    this.emitAnchor();
   };
+}
+
+/** The surface vertex nearest the middle of a mesh's box: on the region even
+ *  when it curves around its own centre (the hippocampus does). */
+function surfaceAnchor(geometry: THREE.BufferGeometry): THREE.Vector3 | null {
+  const pos = geometry.getAttribute('position');
+  if (!pos || pos.count === 0) return null;
+  geometry.computeBoundingBox();
+  const mid = geometry.boundingBox!.getCenter(new THREE.Vector3());
+  const p = new THREE.Vector3();
+  const best = new THREE.Vector3();
+  let bestD = Infinity;
+  const step = Math.max(1, Math.floor(pos.count / 4000));
+  for (let i = 0; i < pos.count; i += step) {
+    p.fromBufferAttribute(pos, i);
+    const d = p.distanceToSquared(mid);
+    if (d < bestD) {
+      bestD = d;
+      best.copy(p);
+    }
+  }
+  return best;
 }

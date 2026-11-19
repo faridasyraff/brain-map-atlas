@@ -13,7 +13,7 @@ const PLANES = [
 ];
 
 const HERO_SLICE = 660;
-const link = 'inline-flex h-12 items-center rounded-lg text-base no-underline transition-colors';
+const link = 'pressable inline-flex h-12 items-center rounded-lg text-base no-underline';
 
 /** The home page: what the atlas is, a real section from it, and the way in. */
 export function Landing() {
@@ -33,7 +33,8 @@ export function Landing() {
               The Allen mouse brain, region by region
             </h1>
             <p className="mb-8 max-w-[52ch] text-lg leading-relaxed text-muted-foreground">
-              Browse the Allen CCFv3 reference atlas in linked sagittal, coronal and transverse sections alongside a 3D model.
+              Browse the Allen CCFv3 reference atlas, all 1,320 coronal sections at 10 µm, in linked sagittal, coronal and
+              transverse views alongside a 3D model.
               Click any point to identify the region, search every structure by name or acronym, and ask the assistant what a
               region does.
             </p>
@@ -97,9 +98,6 @@ function HeroSection() {
           </p>
         )}
       </div>
-      <figcaption className="mt-3 text-[13px] text-subtle-foreground">
-        Coronal section {HERO_SLICE} of 1,320 from the Allen CCFv3 annotation, colored by structure.
-      </figcaption>
     </figure>
   );
 }

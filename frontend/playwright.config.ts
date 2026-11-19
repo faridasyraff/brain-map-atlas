@@ -16,6 +16,9 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,
+  // The real app is one gunicorn process (4 threads) rendering slices and
+  // meshes: one browser per CPU core overloads it, so use two there.
+  workers: real ? 2 : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',

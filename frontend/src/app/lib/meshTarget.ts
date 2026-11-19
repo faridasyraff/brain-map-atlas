@@ -64,10 +64,10 @@ export function meshTargetFor(sel: Pick<Selection, 'label' | 'acronym' | 'struct
     ];
     for (const [map, key] of tries) {
       const node = usable(key) ? map.get(key.toLowerCase()) : undefined;
-      if (node) return { structureId: node.id, name: node.name, acronym: node.acronym, color: node._color || '#ffb74a' };
+      if (node) return { structureId: node.id, name: node.name, acronym: node.acronym, color: node._color || '#a5afae' };
     }
   }
-  if (sel.structureId) return { structureId: sel.structureId, name: name || sel.label, acronym: acronym || sel.acronym, color: '#ffb74a' };
+  if (sel.structureId) return { structureId: sel.structureId, name: name || sel.label, acronym: acronym || sel.acronym, color: '#a5afae' };
   return null;
 }
 

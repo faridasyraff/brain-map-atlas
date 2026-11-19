@@ -1,49 +1,78 @@
 @import "tailwindcss";
-@import "@fontsource-variable/instrument-sans";
+@import "@fontsource-variable/archivo/wdth.css";
 
 /* Design tokens — the same palette as the design mockups and the
    original vanilla app's styles, exposed to Tailwind. `bg-surface`, `text-muted-foreground`,
    `border-border`, `bg-plane-coronal`, `rounded-md`, ... all come from here.
    Names follow shadcn/ui's conventions so its components work unchanged. */
 @theme {
-  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* Neutrals */
-  --color-canvas: #000000;            /* image viewports: imaging needs true black */
-  --color-background: #12161b;        /* app chrome */
-  --color-surface: #171c22;           /* panels, headers */
-  --color-raised: #1f252d;            /* inputs, menus */
-  --color-hover: #262d36;
-  --color-border: #2a313b;
-  --color-border-strong: #3b4552;
-  --color-foreground: #e3e8ee;        /* 13.9:1 on surface */
-  --color-muted-foreground: #a0abb8;  /*  7.6:1 on surface */
-  --color-subtle-foreground: #7d8896; /*  4.6:1 on surface (AA) */
+  /* Neutrals: a muted graphite, slightly green-grey, so long sessions stay easy
+     on the eyes. Contrast notes are against surface. */
+  --color-canvas: #000000;            /* slice viewports: imaging needs true black */
+  --color-stage: #101415;             /* behind the 3D brain */
+  --color-background: #161b1d;        /* app chrome */
+  --color-surface: #1c2225;           /* panels, headers */
+  --color-raised: #242b2f;            /* inputs, menus */
+  --color-hover: #2b3337;
+  --color-border: #2d3538;
+  --color-border-strong: #3e484c;
+  --color-foreground: #e2e6e4;        /* 13.4:1 */
+  --color-muted-foreground: #a5afae;  /*  7.4:1 */
+  --color-subtle-foreground: #87918f; /*  4.9:1 (AA) */
 
-  /* Interaction */
-  --color-primary: #e3e8ee;
-  --color-primary-foreground: #12161b;
-  --color-ring: #7ab4ff;
-  --color-link: #8fc0ff;
+  /* Interaction: a muted paper button for the one main action per area
+     (amber is the 3D plane's colour, so actions don't use it). */
+  --color-primary: #cfc9bb;
+  --color-primary-hover: #dcd7cb;
+  --color-primary-foreground: #171b1c;
+  --color-accent: #2f3a3e;
+  --color-ring: #9db7c4;
+  --color-link: #a9c4d2;
 
   /* Status */
-  --color-destructive: #ff8f78;
-  --color-warning: #f0b65e;
-  --color-success: #63d29c;
+  --color-destructive: #d98c7a;
+  --color-warning: #c9a464;
+  --color-success: #7db395;
 
-  /* Data: the four planes (also the 3D slice planes) */
-  --color-plane-sagittal: #4cc3e6;
-  --color-plane-coronal: #b394ff;
-  --color-plane-transverse: #4fd18e;
-  --color-plane-3d: #f0b65e;
+  /* Data: the four planes (also the 3D slice planes), softened. */
+  --color-plane-sagittal: #6aa6c4;
+  --color-plane-coronal: #9c8cc4;
+  --color-plane-transverse: #74ae8e;
+  --color-plane-3d: #c4a46a;
 
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
   --radius-xl: 16px;
 
-  --shadow-menu: 0 12px 32px rgb(0 0 0 / 0.5), 0 0 0 1px #3b4552;
+  --shadow-menu: 0 12px 32px rgb(0 0 0 / 0.5), 0 0 0 1px #3e484c;
   --shadow-float: 0 6px 20px rgb(0 0 0 / 0.45);
+
+  /* Motion. Stronger curves than the CSS defaults; `ease-out` / `ease-in-out`
+     utilities pick these up. Never ease-in on UI. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Radix waits for a CSS animation before unmounting, so open/close use
+     keyframes. Exits are faster than entrances. */
+  --animate-fade-in: fade-in 200ms var(--ease-out);
+  --animate-fade-out: fade-out 150ms var(--ease-out) forwards;
+  --animate-dialog-in: dialog-in 200ms var(--ease-out);
+  --animate-dialog-out: dialog-out 150ms var(--ease-out) forwards;
+  --animate-sheet-in: sheet-in 300ms var(--ease-drawer);
+  --animate-sheet-out: sheet-out 200ms var(--ease-drawer) forwards;
+  --animate-tooltip-in: tooltip-in 125ms var(--ease-out);
+
+  @keyframes fade-in { from { opacity: 0; } }
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes dialog-in { from { opacity: 0; transform: scale(0.96); } }
+  @keyframes dialog-out { to { opacity: 0; transform: scale(0.96); } }
+  @keyframes sheet-in { from { transform: translateY(100%); } }
+  @keyframes sheet-out { to { transform: translateY(100%); } }
+  @keyframes tooltip-in { from { opacity: 0; transform: scale(0.97); } }
 }
 
 @layer base {
@@ -53,8 +82,35 @@
     font-feature-settings: "tnum" 1;   /* tabular figures: slice numbers don't jiggle */
   }
   :focus-visible { @apply outline-2 outline-offset-2 outline-ring; }
+  p { text-wrap: pretty; }   /* no one-word last lines */
 }
 
+/* Archivo's width axis: condensed for numbers and meta (catalog numbers,
+   coordinates), slightly wide for titles. */
+@utility font-condensed { font-stretch: 80%; }
+@utility font-wide { font-stretch: 112%; }
+
+/* Reduced motion: fewer and gentler, not none. Opacity fades stay (they
+   show what changed); movement and scale go. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  :root {
+    --animate-dialog-in: fade-in 150ms ease;
+    --animate-dialog-out: fade-out 100ms ease forwards;
+    --animate-sheet-in: fade-in 150ms ease;
+    --animate-sheet-out: fade-out 100ms ease forwards;
+    --animate-tooltip-in: fade-in 100ms ease;
+  }
+  /* Everything else: no keyframe movement. Radix parts (they carry data-state) keep
+     the fades above; transitions stay (fades and colour changes; `pressable` drops its scale). */
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  *:not([data-state]), *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* Anything pressable: colours ease gently on hover; a press scales it down a
+   touch on the strong curve. (Tailwind 4's `scale-*` is the `scale` property.) */
+@utility pressable {
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, outline-color 150ms ease,
+    fill 150ms ease, stroke 150ms ease, scale 160ms var(--ease-out);
+  &:active:not(:disabled) { scale: 0.97; }
+  @media (prefers-reduced-motion: reduce) { &:active:not(:disabled) { scale: none; } }
 }

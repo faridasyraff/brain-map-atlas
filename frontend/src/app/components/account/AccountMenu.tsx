@@ -17,7 +17,7 @@ export function AccountMenu() {
         <span className="max-w-48 truncate text-sm text-muted-foreground max-lg:hidden" title={user.email}>
           {user.email}
         </span>
-        {user.is_admin && <span className="rounded-full border border-border-strong px-2 text-[11px] text-muted-foreground">Admin</span>}
+        {user.is_admin && <span className="text-xs text-subtle-foreground">Admin</span>}
         <Button variant="ghost" size="sm" onClick={() => signOut.mutate()}>
           Sign out
         </Button>

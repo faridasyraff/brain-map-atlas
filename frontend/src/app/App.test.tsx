@@ -114,10 +114,21 @@ describe('Search → selection', () => {
 });
 
 describe('Hierarchy', () => {
+  it('the index folds to a rail and back, keeping keyboard focus', async () => {
+    installFakeApi();
+    renderApp();
+    expect(await screen.findByRole('tree')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Fold the brain index' }));
+    expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show the brain index' })).toHaveFocus();
+    await userEvent.click(screen.getByRole('button', { name: 'Show the brain index' }));
+    expect(await screen.findByRole('tree')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fold the brain index' })).toHaveFocus();
+  });
+
   it('browses the tree and opens a group from it', async () => {
     installFakeApi();
     renderApp();
-    await userEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
     await userEvent.click(await screen.findByRole('button', { name: /^Thalamus/ }));
     await waitFor(() => expect(useAtlas.getState().selection?.label).toBe('Thalamus'));
   });
@@ -125,7 +136,6 @@ describe('Hierarchy', () => {
   it('filter: exact match first, Enter opens it', async () => {
     installFakeApi();
     renderApp();
-    await userEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
     await screen.findByRole('tree');
     await userEvent.type(screen.getByRole('searchbox', { name: 'Filter the hierarchy' }), 'cp{Enter}');
     await waitFor(() => expect(useAtlas.getState().selection?.label).toBe('Caudoputamen'));
