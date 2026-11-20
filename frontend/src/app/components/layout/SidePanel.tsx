@@ -11,7 +11,7 @@ import { useUi, type PanelTab } from '@/store/ui';
  *  hierarchy is the index on the left). */
 export function SidePanel() {
   return (
-    <aside aria-label="Region details" className="flex w-[336px] shrink-0 flex-col border-l border-border bg-surface">
+    <aside aria-label="Region details" className="flex w-[336px] shrink-0 flex-col max-lg:w-72 border-l border-border bg-surface">
       <PanelTabs className="flex-[3_1_0]" withHierarchy={false} />
       <ErrorBoundary area="the assistant" className="border-t border-border p-5">
         <Assistant />
