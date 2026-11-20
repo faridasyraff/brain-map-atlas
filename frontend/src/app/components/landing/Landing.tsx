@@ -214,9 +214,10 @@ function heroRegions(roots: OntologyNode[]): HomeRegion[] {
 /** The three sections at the atlas's starting point, as overlapping glass plates. */
 function SectionPlates() {
   const plates: { plane: Plane; className: string; delay: string }[] = [
-    { plane: 'sagittal', className: 'left-0 top-[8%] w-[52%]', delay: '0ms' },
-    { plane: 'transverse', className: 'left-[22%] top-[38%] w-[48%]', delay: '90ms' },
-    { plane: 'coronal', className: 'right-0 top-0 w-[50%]', delay: '180ms' },
+    // Overlapping only at the corners, so each section stays readable.
+    { plane: 'sagittal', className: 'left-0 top-[5%] w-[54%]', delay: '0ms' },
+    { plane: 'transverse', className: 'left-[24%] top-[47%] w-[44%]', delay: '90ms' },
+    { plane: 'coronal', className: 'right-0 top-0 w-[47%]', delay: '180ms' },
   ];
   return (
     <div className="relative aspect-[5/4] w-full">
@@ -227,6 +228,21 @@ function SectionPlates() {
   );
 }
 
+/** Each section's size in voxels (width × height), fixed by the atlas. */
+const SECTION_SIZE: Record<Plane, [number, number]> = { sagittal: [1320, 800], coronal: [1140, 800], transverse: [1320, 1140] };
+
+/**
+ * The part of each plate's section that is shown, in % of the image: the
+ * labelled brain plus a small margin, measured on these exact slices. The
+ * sagittal one drops its left seventh, empty but for a smear of template
+ * tissue outside the atlas, so the brain fills its plate.
+ */
+const PLATE_CROP: Record<Plane, { x: number; y: number; w: number; h: number }> = {
+  sagittal: { x: 14.5, y: 5, w: 85.5, h: 92 },
+  transverse: { x: 0, y: 1.5, w: 100, h: 97 },
+  coronal: { x: 3, y: 0, w: 94, h: 98 },
+};
+
 function Plate({ plane, className, delay }: { plane: Plane; className: string; delay: string }) {
   const idx = plane === 'coronal' ? HERO_SLICE : PLANES[plane].initial;
   const slice = useQuery({
@@ -234,11 +250,26 @@ function Plate({ plane, className, delay }: { plane: Plane; className: string; d
     queryFn: ({ signal }) => fetchSlice(plane, idx, signal),
     staleTime: Infinity,
   });
+  const [width, height] = SECTION_SIZE[plane];
+  const crop = PLATE_CROP[plane];
   return (
     <div data-reveal style={{ '--d': delay } as React.CSSProperties} className={cn('glass absolute rounded-2xl p-3 shadow-[0_30px_60px_rgb(0_0_0/0.5)]', className)}>
-      <div className="grid aspect-[1140/800] place-items-center overflow-hidden rounded-lg bg-canvas">
+      <div
+        className="relative grid place-items-center overflow-hidden rounded-lg bg-canvas"
+        style={{ aspectRatio: `${(width * crop.w) / 100} / ${(height * crop.h) / 100}` }}
+      >
         {slice.data ? (
-          <img src={slice.data.image} alt={`${PLANES[plane].label} section of the mouse brain, colored by Allen region`} className="block size-full object-contain" />
+          <img
+            src={slice.data.image}
+            alt={`${PLANES[plane].label} section of the mouse brain, colored by Allen region`}
+            className="absolute block max-w-none"
+            style={{
+              width: `${10000 / crop.w}%`,
+              height: `${10000 / crop.h}%`,
+              left: `${(-100 * crop.x) / crop.w}%`,
+              top: `${(-100 * crop.y) / crop.h}%`,
+            }}
+          />
         ) : (
           <p role={slice.isError ? 'alert' : 'status'} className="max-w-[30ch] p-4 text-center text-[13px] text-home-subtle">
             {slice.isError ? 'This section could not be loaded. The atlas server may still be starting up.' : 'Loading a section…'}
