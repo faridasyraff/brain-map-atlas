@@ -31,7 +31,7 @@ export function TopBar() {
   return (
     <header className="grid h-10 shrink-0 grid-cols-[1fr_minmax(0,440px)_1fr] items-center gap-4 border-b border-border bg-surface pl-3 pr-1.5">
       <div className="flex min-w-0 items-baseline gap-2.5">
-        <BrandMark className="text-[13px]" />
+        <BrandMark className="shrink-0 whitespace-nowrap text-[13px]" />
         <span className="truncate text-xs text-subtle-foreground">Allen Mouse Brain CCFv3, 2017 annotation</span>
       </div>
       <SearchBox />
