@@ -17,7 +17,11 @@ export function Providers({ queryClient, children }: { queryClient?: QueryClient
   const [client] = useState(() => queryClient ?? makeQueryClient());
   return (
     <QueryClientProvider client={client}>
-      <TooltipProvider delayDuration={300}>
+      {/* The first tooltip waits 300 ms; moving on to the next icon within 500 ms
+          shows it at once. Tooltips here are labels, not hoverable panels: keeping
+          one open while the pointer travelled toward it made a quick move to the
+          neighbouring icon show nothing until the mouse moved again. */}
+      <TooltipProvider delayDuration={300} skipDelayDuration={500} disableHoverableContent>
         {children}
         <SignInDialog />
         <Toaster theme="dark" position="bottom-left" closeButton toastOptions={{ className: 'font-sans' }} />
