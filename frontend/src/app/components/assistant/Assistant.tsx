@@ -106,7 +106,7 @@ export function Assistant() {
         <label htmlFor="assistant-input" className="sr-only">
           Question for the assistant
         </label>
-        <Input id="assistant-input" autoComplete="off" placeholder="Ask about the selected region" className="h-8 text-[13px] max-md:h-11 max-md:text-sm" value={text} onChange={(e) => setText(e.target.value)} />
+        <Input id="assistant-input" autoComplete="off" maxLength={2000} placeholder="Ask about the selected region" className="h-8 text-[13px] max-md:h-11 max-md:text-sm" value={text} onChange={(e) => setText(e.target.value)} />
         <Button type="submit" variant="primary" size="sm" className="max-md:h-11" disabled={!text.trim() || ask.isPending}>
           Ask
         </Button>

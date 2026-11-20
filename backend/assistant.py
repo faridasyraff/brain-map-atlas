@@ -418,7 +418,11 @@ def _gpt_answer(question, region_name='', parcellation_index=''):
     if not api_key:
         return "OpenAI API key not found. Set OPENAI_API_KEY in your .env file."
 
-    client = OpenAI(api_key=api_key)
+    # The SDK's default is a 10-minute timeout with 2 retries, while every
+    # request shares one process's 16 threads: a stalled OpenAI call must give
+    # its thread back well inside gunicorn's 120 s (two 30 s tries at most;
+    # it then ends as a 500 with an error id).
+    client = OpenAI(api_key=api_key, timeout=30.0, max_retries=1)
 
     # Build a rich region context from the atlas data frames (no KB required)
     region_context = ''

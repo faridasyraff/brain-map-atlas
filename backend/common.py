@@ -120,6 +120,17 @@ def _json_body():
     return data
 
 
+def _text(data, key, default=''):
+    """A string field of a JSON body. Missing or null gives `default`; any
+    other type (a number, a list) is a 400, not a crash on `.lower()`."""
+    value = data.get(key)
+    if value is None:
+        return default
+    if not isinstance(value, str):
+        abort(400, description=f'{key} must be a string')
+    return value
+
+
 def _safe_error_response(e, status=500):
     """Does the same safe error handling as handle_exception above, but for
     use inside a route's own try/except block (instead of writing

@@ -84,6 +84,29 @@ def _add_server_timing(resp):
             log.warning(f'slow request: {request.method} {request.path} took {ms:.0f} ms')
     return resp
 
+# Browser-side hardening for every response. The pages load scripts, styles,
+# fonts and meshes only from this server, and slices (and the smallest font
+# files, which Vite inlines into the CSS) arrive as data: URLs;
+# React style props and the toast library's injected <style> need
+# 'unsafe-inline' for styles (never for scripts). frame-ancestors 'none'
+# stops other sites from framing the app (clickjacking the account forms).
+_SECURITY_HEADERS = {
+    'Content-Security-Policy': (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; "
+        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    ),
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+}
+
+@app.after_request
+def _add_security_headers(resp):
+    for name, value in _SECURITY_HEADERS.items():
+        resp.headers.setdefault(name, value)
+    return resp
+
 # Registered after the timer on purpose: Flask runs after_request hooks in
 # reverse order, so compression happens first and is included in the timing.
 Compress(app)
@@ -103,6 +126,9 @@ if not app.secret_key:
         '  python -c "import secrets; print(secrets.token_hex(32))"\n'
         'and add it to .env as SECRET_KEY=<the value it printed>.'
     )
+# No request to this API carries more than a few KB of JSON. Without a cap,
+# Flask reads a body of any size into memory; past this it answers 413.
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 # Set SESSION_COOKIE_SECURE=1 once the site is served over https, so the

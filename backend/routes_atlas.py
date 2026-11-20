@@ -16,7 +16,8 @@ import numpy as np
 from PIL import Image
 from flask import Blueprint, request, jsonify, send_from_directory, Response, abort
 from extensions import limiter
-from common import (_DEBUG_ERRORS, _check_rapid, _json_body, _rapid_group, _rapid_lookup, _safe_error_response, log)
+from common import (_DEBUG_ERRORS, _check_rapid, _json_body, _rapid_group, _rapid_lookup, _safe_error_response,
+                    _text, log)
 from atlas import (SLICE_MIME, LEVEL_COLS, VIEW_CFG, _MAX_PIDX, _MESH_LUT, _acro_to_term_id, _id_to_label, _collect_leaf_indices, _hist_bbox, _hist_centroid_by_slice, _indices_with_voxels, _load_mesh_volume, _mesh_volume_missing_response, _name_to_term_id, _pidx_to_sid, _render_size_cache, _term_label_to_indices, _term_nodes, _x_hist, acronym_df, annotation_array, color_df, get_hex_for_index, get_slices, name_df, render_to_b64, term_df, world_coords)
 from enrichment import (_get_functional_keywords, _get_region_summary, _get_related_regions)
 
@@ -195,8 +196,8 @@ def get_slice():
 @bp.route('/api/lookup', methods=['POST'])
 def lookup():
     data = _json_body()
+    view = _text(data, 'view').lower()
     try:
-        view = data['view'].lower()
         idx  = int(data['idx'])
         col  = int(data['col'])
         row  = int(data['row'])
@@ -570,7 +571,7 @@ def structures_in_slice():
     try:
         _, _, annot = get_slices(view, idx)
     except Exception as e:
-        return jsonify({'error': f'slice extraction failed: {e}'}), 500
+        return _safe_error_response(e)
 
     # Unique non-zero parcellation indices in this slice
     uniq = np.unique(annot)
@@ -609,11 +610,11 @@ def structures_in_slice():
 @bp.route('/api/highlight', methods=['POST'])
 def highlight():
     data = _json_body()
+    view  = _text(data, 'view').lower()
+    level = _text(data, 'level', 'structure')
     try:
-        view   = data['view'].lower()
         idx    = int(data['idx'])
         target = int(data['parcellation_index'])
-        level  = data.get('level', 'structure')
     except (KeyError, TypeError, ValueError):
         return jsonify({'error': 'view, idx, parcellation_index required'}), 400
 
@@ -696,12 +697,15 @@ def resolve_acronyms():
 @bp.route('/api/highlight_indices', methods=['POST'])
 def highlight_indices():
     data = _json_body()
+    view = _text(data, 'view').lower()
     try:
-        view    = data['view'].lower()
         idx     = int(data['idx'])
         indices = [int(i) for i in data['parcellation_indices']]
     except (KeyError, TypeError, ValueError):
         return jsonify({'error': 'view, idx, parcellation_indices required'}), 400
+    # As in region_center_indices: a negative or huge index overflows the
+    # annotation dtype below (a 500), so it is dropped as "not a region".
+    indices = [i for i in indices if 0 <= i <= _MAX_PIDX]
     if view not in VIEW_CFG or not indices:
         return jsonify({'error': 'invalid input'}), 400
 
@@ -766,8 +770,8 @@ def group_by_term():
     including container nodes like Cerebrum, Vermal regions, Piriform area.
     """
     data    = _json_body()
-    name    = (data.get('name')    or '').strip()
-    acronym = (data.get('acronym') or '').strip()
+    name    = _text(data, 'name').strip()
+    acronym = _text(data, 'acronym').strip()
 
     # Find the term label (now _term_nodes is keyed by label)
     term_label = None
@@ -803,12 +807,15 @@ def highlight_group():
     region separations remain clearly visible.
     """
     data = _json_body()
+    view       = _text(data, 'view').lower()
+    group_lv   = _text(data, 'group_level')
+    group_name = _text(data, 'group_name').strip()
     try:
-        view       = data['view'].lower()
-        idx        = int(data['idx'])
-        group_lv   = data['group_level']
-        group_name = data['group_name'].strip()
+        idx = int(data['idx'])
     except (KeyError, TypeError, ValueError):
+        return jsonify({'error': 'view, idx, group_level, group_name required'}), 400
+    # An empty name would match every region with no value at that level.
+    if not group_lv or not group_name:
         return jsonify({'error': 'view, idx, group_level, group_name required'}), 400
 
     if view not in VIEW_CFG:
@@ -888,7 +895,7 @@ def find_group_level():
     Returns { group_level, group_name, member_count }.
     """
     data = _json_body()
-    name = (data.get('name') or '').strip()
+    name = _text(data, 'name').strip()
     if not name:
         return jsonify({'error': 'name required'}), 400
 
@@ -936,10 +943,9 @@ def region_center_group():
     group colour.
     """
     data = _json_body()
-    try:
-        group_lv   = data['group_level']
-        group_name = data['group_name'].strip()
-    except (KeyError, TypeError, ValueError):
+    group_lv   = _text(data, 'group_level')
+    group_name = _text(data, 'group_name').strip()
+    if not group_lv or not group_name:
         return jsonify({'error': 'group_level and group_name required'}), 400
 
     if group_lv not in LEVEL_COLS:

@@ -199,10 +199,52 @@ class ErrorHandling(unittest.TestCase):
             status, _ = call('/api/region_center', {'parcellation_index': idx})
             self.assertIn(status, (200, 404), idx)
 
+    def test_out_of_range_highlight_indices_never_500(self):
+        for idx in (-1, 10**11):
+            status, _ = call('/api/highlight_indices',
+                             {'view': 'coronal', 'idx': 600, 'parcellation_indices': [idx]})
+            self.assertEqual(status, 400, idx)
+
+    def test_wrong_json_types_are_400_not_500(self):
+        # A number where a string belongs used to crash on .lower()/.strip().
+        cases = [
+            ('/api/lookup', {'view': 1, 'idx': 1, 'col': 1, 'row': 1}),
+            ('/api/highlight', {'view': ['coronal'], 'idx': 600, 'parcellation_index': 1}),
+            ('/api/highlight_indices', {'view': 1, 'idx': 600, 'parcellation_indices': [1]}),
+            ('/api/highlight_group', {'view': 'coronal', 'idx': 600, 'group_level': 'structure', 'group_name': 5}),
+            ('/api/group_by_term', {'name': 5}),
+            ('/api/find_group_level', {'name': 5}),
+            ('/api/region_center_group', {'group_level': 'structure', 'group_name': 5}),
+            ('/api/region_center_group', {'group_level': ['x'], 'group_name': 'Thalamus'}),
+            # a missing name would otherwise match every region without one
+            ('/api/highlight_group', {'view': 'coronal', 'idx': 600, 'group_level': 'substructure'}),
+            ('/api/chat', {'message': 5}),
+            # Not signup or login: their 5- and 10-a-minute limits are kept
+            # for the account tests (they read fields the same way, via _text).
+        ]
+        for path, body in cases:
+            self.assertEqual(call(path, body)[0], 400, path)
+
+    def test_oversized_body_is_413(self):
+        status, d = call('/api/log_warning', {'label': 'x' * (2 * 1024 * 1024)})
+        self.assertEqual(status, 413)
+        self.assertIn('error', d)
+
     def test_unknown_route_is_404_json(self):
         status, d = call('/api/does_not_exist')
         self.assertEqual(status, 404)
         self.assertEqual(d['error'], 'Not found')
+
+
+class SecurityHeaders(unittest.TestCase):
+    def test_pages_and_api_send_hardening_headers(self):
+        for path in ('/', '/app', '/api/auth/me'):
+            with urllib.request.urlopen(BASE + path, timeout=30) as r:
+                h = r.headers
+            self.assertIn("frame-ancestors 'none'", h.get('Content-Security-Policy', ''), path)
+            self.assertIn("script-src 'self'", h['Content-Security-Policy'], path)
+            self.assertEqual(h.get('X-Content-Type-Options'), 'nosniff', path)
+            self.assertEqual(h.get('X-Frame-Options'), 'DENY', path)
 
 
 class RateLimit(unittest.TestCase):
@@ -264,6 +306,12 @@ class Assistant(unittest.TestCase):
 
     def test_chat_requires_message(self):
         self.assertEqual(call('/api/chat', {'message': ''})[0], 400)
+
+    def test_chat_rejects_overlong_message(self):
+        # Checked before any model is called, so this never reaches OpenAI.
+        status, d = call('/api/chat', {'message': 'x' * 2001, 'ai_provider': 'openai'})
+        self.assertEqual(status, 400)
+        self.assertIn('too long', str(d))
 
     def test_enrich_explains_missing_ai(self):
         status, d = call('/api/enrich?name=Caudoputamen&acronym=CP')
