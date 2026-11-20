@@ -6,17 +6,17 @@ import { cn } from '@/lib/utils';
 export const Tabs = TabsPrimitive.Root;
 
 export function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
-  return <TabsPrimitive.List className={cn('flex gap-5 border-b border-border px-5', className)} {...props} />;
+  return <TabsPrimitive.List className={cn('flex gap-4 border-b border-border px-4', className)} {...props} />;
 }
 
 export function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'relative h-11 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+        'relative h-9 text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-foreground max-md:h-11 max-md:text-sm',
         'data-[state=active]:font-semibold data-[state=active]:text-foreground',
         'data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px',
-        'data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-t data-[state=active]:after:bg-foreground',
+        'data-[state=active]:after:h-px data-[state=active]:after:bg-foreground',
         className,
       )}
       {...props}

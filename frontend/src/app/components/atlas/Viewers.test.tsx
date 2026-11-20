@@ -203,3 +203,46 @@ describe('3D view', () => {
     expect(liveViewer()).toBe(v);
   });
 });
+
+describe('3D camera views', () => {
+  it('a preset turns the camera, and moving it by hand releases the preset', async () => {
+    installFakeApi();
+    renderApp();
+    const dorsal = await screen.findByRole('button', { name: 'D, view from dorsal (top)' });
+    expect(dorsal).toBeDisabled(); // until the outline has loaded
+    await waitFor(() => expect(liveViewer()).toBeDefined());
+    act(() => liveViewer()!.events.onReady?.());
+    expect(dorsal).toBeEnabled();
+    await userEvent.click(dorsal);
+    expect(liveViewer()!.viewFrom).toHaveBeenCalledWith('D');
+    act(() => liveViewer()!.events.onView?.('D'));
+    expect(dorsal).toHaveAttribute('aria-pressed', 'true');
+    act(() => liveViewer()!.events.onView?.(null));
+    expect(dorsal).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '3D, the default view' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('3D surfaces and display options', () => {
+  it('the tree shows a structure as a surface in 3D, and Display hides them all again', async () => {
+    installFakeApi();
+    renderApp();
+    const eye = await screen.findByRole('button', { name: 'Show Thalamus in 3D' });
+    expect(eye).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(eye);
+    expect(eye).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(liveViewer()!.setSurfaces).toHaveBeenLastCalledWith([{ id: 549, color: '#FF7080' }]));
+    // Structures without a 3D model get no eye.
+    expect(screen.queryByRole('button', { name: 'Show Lateral dorsal nucleus of thalamus in 3D' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Display' }));
+    const panel = screen.getByRole('group', { name: 'Display options' });
+    await userEvent.click(within(panel).getByRole('checkbox', { name: 'Brain outline' }));
+    expect(liveViewer()!.setShellVisible).toHaveBeenLastCalledWith(false);
+    expect(within(panel).getByText('1 surface shown')).toBeInTheDocument();
+    await userEvent.click(within(panel).getByRole('button', { name: 'Hide all' }));
+    await waitFor(() => expect(liveViewer()!.setSurfaces).toHaveBeenLastCalledWith([]));
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('group', { name: 'Display options' })).not.toBeInTheDocument();
+  });
+});

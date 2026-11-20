@@ -13,9 +13,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshLut, getMeshVolume, getMeshVolumeMeta, type MeshVolumeMeta } from '../api';
 import { resolveMeshId, ROOT_STRUCTURE_ID, type MeshTarget } from '../meshTarget';
 import type { PlanePick } from '../navigate';
+import { loadStructureMesh, prefersReducedMotion } from './shared';
 import { PLANE_ORDER, PLANES, type Plane } from '../planes';
 
-const MESH_BASE = '/meshes/';
 const REGION_OPACITY = 0.9;
 const FLY_MS = 450; // happens on every pick, so it stays short
 
@@ -42,10 +42,39 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const CLICK_SLOP_SQ = 25; // px²: more movement than this is an orbit, not a click
 
 type Vec3 = { x: number; y: number; z: number };
+
+/** Camera presets: the default 3D view, or looking at the brain from one side. */
+export type CameraView = '3d' | 'D' | 'V' | 'L' | 'R' | 'A' | 'P';
+
+/** Where the anatomical axes point on screen: x right, y up, z toward the
+ *  viewer (all in -1..1). Positive ends: posterior, dorsal, right. */
+export interface Orientation {
+  p: Vec3;
+  d: Vec3;
+  r: Vec3;
+}
+
+// World axes (see the root group in the constructor): +x posterior, +y dorsal, -z right.
+const AXIS_P = new THREE.Vector3(1, 0, 0);
+const AXIS_D = new THREE.Vector3(0, 1, 0);
+const AXIS_R = new THREE.Vector3(0, 0, -1);
+const POLE = 0.01; // looking straight down an axis, OrbitControls needs a nudge to know which way is up
+
+/** Where the camera sits for each side view (from the target), chosen so the
+ *  picture has the usual orientation: dorsal up for side views, anterior up
+ *  for top and bottom views. */
+const SIDE: Record<Exclude<CameraView, '3d'>, THREE.Vector3> = {
+  D: new THREE.Vector3(POLE, 1, 0), // nudged posterior, so anterior is up
+  V: new THREE.Vector3(-POLE, -1, 0), // nudged anterior, so anterior is up
+  L: AXIS_R.clone().negate(),
+  R: AXIS_R.clone(),
+  A: AXIS_P.clone().negate(),
+  P: AXIS_P.clone(),
+};
+
 export interface ViewerStatus {
   acronym: string;
   name: string;
@@ -59,6 +88,14 @@ export interface BrainViewerEvents {
    *  label; null when there is none or it is behind the camera. `settled` is
    *  false while the camera flies to a newly picked region. */
   onAnchor?: (a: { x: number; y: number; settled: boolean } | null) => void;
+  /** The camera turned: where the anatomical axes now point (for the orientation gizmo). */
+  onOrient?: (o: Orientation) => void;
+  /** Screen pixels per µm at the centre of rotation (for a scale bar). */
+  onScale?: (pxPerUm: number) => void;
+  /** The brain outline has loaded and the camera has its home pose (presets work from here). */
+  onReady?: () => void;
+  /** A preset was applied, or (null) the user moved the camera away from it. */
+  onView?: (view: CameraView | null) => void;
 }
 export interface MeshCatalogMaps {
   available: Set<number> | null;
@@ -130,7 +167,7 @@ const VERTEX_SHADER = /* glsl */ `
   out vec3 vLocalPos;
   void main() {
     vec4 worldPos = modelMatrix * vec4(position, 1.0);
-    vLocalPos = vec3(worldPos.x, -worldPos.y, worldPos.z); // undo the root group's y-flip
+    vLocalPos = vec3(worldPos.x, -worldPos.y, -worldPos.z); // undo the root group's half-turn about x
     gl_Position = projectionMatrix * viewMatrix * worldPos;
   }
 `;
@@ -209,18 +246,41 @@ export class BrainViewer {
     uniforms: { uColor: { value: new THREE.Color('#c9d1d2') }, uFace: { value: 0.03 }, uEdge: { value: 0.5 } },
     transparent: true,
     depthWrite: false,
-    // The y-flip turns the shell inside out: BackSide is its outer surface.
-    side: THREE.BackSide,
+    side: THREE.FrontSide,
   });
   /** eBrain: an opaque shell with the camera's octant cut away. */
   private readonly shellSolid = new THREE.MeshPhysicalMaterial({ color: 0x8f9899, roughness: 0.7, metalness: 0, side: THREE.DoubleSide });
   private region: THREE.Mesh | null = null;
+  private readonly surfaceGroup = new THREE.Group();
+  private readonly surfaces = new Map<number, THREE.Mesh>();
+  private surfaceWanted = new Set<number>();
+  private surfaceOpacity = 0.55;
+  private axes: THREE.Group | null = null;
+  // Display options, kept so ones set before the outline loads still apply.
+  private shellVisible = true;
+  private planesVisible = true;
+  private axesVisible = true;
+  /** Where the last preset put the camera; cleared once the camera leaves it. */
+  private presetPose: THREE.Vector3 | null = null;
   /** A point on the region's surface (mesh frame) that the label points at. */
   private anchor: THREE.Vector3 | null = null;
   private lastAnchor = '';
   private bounds: Bounds | null = null;
   private home: { position: THREE.Vector3; target: THREE.Vector3 } | null = null;
-  private tween: { fromPos: THREE.Vector3; fromTarget: THREE.Vector3; toPos: THREE.Vector3; toTarget: THREE.Vector3; t0: number; ms: number } | null = null;
+  /** A camera flight: the target moves in a line; the camera swings around it on
+   *  an arc, its orientation slerped so it never flips passing over a pole. */
+  private tween: {
+    fromTarget: THREE.Vector3;
+    toTarget: THREE.Vector3;
+    fromDir: THREE.Vector3;
+    turn: THREE.Quaternion;
+    fromLen: number;
+    toLen: number;
+    fromQuat: THREE.Quaternion;
+    toQuat: THREE.Quaternion;
+    t0: number;
+    ms: number;
+  } | null = null;
   private slices: Record<Plane, number> = { sagittal: PLANES.sagittal.initial, coronal: PLANES.coronal.initial, transverse: PLANES.transverse.initial };
   private ebrain = false;
   private volume: VolumeData | null = null;
@@ -232,6 +292,10 @@ export class BrainViewer {
   private ring: THREE.Mesh | null = null;
   private hover: { view: Plane | null; id: number } = { view: null, id: 0 };
   private raf = 0;
+  /** Something in the scene changed: draw the next frame. (Camera motion is tracked separately.) */
+  private dirty = true;
+  private readonly tmpDir = new THREE.Vector3();
+  private readonly tmpQuat = new THREE.Quaternion();
   private probeRaf = 0;
   private downAt: { x: number; y: number } | null = null;
   private disposed = false;
@@ -247,7 +311,7 @@ export class BrainViewer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.localClippingEnabled = true;
-    this.scene.background = new THREE.Color(0x101415);
+    this.scene.background = new THREE.Color(0x000000);
     this.camera.position.set(14000, 8000, 18000);
 
     this.controls = new OrbitControls(this.camera, canvas);
@@ -256,22 +320,32 @@ export class BrainViewer {
     const stopTween = () => {
       this.tween = null;
     };
+    const leftPreset = () => {
+      if (this.presetPose && !this.tween && this.camera.position.distanceToSquared(this.presetPose) > 1) this.releasePreset();
+    };
+    this.controls.addEventListener('change', leftPreset);
+    this.cleanup.push(() => this.controls.removeEventListener('change', leftPreset));
     this.controls.addEventListener('start', stopTween);
     this.cleanup.push(() => this.controls.removeEventListener('start', stopTween));
 
     // Near-neutral light, so the Allen colours read true.
     this.scene.add(new THREE.AmbientLight(0x30363a, 0.6));
     const lights: [number, number, [number, number, number]][] = [
-      [0xf2efe8, 1.15, [1, 1.3, 1]],
-      [0x8fa3b0, 0.45, [-1, 0.3, -0.8]],
-      [0x9a9286, 0.35, [0, -1, 0.5]],
+      // World: +x posterior, +y dorsal, -z right. Key light above-behind-right, where the default camera is.
+      [0xf2efe8, 1.15, [1, 1.3, -1]],
+      [0x8fa3b0, 0.45, [-1, 0.3, 0.8]],
+      [0x9a9286, 0.35, [0, -1, -0.5]],
     ];
     for (const [color, intensity, pos] of lights) {
       const l = new THREE.DirectionalLight(color, intensity);
       l.position.set(...pos);
       this.scene.add(l);
     }
-    this.root.scale.y = -1;
+    // Mesh space is PIR (x posterior, y inferior, z right). A half-turn about x
+    // puts superior up without mirroring the brain (a y-flip alone would swap
+    // left and right). World: +x posterior, +y dorsal, -z right.
+    this.root.rotation.x = Math.PI;
+    this.root.add(this.surfaceGroup);
     this.scene.add(this.root);
 
     this.listen(canvas, 'pointerdown', (e) => {
@@ -339,6 +413,7 @@ export class BrainViewer {
       }
       this.region = mesh;
       this.root.add(mesh);
+      this.dirty = true;
       this.anchor = surfaceAnchor(mesh.geometry);
       this.flyTo(mesh);
       if (res.substitute) {
@@ -356,11 +431,111 @@ export class BrainViewer {
   }
 
   recenter() {
-    if (this.home) this.moveCamera(this.home.position, this.home.target);
+    this.viewFrom('3d');
+  }
+
+  /** Look at the whole brain from one side (or the default 3D view), at the
+   *  default distance. */
+  viewFrom(view: CameraView) {
+    if (!this.home) return;
+    const pos =
+      view === '3d'
+        ? this.home.position.clone()
+        : this.home.target.clone().addScaledVector(SIDE[view].clone().normalize(), this.home.position.distanceTo(this.home.target));
+    this.moveCamera(pos, this.home.target);
+    this.presetPose = pos;
+    this.events.onView?.(view);
+  }
+
+  private releasePreset() {
+    this.presetPose = null;
+    this.events.onView?.(null);
+  }
+
+  /** Report the orientation and scale again on the next frame (for a listener that just subscribed). */
+  refreshOverlays() {
+    this.dirty = true;
+    this.lastOrient = '';
+    this.lastScale = 0;
+  }
+
+  /** Draw these structures as surfaces alongside the selection; drops the ones left out. */
+  async setSurfaces(list: { id: number; color: string }[]) {
+    this.surfaceWanted = new Set(list.map((s) => s.id));
+    for (const [id, mesh] of this.surfaces) {
+      if (this.surfaceWanted.has(id)) continue;
+      this.surfaceGroup.remove(mesh);
+      disposeTree(mesh);
+      this.surfaces.delete(id);
+      this.dirty = true;
+    }
+    await Promise.all(
+      list
+        .filter((s) => !this.surfaces.has(s.id))
+        .map(async (s) => {
+          try {
+            const mesh = await this.loadMesh(s.id, s.color, this.surfaceOpacity, false);
+            // Dropped, replaced or already loaded by a newer call while this one loaded.
+            if (this.disposed || !this.surfaceWanted.has(s.id) || this.surfaces.has(s.id)) {
+              disposeTree(mesh);
+              return;
+            }
+            this.styleSurface(mesh);
+            this.surfaces.set(s.id, mesh);
+            this.surfaceGroup.add(mesh);
+            this.dirty = true;
+          } catch {
+            // no model for this structure: the tree only offers ones that have one
+          }
+        }),
+    );
+  }
+
+  /** How solid the extra surfaces are, 0.2 to 1. */
+  setSurfaceOpacity(opacity: number) {
+    this.surfaceOpacity = THREE.MathUtils.clamp(opacity, 0.2, 1);
+    for (const m of this.surfaces.values()) this.styleSurface(m);
+  }
+
+  setPlanesVisible(visible: boolean) {
+    this.planesVisible = visible;
+    this.applyVisibility();
+  }
+
+  setAxesVisible(visible: boolean) {
+    this.axesVisible = visible;
+    this.applyVisibility();
+  }
+
+  /** The display options, applied to whatever has loaded. In eBrain mode the
+   *  planes stay: they are what you click. */
+  private applyVisibility() {
+    this.dirty = true;
+    if (this.shell) this.shell.visible = this.shellVisible;
+    if (this.axes) this.axes.visible = this.axesVisible;
+    for (const v of PLANE_ORDER) if (this.planes[v]) this.planes[v].group.visible = this.planesVisible || this.ebrain;
+  }
+
+  private styleSurface(mesh: THREE.Mesh) {
+    this.dirty = true;
+    const mat = mesh.material as THREE.MeshPhysicalMaterial;
+    mat.opacity = this.surfaceOpacity; // a uniform: no rebuild needed
+    const transparent = this.surfaceOpacity < 1;
+    // In eBrain mode, cut the same octant as the shell so the painted planes show.
+    const clipped = this.ebrain;
+    const wasClipped = !!mat.clippingPlanes?.length;
+    mat.depthWrite = !transparent; // render state, not part of the program
+    if (mat.transparent !== transparent || clipped !== wasClipped) {
+      mat.transparent = transparent;
+      mat.clippingPlanes = clipped ? [this.clip.coronal, this.clip.transverse, this.clip.sagittal] : null;
+      mat.clipIntersection = true;
+      mat.needsUpdate = true; // the shader program changes
+    }
   }
 
   setShellVisible(visible: boolean) {
-    if (this.shell) this.shell.visible = visible;
+    this.shellVisible = visible;
+    this.applyVisibility();
   }
 
   /** eBrain mode on/off. Resolves once the label volume is ready (or rejects). */
@@ -415,14 +590,7 @@ export class BrainViewer {
   }
 
   private async loadMesh(id: number, color: string, opacity: number, isShell: boolean) {
-    const gltf = await this.loader.loadAsync(`${MESH_BASE}${id}.glb`);
-    let mesh: THREE.Mesh | null = null;
-    gltf.scene.traverse((o) => {
-      if (!mesh && (o as THREE.Mesh).isMesh) mesh = o as THREE.Mesh;
-    });
-    const found = mesh as THREE.Mesh | null;
-    if (!found) throw new Error('empty mesh');
-    if (!found.geometry.attributes.normal) found.geometry.computeVertexNormals();
+    const found = await loadStructureMesh(this.loader, id);
     found.material = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(color),
       roughness: 0.55,
@@ -431,10 +599,8 @@ export class BrainViewer {
       transparent: true,
       opacity,
       depthWrite: !isShell,
-      // The y-flip turns the shell inside out: BackSide is its outer surface.
-      side: isShell ? THREE.BackSide : THREE.FrontSide,
+      side: THREE.FrontSide,
     });
-    found.removeFromParent();
     return found;
   }
 
@@ -450,17 +616,23 @@ export class BrainViewer {
       mesh.material = this.shellGlass;
       this.shell = mesh;
       this.root.add(mesh);
+      this.dirty = true;
       this.frame(mesh);
       mesh.geometry.computeBoundingBox();
       const bb = mesh.geometry.boundingBox!;
       const center = bb.getCenter(new THREE.Vector3());
       const size = bb.getSize(new THREE.Vector3());
       this.bounds = { center, size, min: bb.min.clone() };
+      // The labels are drawn once into a texture: make sure their font is there first.
+      await document.fonts?.load('500 24px "JetBrains Mono Variable"').catch(() => undefined);
+      if (this.disposed) return;
       this.buildAxes(center, size);
       this.buildPlanes(size);
       for (const v of PLANE_ORDER) this.placePlane(v);
       this.applyAppearance();
+      this.applyVisibility();
       this.home = { position: this.camera.position.clone(), target: this.controls.target.clone() };
+      this.events.onReady?.();
       if (this.region) this.flyTo(this.region); // it loaded before the shell
       // (A region requested meanwhile loads on its own and reports its own status.)
       if (!this.target) this.regionStatus('—', 'Select a region to see it in 3D');
@@ -478,7 +650,7 @@ export class BrainViewer {
     const fov = (this.camera.fov * Math.PI) / 180;
     const dist = (Math.max(size.x, size.y, size.z) / 2 / Math.tan(fov / 2)) * padding;
     this.controls.target.copy(center);
-    this.camera.position.copy(center).addScaledVector(new THREE.Vector3(0.8, 0.5, 1).normalize(), dist);
+    this.camera.position.copy(center).addScaledVector(new THREE.Vector3(0.8, 0.5, -1).normalize(), dist);
     this.camera.updateProjectionMatrix();
     const radius = size.length() / 2;
     this.controls.minDistance = radius * 0.25;
@@ -505,7 +677,7 @@ export class BrainViewer {
       const ctx = cvs.getContext('2d');
       if (!ctx) return;
       ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
-      ctx.font = '500 26px "Archivo Variable", system-ui, sans-serif';
+      ctx.font = '500 24px "JetBrains Mono Variable", ui-monospace, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(text, 96, 34);
@@ -525,6 +697,7 @@ export class BrainViewer {
     label('Left', new THREE.Vector3(0, 0, -off), AXIS);
     label('Right', new THREE.Vector3(0, 0, off), AXIS);
     this.root.add(g);
+    this.axes = g;
   }
 
   private buildPlanes(size: THREE.Vector3) {
@@ -551,6 +724,7 @@ export class BrainViewer {
   }
 
   private placePlane(v: Plane) {
+    this.dirty = true;
     const p = this.planes[v];
     const b = this.bounds;
     if (!p || !b) return;
@@ -632,6 +806,7 @@ export class BrainViewer {
 
   /** Planes: tinted glass, or (eBrain, volume loaded) painted from the volume. Shell: ghost, or solid with a cutaway. */
   private applyAppearance() {
+    this.dirty = true;
     for (const v of PLANE_ORDER) {
       const p = this.planes[v];
       if (!p) continue;
@@ -644,6 +819,8 @@ export class BrainViewer {
         p.preview.opacity = this.ebrain ? 0 : 0.18;
       }
     }
+    for (const m of this.surfaces.values()) this.styleSurface(m);
+    this.applyVisibility();
     if (!this.shell) return;
     if (this.ebrain) {
       this.updateClipPlanes();
@@ -665,11 +842,23 @@ export class BrainViewer {
       this.controls.target.copy(target);
       return;
     }
+    // Drop any inertia left from a recent drag, so it can't push the camera off course.
+    this.controls.enableDamping = false;
+    this.controls.update();
+    this.controls.enableDamping = true;
+    const from = this.camera.position.clone().sub(this.controls.target);
+    const to = position.clone().sub(target);
+    const fromDir = from.clone().normalize();
+    const toQuat = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(position, target, this.camera.up));
     this.tween = {
-      fromPos: this.camera.position.clone(),
       fromTarget: this.controls.target.clone(),
-      toPos: position.clone(),
       toTarget: target.clone(),
+      fromDir,
+      turn: new THREE.Quaternion().setFromUnitVectors(fromDir, to.clone().normalize()),
+      fromLen: from.length(),
+      toLen: to.length(),
+      fromQuat: this.camera.quaternion.clone(),
+      toQuat,
       t0: performance.now(),
       ms: FLY_MS,
     };
@@ -679,6 +868,7 @@ export class BrainViewer {
    *  current viewing angle and enough of the brain around it for context. */
   private flyTo(mesh: THREE.Object3D) {
     if (!this.home) return;
+    if (this.presetPose) this.releasePreset();
     mesh.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(mesh);
     if (box.isEmpty()) return;
@@ -756,7 +946,7 @@ export class BrainViewer {
     this.ray.setFromCamera(ndc, this.camera);
     const meshes = PLANE_ORDER.flatMap((v) => (this.planes[v]?.group.visible ? [this.planes[v].mesh] : []));
     const hits = this.ray.intersectObjects(meshes, false).map((h) => {
-      const local = new THREE.Vector3(h.point.x, -h.point.y, h.point.z);
+      const local = this.root.worldToLocal(h.point.clone());
       const view = PLANE_ORDER.find((v) => this.planes[v].mesh === h.object)!;
       return { view, local, world: h.point, voxel: this.sample(local) };
     });
@@ -811,6 +1001,7 @@ export class BrainViewer {
 
   /** Light up the hovered region on the hovered plane. */
   private setHover(view: Plane | null, id: number) {
+    this.dirty = true;
     this.hover = { view, id };
     for (const v of PLANE_ORDER) {
       const u = this.planes[v]?.volumeMat?.uniforms;
@@ -821,6 +1012,7 @@ export class BrainViewer {
   }
 
   private placeMarker(world: THREE.Vector3, view: Plane) {
+    this.dirty = true;
     if (!this.marker) {
       const mat = (opacity: number) => new THREE.MeshBasicMaterial({ color: 0xc4a46a, transparent: true, opacity, depthTest: false });
       this.marker = new THREE.Mesh(new THREE.SphereGeometry(45, 16, 12), mat(0.95));
@@ -841,6 +1033,7 @@ export class BrainViewer {
   }
 
   private clearRegion() {
+    this.dirty = true;
     if (!this.region) return;
     this.root.remove(this.region);
     disposeTree(this.region);
@@ -861,19 +1054,65 @@ export class BrainViewer {
       this.renderer.setSize(w, h, false);
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
+      this.dirty = true;
     }
+    const flying = !!this.tween;
     if (this.tween) {
-      const k = Math.min(1, (performance.now() - this.tween.t0) / this.tween.ms);
+      const t = this.tween;
+      const k = Math.min(1, (performance.now() - t.t0) / t.ms);
       const ease = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2; // ease-in-out (cubic)
-      this.camera.position.lerpVectors(this.tween.fromPos, this.tween.toPos, ease);
-      this.controls.target.lerpVectors(this.tween.fromTarget, this.tween.toTarget, ease);
-      if (k === 1) this.tween = null;
+      this.controls.target.lerpVectors(t.fromTarget, t.toTarget, ease);
+      const dir = this.tmpDir.copy(t.fromDir).applyQuaternion(this.tmpQuat.identity().slerp(t.turn, ease));
+      this.camera.position.copy(this.controls.target).addScaledVector(dir, THREE.MathUtils.lerp(t.fromLen, t.toLen, ease));
+      this.camera.quaternion.slerpQuaternions(t.fromQuat, t.toQuat, ease);
+      if (k === 1) {
+        this.tween = null;
+        this.dirty = true; // one more frame, with OrbitControls back in charge
+      }
     }
-    this.controls.update();
+    // During a flight the camera is posed directly (OrbitControls would re-aim it
+    // and flip it over a pole). Otherwise update() reports whether it moved: a
+    // drag, or damping settling after one.
+    const moved = this.tween ? false : this.controls.update();
+    // Nothing moved and nothing changed: skip the frame. A still brain costs no GPU time.
+    if (!moved && !flying && !this.dirty) return;
+    this.dirty = false;
     if (this.ebrain && this.followCamera()) this.updateClipPlanes();
     this.renderer.render(this.scene, this.camera);
     this.emitAnchor();
+    this.emitOrient();
+    this.emitScale(h);
   };
+
+  private lastScale = 0;
+  /** Pixels per µm at the orbit target (scene units are µm). Reported when it changes by more than 0.5%. */
+  private emitScale(heightPx: number) {
+    const on = this.events.onScale;
+    if (!on) return;
+    const dist = this.camera.position.distanceTo(this.controls.target);
+    const visible = 2 * dist * Math.tan(((this.camera.fov * Math.PI) / 180) / 2);
+    const pxPerUm = heightPx / visible;
+    if (Math.abs(pxPerUm - this.lastScale) <= this.lastScale * 0.005) return;
+    this.lastScale = pxPerUm;
+    on(pxPerUm);
+  }
+
+  private lastOrient = '';
+  /** Tell the page where the anatomical axes point on screen (only when they moved). */
+  private emitOrient() {
+    const on = this.events.onOrient;
+    if (!on) return;
+    const e = this.camera.matrixWorld.elements;
+    const right = new THREE.Vector3(e[0], e[1], e[2]);
+    const up = new THREE.Vector3(e[4], e[5], e[6]);
+    const back = new THREE.Vector3(e[8], e[9], e[10]);
+    const screen = (a: THREE.Vector3) => ({ x: a.dot(right), y: a.dot(up), z: a.dot(back) });
+    const o: Orientation = { p: screen(AXIS_P), d: screen(AXIS_D), r: screen(AXIS_R) };
+    const key = [o.p, o.d, o.r].map((v) => `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`).join(';');
+    if (key === this.lastOrient) return;
+    this.lastOrient = key;
+    on(o);
+  }
 }
 
 /** The surface vertex nearest the middle of a mesh's box: on the region even

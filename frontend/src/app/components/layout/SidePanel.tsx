@@ -11,7 +11,7 @@ import { useUi, type PanelTab } from '@/store/ui';
  *  hierarchy is the index on the left). */
 export function SidePanel() {
   return (
-    <aside aria-label="Region details" className="flex w-[360px] shrink-0 flex-col border-l border-border bg-surface">
+    <aside aria-label="Region details" className="flex w-[336px] shrink-0 flex-col border-l border-border bg-surface">
       <PanelTabs className="flex-[3_1_0]" withHierarchy={false} />
       <ErrorBoundary area="the assistant" className="border-t border-border p-5">
         <Assistant />
@@ -20,7 +20,7 @@ export function SidePanel() {
   );
 }
 
-/** Inspector / Hierarchy / Saved (the phone's details sheet; the desktop side panel leaves out Hierarchy). */
+/** Details / Hierarchy / Saved (the phone's details sheet; the desktop side panel leaves out Hierarchy). */
 export function PanelTabs({ className, withHierarchy = true }: { className?: string; withHierarchy?: boolean }) {
   const stored = useUi((s) => s.tab);
   const setTab = useUi((s) => s.setTab);
@@ -28,7 +28,7 @@ export function PanelTabs({ className, withHierarchy = true }: { className?: str
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as PanelTab)} className={cn('flex min-h-0 flex-col', className)}>
       <TabsList aria-label="Panel sections">
-        <TabsTrigger value="inspector">Inspector</TabsTrigger>
+        <TabsTrigger value="inspector">Details</TabsTrigger>
         {withHierarchy && <TabsTrigger value="hierarchy">Hierarchy</TabsTrigger>}
         <TabsTrigger value="saved">Saved</TabsTrigger>
       </TabsList>

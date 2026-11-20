@@ -26,7 +26,7 @@ test('tap a slice to identify the region; the sheet shows it', async ({ page }) 
   for (const name of ['Save', 'Copy link', 'Ask']) await expect(sheet.getByRole('button', { name })).toBeVisible();
 
   await sheet.getByRole('button', { name: 'Show region details' }).last().tap();
-  await expect(page.getByRole('dialog', { name: 'Region details' }).getByRole('tab', { name: 'Inspector' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Region details' }).getByRole('tab', { name: 'Details' })).toBeVisible();
 });
 
 test('step through slices with − and +', async ({ page }) => {

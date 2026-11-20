@@ -57,8 +57,8 @@ export function Assistant() {
 
   return (
     <section aria-label="Assistant" className="flex min-h-0 flex-[2_1_0] flex-col border-t border-border">
-      <header className="flex items-center justify-between px-5 pb-2 pt-3">
-        <h2 className="text-sm font-semibold">Assistant</h2>
+      <header className="flex items-center justify-between px-4 pb-2 pt-3">
+        <h2 className="panel-label">Assistant</h2>
         <div role="group" aria-label="AI model" className="flex gap-0.5 rounded-md border border-border bg-background p-0.5">
           {(
             [
@@ -83,7 +83,7 @@ export function Assistant() {
         </div>
       </header>
 
-      <div aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-2">
+      <div aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-2 text-[13px]">
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground">
             {selection ? `Ask about ${selection.label}: its function, connections or anatomy.` : 'Select a region, then ask about it, or ask a general question.'}
@@ -102,12 +102,12 @@ export function Assistant() {
         <div ref={bottom} />
       </div>
 
-      <form onSubmit={send} className="flex gap-2 px-5 pb-4 pt-2">
+      <form onSubmit={send} className="flex gap-2 px-3 pb-3 pt-2">
         <label htmlFor="assistant-input" className="sr-only">
           Question for the assistant
         </label>
-        <Input id="assistant-input" autoComplete="off" placeholder="Ask about the selected region" value={text} onChange={(e) => setText(e.target.value)} />
-        <Button type="submit" variant="primary" disabled={!text.trim() || ask.isPending}>
+        <Input id="assistant-input" autoComplete="off" placeholder="Ask about the selected region" className="h-8 text-[13px] max-md:h-11 max-md:text-sm" value={text} onChange={(e) => setText(e.target.value)} />
+        <Button type="submit" variant="primary" size="sm" className="max-md:h-11" disabled={!text.trim() || ask.isPending}>
           Ask
         </Button>
       </form>

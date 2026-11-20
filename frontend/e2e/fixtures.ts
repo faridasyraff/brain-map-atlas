@@ -23,4 +23,4 @@ export { expect };
 export const realBackend = !!process.env.E2E_BASE_URL;
 
 /** The selected region's name in the desktop inspector. */
-export const regionHeading = (page: Page) => page.getByRole('tabpanel', { name: 'Inspector' }).getByRole('heading', { level: 2 }).first();
+export const regionHeading = (page: Page) => page.getByRole('tabpanel', { name: 'Details' }).getByRole('heading', { level: 2 }).first();
