@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { defaultRangeExtractor, useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { ChevronRight, Eye, EyeOff, Search } from 'lucide-react';
+import { Tip } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { usePhoneLayout } from '@/hooks/useMediaQuery';
 import { availableMeshesQuery, getOntology, type OntologyNode } from '@/lib/api';
@@ -307,19 +308,21 @@ function Dot({ color, dim }: { color: string; dim?: boolean }) {
  *  or focus (always on a phone), so the tree stays quiet. */
 function SurfaceToggle({ node, on, onToggle }: { node: OntologyNode; on: boolean; onToggle: (id: number) => void }) {
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      aria-label={`Show ${node.name} in 3D`}
-      title={on ? `Hide ${node.name} in 3D` : `Show ${node.name} in 3D`}
-      onClick={() => onToggle(node.id)}
-      className={cn(
-        'pressable grid size-6 shrink-0 place-items-center rounded-sm max-md:size-11',
-        on ? 'text-foreground' : 'text-subtle-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100',
-      )}
-    >
-      {on ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-    </button>
+    // A constant label, as the accessible name (aria-pressed and the eye carry the state).
+    <Tip label={`Show ${node.name} in 3D`}>
+      <button
+        type="button"
+        aria-pressed={on}
+        aria-label={`Show ${node.name} in 3D`}
+        onClick={() => onToggle(node.id)}
+        className={cn(
+          'pressable grid size-6 shrink-0 place-items-center rounded-sm max-md:size-11',
+          on ? 'text-foreground' : 'text-subtle-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100',
+        )}
+      >
+        {on ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+      </button>
+    </Tip>
   );
 }
 

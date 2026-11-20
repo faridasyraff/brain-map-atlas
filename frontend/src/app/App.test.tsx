@@ -144,6 +144,22 @@ describe('Search → selection', () => {
     expect(slider('Coronal slice')).toHaveAttribute('aria-valuenow', '600');
     expect(useAtlas.getState().slices).toEqual({ sagittal: 500, coronal: 600, transverse: 300 });
   });
+
+  it('opens a link with a region but no slices without loading the default slices first', async () => {
+    const api = installFakeApi();
+    resetApp('/app?region=150');
+    renderApp();
+    expect(await within(inspector()).findByRole('heading', { name: 'Lateral dorsal nucleus of thalamus' })).toBeInTheDocument();
+    const { slices } = useAtlas.getState();
+    await waitFor(() => expect(api.calls('/api/slice')).toHaveLength(3));
+    await new Promise((r) => setTimeout(r, 300)); // nothing late either
+    expect(api.calls('/api/slice')).toHaveLength(3);
+    // Each view asked once, for the region's slice, never for the starting one.
+    for (const c of api.calls('/api/slice')) {
+      const view = c.url.searchParams.get('view') as keyof typeof slices;
+      expect(Number(c.url.searchParams.get('idx'))).toBe(slices[view]);
+    }
+  });
 });
 
 describe('Hierarchy', () => {

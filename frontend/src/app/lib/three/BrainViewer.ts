@@ -520,13 +520,18 @@ export class BrainViewer {
     this.dirty = true;
     const mat = mesh.material as THREE.MeshPhysicalMaterial;
     mat.opacity = this.surfaceOpacity; // a uniform: no rebuild needed
-    const transparent = this.surfaceOpacity < 1;
+    // Surfaces stay `transparent` even at 100%: switching it swaps the shader
+    // program, and compiling that froze the page for a frame or more as the
+    // opacity slider reached the end. At 100% blending changes nothing, and
+    // writing depth (render state, not part of the program) makes it solid.
+    mat.depthWrite = this.surfaceOpacity >= 1;
+    // A solid surface used to be drawn in the opaque pass, before the glass shell and the
+    // plane previews; drawing it first among the transparent objects keeps that look.
+    mesh.renderOrder = this.surfaceOpacity >= 1 ? -1 : 0;
     // In eBrain mode, cut the same octant as the shell so the painted planes show.
     const clipped = this.ebrain;
     const wasClipped = !!mat.clippingPlanes?.length;
-    mat.depthWrite = !transparent; // render state, not part of the program
-    if (mat.transparent !== transparent || clipped !== wasClipped) {
-      mat.transparent = transparent;
+    if (clipped !== wasClipped) {
       mat.clippingPlanes = clipped ? [this.clip.coronal, this.clip.transverse, this.clip.sagittal] : null;
       mat.clipIntersection = true;
       mat.needsUpdate = true; // the shader program changes

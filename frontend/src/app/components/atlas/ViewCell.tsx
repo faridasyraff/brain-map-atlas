@@ -12,6 +12,7 @@ import { PLANE_COLOR_CLASS, PLANES, type Plane } from '@/lib/planes';
 import type { Highlight } from '@/lib/selection';
 import { cn } from '@/lib/utils';
 import { ATLAS, fmtUm } from '@/lib/atlasFacts';
+import { useAtlas } from '@/store/atlas';
 import { ScaleBar } from './ScaleBar';
 import { isIdentity, ZOOM_MAX, ZOOM_MIN, type ViewTransform } from '@/lib/zoom';
 
@@ -64,7 +65,8 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, hi
   const cfg = PLANES[plane];
   const color = PLANE_COLOR_CLASS[plane];
   // A hidden view (another one is expanded) loads nothing until shown again.
-  const slice = useSlice(plane, idx, !hidden);
+  const opening = useAtlas((s) => s.opening);
+  const slice = useSlice(plane, idx, !hidden && !opening);
   const mask = useHighlight(plane, idx, highlight, !hidden);
 
   const [draft, setDraft] = useSliderDraft(idx);
@@ -101,16 +103,18 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, hi
   const layer = 'absolute inset-3 block h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain select-none';
 
   return (
-    <section aria-label={`${cfg.label} view`} hidden={hidden} className="flex min-h-0 min-w-0 flex-1 flex-col bg-canvas">
+    <section aria-label={`${cfg.label} view`} hidden={hidden} className="@container flex min-h-0 min-w-0 flex-1 flex-col bg-canvas">
       {!phone && (
-      <header className="flex h-8 shrink-0 items-center gap-2.5 border-b border-border bg-surface pl-2.5 pr-1">
-        <span className="flex items-center gap-1.5 text-[12.5px] font-semibold">
-          <span aria-hidden className={cn('size-[9px] rounded-[2px]', color.bg)} />
-          {cfg.label}
+      <header className="flex h-8 shrink-0 items-center gap-2.5 border-b border-border bg-surface pl-2.5 pr-1 @max-[200px]:gap-1.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] font-semibold">
+          <span aria-hidden className={cn('size-[9px] shrink-0 rounded-[2px]', color.bg)} />
+          {/* Short of room the name shortens first; in a narrow view (a tablet) the swatch alone
+              names the plane, so the slider and the buttons keep their room. */}
+          <span className="truncate @max-[200px]:sr-only">{cfg.label}</span>
         </span>
         <Slider
           aria-label={`${cfg.label} slice`}
-          className={cn('max-w-64 flex-1', color.text)}
+          className={cn('min-w-10 max-w-64 flex-1', color.text)}
           min={cfg.min}
           max={cfg.max}
           value={[draft]}

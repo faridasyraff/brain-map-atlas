@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { openRegionRef } from '@/lib/navigate';
 import type { Plane } from '@/lib/planes';
 import { useAtlas } from '@/store/atlas';
@@ -30,13 +30,30 @@ export function parseLink(search: string) {
  * opening such a link restores it. Mount once.
  */
 export function useUrlSync() {
+  // The link the page was opened with, read once. A region without slice
+  // positions (e.g. the home page's hippocampus link) holds the views back until
+  // its position is known, so they load once, in the right place. Decided while
+  // the root renders, before any view mounts: React runs the views' effects
+  // (which fetch slices) before this component's own.
+  const [link] = useState(() => {
+    const parsed = parseLink(window.location.search);
+    if (parsed.ref && Object.keys(parsed.slices).length === 0) useAtlas.setState({ opening: true });
+    return parsed;
+  });
+
   useEffect(() => {
-    // 1) Restore from the link the page was opened with.
-    const { slices, ref } = parseLink(window.location.search);
+    // 1) Restore from the link. With slice positions, keep them (the sender's exact view).
+    const { slices, ref } = link;
     const hasSlices = Object.keys(slices).length > 0;
     if (hasSlices) useAtlas.getState().setSlices(slices);
-    // With slice positions in the link, keep them (the sender's exact view).
-    if (ref) void openRegionRef(ref, { keepSlices: hasSlices });
+    let done = false;
+    const release = () => {
+      if (!done) useAtlas.setState({ opening: false });
+      done = true;
+    };
+    // A slow or stuck lookup must not leave the views blank: show the default slices after 4 s.
+    const fallback = window.setTimeout(release, 4000);
+    if (ref) void openRegionRef(ref, { keepSlices: hasSlices }).finally(release);
 
     // 2) Keep the address bar in step. replaceState: moving a slider
     //    shouldn't flood the back-button history.
@@ -49,6 +66,13 @@ export function useUrlSync() {
       if (selection) url.searchParams.set(selection.kind === 'region' ? 'region' : 'group', selection.ref);
       window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     };
-    return useAtlas.subscribe(write);
-  }, []);
+    const unsubscribe = useAtlas.subscribe(write);
+    return () => {
+      unsubscribe();
+      // A rerun (StrictMode) opens the link again and releases the views itself:
+      // this run's lookup, superseded and settling first, must not release them early.
+      done = true;
+      window.clearTimeout(fallback);
+    };
+  }, [link]);
 }

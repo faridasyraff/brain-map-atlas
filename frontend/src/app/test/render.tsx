@@ -10,7 +10,7 @@ export const testQueryClient = () => new QueryClient({ defaultOptions: { queries
 
 /** Reset shared stores and the address bar between tests. */
 export function resetApp(url = '/app') {
-  useAtlas.setState({ slices: initialSlices(), selection: null, surfaces: [] });
+  useAtlas.setState({ slices: initialSlices(), selection: null, surfaces: [], opening: false });
   useUi.setState({ panelOpen: true, indexOpen: true, tab: 'inspector', layout: 'stage', signInMode: null });
   window.history.replaceState(null, '', url);
 }
