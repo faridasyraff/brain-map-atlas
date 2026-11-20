@@ -24,8 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
-COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# The lock file pins every package (and the GitHub one to a commit), so a
+# rebuild installs exactly what was tested instead of whatever is newest.
+COPY backend/requirements.lock.txt ./
+RUN pip install --no-cache-dir -r requirements.lock.txt
 
 COPY backend/ ./
 # Copy in only the finished website files built in step 1 — not the raw
@@ -54,6 +56,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=300s --retries=3 \
 # visitors at once by running several separate copies of it side by side
 # ("workers") — but each copy would need its own full copy of that same
 # large chunk of memory, which adds up fast. So instead we run just one
-# copy, but give that one copy 4 "threads" (a way to still handle multiple
-# visitors at the same time) without duplicating all that memory.
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "4", "--timeout", "120", "App:app"]
+# copy, but give that one copy 16 "threads" (a way to still handle multiple
+# visitors at the same time) without duplicating all that memory. Threads
+# share the memory-mapped volumes, so they are cheap; there are this many
+# because an AI chat holds its thread while waiting on Ollama or OpenAI (up
+# to a minute or two), and with only 4 a few chats stalled every slice.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "16", "--timeout", "120", "App:app"]
