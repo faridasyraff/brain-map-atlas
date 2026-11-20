@@ -2,7 +2,7 @@ import { expect, regionHeading, test } from './fixtures';
 
 test('the landing page shows a real section and opens the atlas on the hippocampus', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Allen mouse brain, region by region');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Find any region of the mouse brain');
   const hero = page.getByRole('img', { name: /Coronal section of the mouse brain/ });
   await expect(hero).toBeVisible();
   // Decoded, not just in the page.

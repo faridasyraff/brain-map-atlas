@@ -9,7 +9,7 @@ beforeEach(() => resetApp());
 afterEach(() => vi.unstubAllGlobals());
 
 const slider = (name: string) => screen.getByRole('slider', { name });
-const inspector = () => screen.getByRole('tabpanel', { name: 'Inspector' });
+const inspector = () => screen.getByRole('tabpanel', { name: 'Details' });
 
 async function searchAndOpen(text: string) {
   const box = screen.getByRole('combobox', { name: 'Find a region' });
@@ -38,6 +38,20 @@ describe('App shell', () => {
     expect(screen.getByRole('region', { name: 'Sagittal view' })).toBeInTheDocument();
   });
 
+  it('switches between the stage and four equal views, and remembers the choice', async () => {
+    installFakeApi();
+    renderApp();
+    const canvas = screen.getByLabelText('3D brain');
+    const grid = () => screen.getByRole('main', { name: 'Atlas views' }).firstElementChild as HTMLElement;
+    expect(grid()).toHaveAttribute('data-layout', 'stage');
+    await userEvent.click(screen.getByRole('button', { name: 'Four equal views' }));
+    expect(grid()).toHaveAttribute('data-layout', 'quad');
+    expect(screen.getByLabelText('3D brain')).toBe(canvas); // moved, not remounted
+    expect(localStorage.getItem('brain-atlas.layout')).toBe('quad');
+    await userEvent.click(screen.getByRole('button', { name: 'Stage: 3D above the three sections' }));
+    expect(grid()).toHaveAttribute('data-layout', 'stage');
+  });
+
   it('hides and shows the side panel', async () => {
     installFakeApi();
     renderApp();
@@ -55,6 +69,25 @@ describe('App shell', () => {
     expect(search).toHaveFocus();
     await userEvent.type(search, 'a/b');
     expect(search).toHaveValue('a/b');
+  });
+
+  it('the details panel states the atlas and its citation, even with nothing selected', async () => {
+    installFakeApi();
+    renderApp();
+    expect(within(inspector()).getByText('2017 annotation')).toBeInTheDocument();
+    expect(within(inspector()).getByRole('link', { name: 'doi:10.1016/j.cell.2020.04.007' })).toHaveAttribute(
+      'href',
+      'https://doi.org/10.1016/j.cell.2020.04.007',
+    );
+  });
+
+  it('Ctrl K jumps to search, even from inside another box', async () => {
+    installFakeApi();
+    renderApp();
+    const search = screen.getByRole('combobox', { name: 'Find a region' });
+    search.blur();
+    await userEvent.keyboard('{Control>}k{/Control}');
+    expect(search).toHaveFocus();
   });
 });
 
@@ -114,10 +147,21 @@ describe('Search → selection', () => {
 });
 
 describe('Hierarchy', () => {
+  it('the index folds to a rail and back, keeping keyboard focus', async () => {
+    installFakeApi();
+    renderApp();
+    expect(await screen.findByRole('tree')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Fold the brain index' }));
+    expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show the brain index' })).toHaveFocus();
+    await userEvent.click(screen.getByRole('button', { name: 'Show the brain index' }));
+    expect(await screen.findByRole('tree')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fold the brain index' })).toHaveFocus();
+  });
+
   it('browses the tree and opens a group from it', async () => {
     installFakeApi();
     renderApp();
-    await userEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
     await userEvent.click(await screen.findByRole('button', { name: /^Thalamus/ }));
     await waitFor(() => expect(useAtlas.getState().selection?.label).toBe('Thalamus'));
   });
@@ -125,7 +169,6 @@ describe('Hierarchy', () => {
   it('filter: exact match first, Enter opens it', async () => {
     installFakeApi();
     renderApp();
-    await userEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
     await screen.findByRole('tree');
     await userEvent.type(screen.getByRole('searchbox', { name: 'Filter the hierarchy' }), 'cp{Enter}');
     await waitFor(() => expect(useAtlas.getState().selection?.label).toBe('Caudoputamen'));

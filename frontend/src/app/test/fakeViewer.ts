@@ -13,6 +13,12 @@ export class BrainViewer {
   setCatalog = vi.fn();
   showRegion = vi.fn(async () => {});
   recenter = vi.fn();
+  viewFrom = vi.fn();
+  refreshOverlays = vi.fn();
+  setSurfaces = vi.fn(async () => {});
+  setSurfaceOpacity = vi.fn();
+  setPlanesVisible = vi.fn();
+  setAxesVisible = vi.fn();
   setShellVisible = vi.fn();
   setEbrain = vi.fn(async () => {});
   dispose = vi.fn();

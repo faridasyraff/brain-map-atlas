@@ -90,7 +90,7 @@ describe('phone layout', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Browse the hierarchy' }));
     const dialog = await screen.findByRole('dialog', { name: 'Region details' });
     expect(within(dialog).getByRole('tab', { name: 'Hierarchy' })).toHaveAttribute('aria-selected', 'true');
-    expect(within(dialog).getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('tab', { name: 'Details' })).toBeInTheDocument();
     // Opening a region from the tree closes the sheet, so the views can be seen moving.
     await userEvent.click(await within(dialog).findByRole('button', { name: /^Thalamus/ }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

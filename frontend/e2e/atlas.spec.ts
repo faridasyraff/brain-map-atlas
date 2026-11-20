@@ -40,7 +40,7 @@ test('a drag pans instead of clicking; the wheel zooms; Reset zoom puts it back'
   expect(lookups).toBe(0);
 
   await page.getByRole('region', { name: 'Sagittal view' }).getByRole('button', { name: 'Reset zoom' }).click();
-  await expect(zoom).toHaveText('100%');
+  await expect(zoom).toBeHidden(); // back to 100%: the strip drops the zoom controls
 });
 
 test('search opens a region, and the link reopens it', async ({ page }) => {

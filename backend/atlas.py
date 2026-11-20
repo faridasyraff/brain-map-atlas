@@ -646,8 +646,11 @@ def colorize(annot_slice, level='structure'):
     return lut[flat].reshape(annot_slice.shape[0], annot_slice.shape[1], 3)
 
 # ── Render a slice to base64 PNG ──────────────────────────────────────────────
+SLICE_MIME = 'image/webp'
+
+
 def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=None, fh=None):
-    """Composite one slice into a PNG at the atlas's native resolution:
+    """Composite one slice into a lossless WebP (SLICE_MIME) at the atlas's native resolution:
       1. the grey template, contrast-stretched to this slice's own min..max
       2. the region colors at ~70% opacity wherever there is a region
       3. the region boundary lines on top (black, opacity = boundary/225)
@@ -675,7 +678,10 @@ def render_to_b64(tmpl, bnd, annot, colorize_level=None, fw=None, fh=None):
 
     img = Image.fromarray(np.clip(out + 0.5, 0, 255).astype(np.uint8), 'RGB')
     buf = io.BytesIO()
-    img.save(buf, format='PNG', compress_level=3)   # 3: much faster than the default 6, ~same size
+    # Lossless WebP at its fastest setting: pixel-identical to the PNG this used
+    # to send, ~20% smaller, ~10-15 ms more to encode. (Its denser settings
+    # save 40% but take 0.2-0.7 s a slice: too slow while scrubbing.)
+    img.save(buf, format='WEBP', lossless=True, method=0, quality=0)
     h, w = annot.shape
     return base64.b64encode(buf.getvalue()).decode('utf-8'), w, h
 

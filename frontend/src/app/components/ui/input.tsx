@@ -7,7 +7,7 @@ export function Input({ className, type = 'text', ...props }: React.ComponentPro
       type={type}
       className={cn(
         'h-9 w-full rounded-md border border-border-strong bg-background px-3 text-sm text-foreground',
-        'placeholder:text-subtle-foreground transition-colors hover:border-[#4a5563]',
+        'placeholder:text-subtle-foreground transition-colors hover:border-muted-foreground/40',
         'focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/20',
         '[&::-webkit-search-cancel-button]:hidden',
         className,

@@ -27,7 +27,9 @@ const VIEWS: ViewId[] = [...PLANE_ORDER, 'three-d'];
 
 /** A panel that slides up from the bottom (a full-width dialog). */
 const SHEET =
-  'left-0 right-0 top-auto bottom-0 flex h-[85dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-b-none rounded-t-xl p-0';
+  'left-0 right-0 top-auto bottom-0 flex h-[85dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-b-none rounded-t-xl p-0 ' +
+  // Slides up from below the screen (drawer curve) and back down faster.
+  'data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out';
 
 /**
  * The phone layout: one view at a time (tabs), its slice stepper, and a sheet
@@ -50,10 +52,7 @@ export function PhoneAtlas() {
       <PhoneHeader />
       <TabsPrimitive.Root asChild value={view} onValueChange={(v) => choose(v as ViewId)}>
         <main aria-label="Atlas views" className="flex min-h-0 flex-1 flex-col">
-          <TabsPrimitive.List
-            aria-label="View"
-            className="mx-4 mt-3 grid shrink-0 grid-cols-4 gap-1 rounded-lg border border-border bg-surface p-1"
-          >
+          <TabsPrimitive.List aria-label="View" className="grid shrink-0 grid-cols-4 border-b border-border">
             {VIEWS.map((id) => (
               <TabsPrimitive.Trigger
                 key={id}
@@ -61,8 +60,8 @@ export function PhoneAtlas() {
                 // The active tab is underlined in its plane's color.
                 style={{ '--tab-accent': `var(--color-plane-${id === 'three-d' ? '3d' : id})` } as React.CSSProperties}
                 className={cn(
-                  'h-9 rounded-[7px] text-[13px] font-medium text-muted-foreground transition-colors',
-                  'data-[state=active]:bg-hover data-[state=active]:font-semibold data-[state=active]:text-foreground',
+                  'h-11 text-[13px] font-medium text-muted-foreground transition-colors',
+                  'data-[state=active]:font-semibold data-[state=active]:text-foreground',
                   'data-[state=active]:shadow-[inset_0_-2px_0_var(--tab-accent)]',
                 )}
               >
@@ -71,14 +70,14 @@ export function PhoneAtlas() {
             ))}
           </TabsPrimitive.List>
 
-          <ErrorBoundary area="the atlas views" className="mt-3 flex-1 p-4">
+          <ErrorBoundary area="the atlas views" className="flex min-h-0 flex-1 flex-col">
             {PLANE_ORDER.map((plane) => (
-              <TabsPrimitive.Content key={plane} value={plane} forceMount className="mt-3 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+              <TabsPrimitive.Content key={plane} value={plane} forceMount className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
                 <ViewCell phone plane={plane} idx={slices[plane]} highlight={highlight} hidden={view !== plane} />
                 <SliceStepper plane={plane} />
               </TabsPrimitive.Content>
             ))}
-            <TabsPrimitive.Content value="three-d" forceMount className="mt-3 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+            <TabsPrimitive.Content value="three-d" forceMount className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
               {opened3d && <ThreeDCell hidden={view !== 'three-d'} />}
             </TabsPrimitive.Content>
           </ErrorBoundary>
@@ -92,8 +91,8 @@ export function PhoneAtlas() {
 function PhoneHeader() {
   const [searching, setSearching] = useState(false);
   return (
-    <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border bg-surface pl-4 pr-2">
-      <BrandMark size={22} className="mr-auto text-base" />
+    <header className="flex h-[52px] shrink-0 items-center gap-1 border-b border-border bg-surface pl-4 pr-1">
+      <BrandMark className="mr-auto inline-flex h-11 items-center text-[15px]" />
       <IconButton label="Find a region" className="size-11 [&_svg]:size-5" onClick={() => setSearching(true)}>
         <Search />
       </IconButton>
@@ -153,7 +152,7 @@ function SliceStepper({ plane }: { plane: Plane }) {
   const name = cfg.label.toLowerCase();
 
   return (
-    <div className="flex shrink-0 items-center gap-2.5 px-4 py-3">
+    <div className="flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-2">
       <IconButton label={`Previous ${name} slice`} variant="secondary" className="size-11" disabled={idx <= cfg.min} onClick={() => step(-1)}>
         <Minus />
       </IconButton>
@@ -170,7 +169,7 @@ function SliceStepper({ plane }: { plane: Plane }) {
       <IconButton label={`Next ${name} slice`} variant="secondary" className="size-11" disabled={idx >= cfg.max} onClick={() => step(1)}>
         <Plus />
       </IconButton>
-      <output aria-label={`${cfg.label} slice number`} className="min-w-10 text-right text-[15px] font-semibold">
+      <output aria-label={`${cfg.label} slice number`} className="min-w-10 text-right font-mono text-[13px]">
         {draft}
       </output>
     </div>
@@ -196,16 +195,17 @@ function RegionSheet() {
   return (
     <section
       aria-label="Selected region"
-      className="shrink-0 rounded-t-xl border-t border-border bg-surface shadow-[0_-8px_24px_rgb(0_0_0/0.35)]"
+      className="shrink-0 rounded-t-xl border-t border-border-strong bg-raised"
     >
-      <button type="button" aria-label="Show region details" onClick={showDetails} className="flex h-6 w-full justify-center pt-2">
+      {/* The grab handle: a full 44px target, overlapping the sheet's top padding. */}
+      <button type="button" aria-label="Show region details" onClick={showDetails} className="-mb-4 flex h-11 w-full justify-center pt-2">
         <span aria-hidden className="h-1 w-10 rounded-full bg-border-strong" />
       </button>
       {selection ? (
         <SheetSummary key={`${selection.kind}:${selection.ref}`} selection={selection} onDetails={showDetails} onAsk={() => setSheet('ask')} />
       ) : (
         <div className="px-4 pb-5 pt-1">
-          <h2 className="text-base font-semibold">No region selected</h2>
+          <h2 className="text-[15px] font-semibold">No region selected</h2>
           <p className="mt-1 text-sm text-muted-foreground">Tap the slice to identify a region, or search for one.</p>
           <Button
             className="mt-3 h-11 w-full"
@@ -244,28 +244,30 @@ function SheetSummary({ selection, onDetails, onAsk }: { selection: Selection; o
   return (
     <div className="px-4 pb-5">
       <div className="flex items-start gap-3 pt-1">
-        <span
-          aria-hidden
-          className="mt-0.5 size-8 shrink-0 rounded-lg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14)]"
-          style={{ background: selection.color ?? 'var(--color-border-strong)' }}
-        />
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold leading-tight">{selection.label}</h2>
-          {hasAcronym && (
-            <abbr title="Acronym" className="mt-1.5 inline-block rounded-sm border border-border-strong px-2 py-0.5 text-xs font-semibold no-underline">
-              {selection.acronym}
-            </abbr>
-          )}
+          <p className="flex items-center gap-2 text-xs">
+            <span
+              aria-hidden
+              className="size-3 shrink-0 rounded-[3px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.18)]"
+              style={{ background: selection.color ?? 'var(--color-border-strong)' }}
+            />
+            {hasAcronym && (
+              <abbr title="Acronym" className="font-mono font-bold no-underline">
+                {selection.acronym}
+              </abbr>
+            )}
+          </p>
+          <h2 className="mt-1 text-[17px] font-semibold leading-tight">{selection.label}</h2>
         </div>
         <IconButton label="Show region details" className="-mr-2 -mt-2 size-11 [&_svg]:size-5" onClick={onDetails}>
           <ChevronUp />
         </IconButton>
       </div>
-      <p className={cn('mt-3 line-clamp-3 text-sm leading-relaxed', summary ? 'text-foreground/85' : 'text-subtle-foreground')}>
+      <p className={cn('mt-2 line-clamp-3 text-[13px] leading-relaxed', summary ? 'text-muted-foreground' : 'text-subtle-foreground')}>
         {enrich.isLoading ? 'Loading summary…' : summary || enrich.data?.ai_note || 'No summary for this region yet.'}
       </p>
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <Button className="h-11" aria-pressed={!!saved} disabled={pending} onClick={toggleSave}>
+        <Button variant="primary" className="h-11" aria-pressed={!!saved} disabled={pending} onClick={toggleSave}>
           {saved ? <BookmarkCheck /> : <Bookmark />}
           {saved ? 'Saved' : 'Save'}
         </Button>
@@ -273,7 +275,7 @@ function SheetSummary({ selection, onDetails, onAsk }: { selection: Selection; o
           <Link2 />
           Copy link
         </Button>
-        <Button variant="primary" className="h-11" onClick={onAsk}>
+        <Button className="h-11" onClick={onAsk}>
           Ask
         </Button>
       </div>

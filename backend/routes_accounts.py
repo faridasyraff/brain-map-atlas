@@ -5,7 +5,7 @@ import re
 from flask import Blueprint, jsonify, abort
 from flask_login import UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from common import _json_body
+from common import _json_body, _text
 from extensions import limiter, login_manager
 from db import (create_user, get_user_by_email, get_user_by_id, user_count,
                 list_saved, upsert_saved, delete_saved, list_history, add_history, delete_user)
@@ -50,10 +50,10 @@ def _user_public(u):
 @limiter.limit('5 per minute')
 def auth_signup():
     data = _json_body()
-    email = (data.get('email') or '').strip().lower()
-    password = data.get('password') or ''
+    email = _text(data, 'email').strip().lower()
+    password = _text(data, 'password')
 
-    if not email or '@' not in email:
+    if not email or '@' not in email or len(email) > 254:
         return jsonify({'error': 'A valid email is required'}), 400
     if len(password) < 8:
         return jsonify({'error': 'Password must be at least 8 characters'}), 400
@@ -70,8 +70,8 @@ def auth_signup():
 @limiter.limit('10 per minute')
 def auth_login():
     data = _json_body()
-    email = (data.get('email') or '').strip().lower()
-    password = data.get('password') or ''
+    email = _text(data, 'email').strip().lower()
+    password = _text(data, 'password')
 
     row = get_user_by_email(email)
     # A Google-only account has an empty password_hash (nothing to check
@@ -106,7 +106,7 @@ def auth_delete_account():
     it. Asks for the password again so a stray request can't do it."""
     data = _json_body()
     row = get_user_by_id(int(current_user.id))
-    if not row or not check_password_hash(row['password_hash'], data.get('password') or ''):
+    if not row or not row['password_hash'] or not check_password_hash(row['password_hash'], _text(data, 'password')):
         return jsonify({'error': 'Incorrect password'}), 401
     delete_user(int(current_user.id))
     logout_user()

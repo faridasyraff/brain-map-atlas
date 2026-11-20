@@ -3,6 +3,8 @@ flask>=3.0
 flask-cors>=4.0
 flask-limiter>=3.5
 flask-compress>=1.15
+# Pre-compresses the 3D meshes once each (routes_atlas.serve_mesh).
+brotli>=1.1
 flask-login>=0.6
 python-dotenv>=1.0
 # The program that actually runs the app when it's live on the internet.

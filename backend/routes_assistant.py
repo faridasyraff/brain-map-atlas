@@ -1,12 +1,14 @@
 """Assistant endpoints: /api/chat and /api/enrich."""
 from flask import Blueprint, request, jsonify
 from extensions import limiter
-from common import (_get_openai_api_key, _json_body, _safe_error_response, log)
+from common import (_get_openai_api_key, _json_body, _safe_error_response, _text, log)
 from atlas import (acronym_df, name_df)
 from enrichment import (_generate_functional_keywords, _generate_region_summary, _get_functional_keywords, _get_region_summary, _get_related_regions)
 from assistant import (_OLLAMA_UNREACHABLE, _OllamaUnavailable, _gpt_answer, _ollama_reachable, _rag_answer)
 
 bp = Blueprint('assistant', __name__)
+
+MAX_QUESTION_CHARS = 2000   # the chat box allows the same (Assistant.tsx)
 
 # ── Asynchronous region enrichment (called by frontend after panel is already
 # rendered). Takes pidx OR name/acronym. Returns region_summary,
@@ -96,14 +98,22 @@ def api_enrich():
 @limiter.limit('15 per minute')
 def chat():
     data               = _json_body()
-    question           = (data.get('message') or '').strip()
-    region_name        = (data.get('region_name') or '').strip()
-    region_acronym     = (data.get('region_acronym') or '').strip()
-    parcellation_index = str(data.get('parcellation_index') or '').strip()
-    ai_provider        = (data.get('ai_provider') or 'ollama').strip().lower()
+    question           = _text(data, 'message').strip()
+    region_name        = _text(data, 'region_name').strip()[:200]
+    region_acronym     = _text(data, 'region_acronym').strip()[:40]
+    # An index (int or digit string) or nothing; anything else is ignored
+    # rather than pasted into the prompt as text.
+    raw_pidx = data.get('parcellation_index')
+    pidx_text = str(raw_pidx).strip() if isinstance(raw_pidx, (int, str)) and not isinstance(raw_pidx, bool) else ''
+    parcellation_index = pidx_text if pidx_text.isascii() and pidx_text.isdigit() and len(pidx_text) <= 9 else ''
+    ai_provider        = (_text(data, 'ai_provider') or 'ollama').strip().lower()
 
     if not question:
         return jsonify({'error': 'message required'}), 400
+    # Every character is sent on to OpenAI or Ollama: keep questions to a
+    # question's length, so one request can't run up the bill or the model.
+    if len(question) > MAX_QUESTION_CHARS:
+        return jsonify({'error': f'message is too long (max {MAX_QUESTION_CHARS} characters)'}), 400
 
     # ── Route to ChatGPT (OpenAI) ──────────────────────────────────────────────
     if ai_provider == 'openai':

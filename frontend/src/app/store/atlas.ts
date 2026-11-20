@@ -27,12 +27,19 @@ interface AtlasState {
   setSlices: (slices: Partial<Slices>) => void;
   /** Select a region/group. With `center`, the views move to show it (all but `keep`, if given). */
   select: (selection: Selection | null, center?: Center, keep?: Plane) => void;
+  /** Structures drawn as surfaces in 3D alongside the selection (Allen structure IDs). */
+  surfaces: number[];
+  toggleSurface: (id: number) => void;
+  clearSurfaces: () => void;
 }
 
 /** Shared atlas state: where each view is, and what's selected. */
 export const useAtlas = create<AtlasState>()((set) => ({
   slices: initialSlices(),
   selection: null,
+  surfaces: [],
+  toggleSurface: (id) => set((s) => ({ surfaces: s.surfaces.includes(id) ? s.surfaces.filter((x) => x !== id) : [...s.surfaces, id] })),
+  clearSurfaces: () => set({ surfaces: [] }),
   setSlice: (plane, idx) => set((s) => ({ slices: { ...s.slices, [plane]: clamp(plane, idx) } })),
   setSlices: (partial) =>
     set((s) => {

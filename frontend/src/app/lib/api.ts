@@ -161,6 +161,14 @@ export const resolveStructureIdx = (idx: number, signal?: AbortSignal) =>
 
 // --- 3D: meshes and the eBrain volume -------------------------------------------
 
+/** Query options for the set of structures with a 3D model (the tree's eyes and the 3D view share the cache entry). */
+export const availableMeshesQuery = {
+  queryKey: ['available-meshes'],
+  queryFn: () => getAvailableMeshes(),
+  staleTime: Infinity,
+  retry: false,
+} as const;
+
 export const getAvailableMeshes = () =>
   get<{ structure_ids: number[] }>('/api/available_meshes').then((r) => new Set(r.structure_ids));
 

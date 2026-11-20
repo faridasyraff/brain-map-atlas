@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { searchRegions, type SearchResult } from '@/lib/api';
 import { openSearchResult } from '@/lib/navigate';
 import { isHexColor } from '@/lib/selection';
-import { cn } from '@/lib/utils';
+import { cn, modKey } from '@/lib/utils';
 
 const MAX_SHOWN = 30;
 
@@ -83,11 +83,11 @@ export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen
           : `No regions match "${text.trim()}"`;
 
   return (
-    <div role="search" className={cn('relative flex-1', !inDialog && 'max-w-xl')}>
+    <div role="search" className={cn('relative flex-1', !inDialog && 'max-w-[440px]')}>
       <label htmlFor="region-search" className="sr-only">
         Find a region
       </label>
-      <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-subtle-foreground" />
       <Input
         id="region-search"
         type="search"
@@ -98,8 +98,8 @@ export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
         autoComplete="off"
         spellCheck={false}
-        placeholder="Find a region by name or acronym"
-        className={cn('pl-9', inDialog ? 'h-11 pr-3' : 'pr-10')}
+        placeholder="Search regions by name or acronym"
+        className={cn('pl-8', inDialog ? 'h-11 pr-3' : 'h-7 pr-20 text-[13px]')}
         autoFocus={inDialog}
         value={text}
         onChange={(e) => {
@@ -111,9 +111,10 @@ export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen
         onKeyDown={onKeyDown}
       />
       {!inDialog && (
-      <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border-strong px-1.5 text-xs text-muted-foreground">
-        /
-      </kbd>
+      <span aria-hidden className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 gap-1">
+        <kbd className="keycap">{modKey()}</kbd>
+        <kbd className="keycap">K</kbd>
+      </span>
       )}
 
       {showList && (
@@ -142,19 +143,18 @@ export function SearchBox({ inDialog, onChosen }: { inDialog?: boolean; onChosen
                 onMouseEnter={() => setActive(i)}
                 className={cn(
                   'flex min-h-9 cursor-pointer items-center gap-2 rounded-sm px-2 py-1',
-                  i === active && 'bg-hover shadow-[inset_2px_0_0_var(--color-ring)]',
-                  r.no_voxels && 'opacity-55',
+                  i === active && 'bg-hover',
                 )}
               >
                 <span
                   aria-hidden
-                  className="size-2 shrink-0 rounded-[2px]"
+                  className={cn('size-2.5 shrink-0 rounded-[2px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.18)]', r.no_voxels && 'opacity-50')}
                   style={{ background: isHexColor(r.structure_color) ? r.structure_color : 'var(--color-border-strong)' }}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">
                     {r.matched_label}
-                    {r.matched_acronym && <span className="ml-2 text-xs text-subtle-foreground">{r.matched_acronym}</span>}
+                    {r.matched_acronym && <span className="ml-2 font-mono text-[11.5px] text-subtle-foreground">{r.matched_acronym}</span>}
                   </span>
                   {r.is_group && <span className="text-xs text-muted-foreground">{r.member_count} regions</span>}
                   {r.no_voxels && <span className="text-xs text-warning">Not shown in the 2D atlas</span>}

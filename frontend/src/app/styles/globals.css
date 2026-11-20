@@ -1,49 +1,95 @@
 @import "tailwindcss";
-@import "@fontsource-variable/instrument-sans";
+@import "@fontsource-variable/instrument-sans/wdth.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/public-sans/wght.css";
 
-/* Design tokens — the same palette as the design mockups and the
-   original vanilla app's styles, exposed to Tailwind. `bg-surface`, `text-muted-foreground`,
-   `border-border`, `bg-plane-coronal`, `rounded-md`, ... all come from here.
-   Names follow shadcn/ui's conventions so its components work unchanged. */
+/* Design tokens. Names follow shadcn/ui (`bg-surface`, `text-muted-foreground`,
+   `border-border`, ...). The atlas (/app) is a true-black instrument: no
+   cards, hairline dividers, the slices and surfaces carry the colour. The home
+   page (/) has its own `home-*` tokens below. */
 @theme {
   --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "Cascadia Mono", Consolas, monospace;   /* acronyms, IDs, coordinates */
+  --font-serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;                        /* home headings */
+  --font-home: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;                      /* home body */
 
-  /* Neutrals */
-  --color-canvas: #000000;            /* image viewports: imaging needs true black */
-  --color-background: #12161b;        /* app chrome */
-  --color-surface: #171c22;           /* panels, headers */
-  --color-raised: #1f252d;            /* inputs, menus */
-  --color-hover: #262d36;
-  --color-border: #2a313b;
-  --color-border-strong: #3b4552;
-  --color-foreground: #e3e8ee;        /* 13.9:1 on surface */
-  --color-muted-foreground: #a0abb8;  /*  7.6:1 on surface */
-  --color-subtle-foreground: #7d8896; /*  4.6:1 on surface (AA) */
+  /* Atlas neutrals: black, with grey only for lines and text. Contrast notes are against #000. */
+  --color-canvas: #000000;            /* slice viewports */
+  --color-stage: #000000;             /* behind the 3D brain (also scene.background in BrainViewer.ts) */
+  --color-background: #000000;
+  --color-surface: #000000;           /* panels are black too: they are separated by hairlines, not fills */
+  --color-raised: #0e0e0e;            /* inputs, menus, sheets */
+  --color-hover: #161616;             /* hover and the selected row */
+  --color-border: #1d1d1d;            /* hairlines between areas */
+  --color-border-strong: #2c2c2c;     /* control outlines */
+  --color-foreground: #e6e6e3;        /* 16.9:1 */
+  --color-muted-foreground: #a3a29d;  /*  8.2:1 */
+  --color-subtle-foreground: #85847f; /*  5.4:1, the floor for meta text */
 
-  /* Interaction */
-  --color-primary: #e3e8ee;
-  --color-primary-foreground: #12161b;
-  --color-ring: #7ab4ff;
-  --color-link: #8fc0ff;
+  /* The one main action per area: an off-white button with black text. */
+  --color-primary: #ecebe5;
+  --color-primary-hover: #ffffff;
+  --color-primary-foreground: #0b0b0b;
+  --color-accent: #161616;
+  --color-ring: #9db7c4;
+  --color-link: #a9c4d2;
 
   /* Status */
-  --color-destructive: #ff8f78;
-  --color-warning: #f0b65e;
-  --color-success: #63d29c;
+  --color-destructive: #d98c7a;
+  --color-warning: #c9a464;
+  --color-success: #7db395;
 
-  /* Data: the four planes (also the 3D slice planes) */
-  --color-plane-sagittal: #4cc3e6;
-  --color-plane-coronal: #b394ff;
-  --color-plane-transverse: #4fd18e;
-  --color-plane-3d: #f0b65e;
+  /* Data: each view's identity (swatch, slider thumb, tab underline, 3D plane). */
+  --color-plane-sagittal: #6aa6c4;
+  --color-plane-coronal: #9c8cc4;
+  --color-plane-transverse: #74ae8e;
+  --color-plane-3d: #c4a46a;
+
+  /* Home page: a darkfield. Near-black ink so it leads straight into the atlas;
+     warm text; glass only here. */
+  --color-home-ink: #050608;
+  --color-home-fg: #e7e2d8;           /* 15.9:1 on ink */
+  --color-home-muted: #aaa397;        /*  8.0:1 */
+  --color-home-subtle: #8a847a;       /*  5.3:1 */
+  --color-home-primary: #d9d3c7;
+  --color-home-glass: rgb(16 18 22 / 0.55);
+  --color-home-glass-edge: rgb(255 255 255 / 0.12);
 
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
   --radius-xl: 16px;
 
-  --shadow-menu: 0 12px 32px rgb(0 0 0 / 0.5), 0 0 0 1px #3b4552;
-  --shadow-float: 0 6px 20px rgb(0 0 0 / 0.45);
+  --shadow-menu: 0 16px 40px rgb(0 0 0 / 0.7), 0 0 0 1px #2c2c2c;
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.6), 0 0 0 1px #2c2c2c;
+
+  /* Motion. Stronger curves than the CSS defaults; `ease-out` / `ease-in-out`
+     utilities pick these up. Never ease-in on UI. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* A light spring (about 4% overshoot, settles in 0.6s), for the home page's scroll entrances. */
+  --ease-spring: linear(0, 0.039, 0.133, 0.256, 0.39, 0.521, 0.641, 0.744, 0.83, 0.898, 0.95, 0.987, 1.012, 1.028, 1.036, 1.038, 1.037, 1.034, 1.029, 1.024, 1.019, 1.015, 1.01, 1.007, 1);
+
+  /* Radix waits for a CSS animation before unmounting, so open/close use
+     keyframes. Exits are faster than entrances. */
+  --animate-fade-in: fade-in 200ms var(--ease-out);
+  --animate-fade-out: fade-out 150ms var(--ease-out) forwards;
+  --animate-dialog-in: dialog-in 200ms var(--ease-out);
+  --animate-dialog-out: dialog-out 150ms var(--ease-out) forwards;
+  --animate-sheet-in: sheet-in 300ms var(--ease-drawer);
+  --animate-sheet-out: sheet-out 200ms var(--ease-drawer) forwards;
+  --animate-tooltip-in: tooltip-in 125ms var(--ease-out);
+  --animate-menu-in: tooltip-in 160ms var(--ease-out);
+
+  @keyframes fade-in { from { opacity: 0; } }
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes dialog-in { from { opacity: 0; transform: scale(0.96); } }
+  @keyframes dialog-out { to { opacity: 0; transform: scale(0.96); } }
+  @keyframes sheet-in { from { transform: translateY(100%); } }
+  @keyframes sheet-out { to { transform: translateY(100%); } }
+  @keyframes tooltip-in { from { opacity: 0; transform: scale(0.97); } }
 }
 
 @layer base {
@@ -53,8 +99,84 @@
     font-feature-settings: "tnum" 1;   /* tabular figures: slice numbers don't jiggle */
   }
   :focus-visible { @apply outline-2 outline-offset-2 outline-ring; }
+  p { text-wrap: pretty; }   /* no one-word last lines */
 }
 
+/* Keyboard keys in hints: "Ctrl K", "Enter". */
+@utility keycap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--color-muted-foreground);
+  background: var(--color-raised);
+}
+
+/* Small all-caps panel headers (atlas only): "STRUCTURE TREE", "DETAILS". */
+@utility panel-label {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-subtle-foreground);
+}
+
+/* Reduced motion: fewer and gentler, not none. Opacity fades stay (they
+   show what changed); movement and scale go. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  :root {
+    --animate-dialog-in: fade-in 150ms ease;
+    --animate-dialog-out: fade-out 100ms ease forwards;
+    --animate-sheet-in: fade-in 150ms ease;
+    --animate-sheet-out: fade-out 100ms ease forwards;
+    --animate-tooltip-in: fade-in 100ms ease;
+    --animate-menu-in: fade-in 100ms ease;
+  }
+  /* Everything else: no keyframe movement. Radix parts (they carry data-state) keep
+     the fades above; transitions stay (fades and colour changes; `pressable` drops its scale). */
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  *:not([data-state]), *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* Anything pressable: colours ease gently on hover; a press scales it down a
+   touch on the strong curve. (Tailwind 4's `scale-*` is the `scale` property.) */
+@utility pressable {
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, outline-color 150ms ease,
+    fill 150ms ease, stroke 150ms ease, scale 160ms var(--ease-out);
+  &:active:not(:disabled) { scale: 0.97; }
+  @media (prefers-reduced-motion: reduce) { &:active:not(:disabled) { scale: none; } }
+}
+
+/* Home page only: frosted glass over the darkfield. */
+@utility glass {
+  background: var(--color-home-glass);
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: inset 0 0 0 1px var(--color-home-glass-edge);
+}
+
+/* Home page scroll entrances (see useReveal in Landing.tsx). Hidden only once
+   the script has switched them on, so the page reads fine without it. A
+   transition, not keyframes: a fast scroll retargets instead of restarting. */
+:root[data-reveals='on'] [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px) scale(0.985);
+  transition:
+    opacity 450ms var(--ease-out) var(--d, 0ms),
+    transform 600ms var(--ease-spring) var(--d, 0ms);
+}
+:root[data-reveals='on'] [data-reveal][data-shown] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-reveals='on'] [data-reveal] {
+    transform: none;
+    transition: opacity 300ms ease var(--d, 0ms);
+  }
 }

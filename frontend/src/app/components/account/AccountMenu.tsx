@@ -17,8 +17,8 @@ export function AccountMenu() {
         <span className="max-w-48 truncate text-sm text-muted-foreground max-lg:hidden" title={user.email}>
           {user.email}
         </span>
-        {user.is_admin && <span className="rounded-full border border-border-strong px-2 text-[11px] text-muted-foreground">Admin</span>}
-        <Button variant="ghost" size="sm" onClick={() => signOut.mutate()}>
+        {user.is_admin && <span className="text-xs text-subtle-foreground">Admin</span>}
+        <Button variant="ghost" size="sm" className="max-md:h-11" onClick={() => signOut.mutate()}>
           Sign out
         </Button>
       </div>
@@ -26,10 +26,10 @@ export function AccountMenu() {
   }
   return (
     <div className="flex items-center gap-1">
-      <Button variant="ghost" size="sm" onClick={() => openSignIn('signin')}>
+      <Button variant="ghost" size="sm" className="max-md:h-11" onClick={() => openSignIn('signin')}>
         Sign in
       </Button>
-      <Button variant="secondary" size="sm" onClick={() => openSignIn('signup')}>
+      <Button variant="secondary" size="sm" className="max-md:h-11" onClick={() => openSignIn('signup')}>
         Create account
       </Button>
     </div>

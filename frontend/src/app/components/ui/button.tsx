@@ -6,11 +6,11 @@ import { cn } from '@/lib/utils';
 // shadcn/ui-style button, themed with the app's tokens (see globals.css).
 export const buttonVariants = cva(
   'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium ' +
-    'transition-colors disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0',
+    'pressable disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground hover:bg-white',
+        primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         secondary: 'border border-border-strong bg-raised text-foreground hover:bg-hover',
         ghost: 'text-muted-foreground hover:bg-hover hover:text-foreground',
         danger: 'border border-destructive text-destructive hover:bg-destructive/10',
@@ -31,6 +31,7 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   /** Render the child element (e.g. an <a>) with button styling instead of a <button>. */
   asChild?: boolean;
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
 export function Button({ className, variant, size, asChild = false, type, ...props }: ButtonProps) {

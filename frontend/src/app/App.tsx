@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ViewsGrid } from '@/components/atlas/ViewsGrid';
 import { PhoneAtlas } from '@/components/layout/PhoneAtlas';
 import { Providers } from '@/components/Providers';
+import { IndexPanel } from '@/components/layout/IndexPanel';
 import { SidePanel } from '@/components/layout/SidePanel';
 import { TopBar } from '@/components/layout/TopBar';
 import { useRecordHistory } from '@/hooks/useLibrary';
@@ -10,7 +11,7 @@ import { usePhoneLayout } from '@/hooks/useMediaQuery';
 import { useUrlSync } from '@/hooks/useUrlSync';
 import { useUi } from '@/store/ui';
 
-/** The atlas: top bar, the four views, and the side panel (one view at a time on a phone). */
+/** The atlas: top bar; the index, the 3D stage over three slices, and the region panel (one view at a time on a phone). */
 export function App({ queryClient }: { queryClient?: QueryClient }) {
   return (
     <Providers queryClient={queryClient}>
@@ -29,6 +30,7 @@ function Atlas() {
     <div className="flex h-full flex-col">
       <TopBar />
       <div className="flex min-h-0 flex-1">
+        <IndexPanel />
         <ErrorBoundary area="the atlas views" className="flex-1 p-5">
           <ViewsGrid />
         </ErrorBoundary>

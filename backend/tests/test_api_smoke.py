@@ -76,16 +76,17 @@ class CoreViews(unittest.TestCase):
         self.assertTrue(r.getheader('Location').endswith('/app?region=150&sag=707&group=Hippocampal%20formation'))
         conn.close()
 
-    def test_slice_renders_png(self):
+    def test_slice_renders_webp(self):
         status, d = call('/api/slice?view=coronal&idx=660&colorize=structure')
         self.assertEqual(status, 200)
-        self.assertTrue(d['image'].startswith('data:image/png;base64,'))
+        self.assertTrue(d['image'].startswith('data:image/webp;base64,'))
         self.assertEqual((d['rows'], d['cols']), (800, 1140))   # rows = S-I, cols = L-R
 
-    def test_slice_png_is_native_resolution_and_fast(self):
+    def test_slice_image_is_native_resolution_lossless_and_fast(self):
         import base64
-        import struct
+        import io
         import time
+        from PIL import Image
         idx = 300 + int(time.time()) % 400            # avoid the server's slice cache
         # Warm the neighbouring slice first: the volumes are memory-mapped, so
         # right after a restart the first reads come from disk. This test is
@@ -95,12 +96,43 @@ class CoreViews(unittest.TestCase):
         with urllib.request.urlopen(req, timeout=30) as r:
             timing = r.headers.get('Server-Timing', '')
             d = json.loads(r.read())
-        png = base64.b64decode(d['image'].split(',', 1)[1])
-        w, h = struct.unpack('>II', png[16:24])
-        self.assertEqual((h, w), (d['rows'], d['cols']))   # 1 image pixel = 1 voxel
+        data = base64.b64decode(d['image'].split(',', 1)[1])
+        img = Image.open(io.BytesIO(data))
+        self.assertEqual(img.format, 'WEBP')
+        self.assertEqual((img.height, img.width), (d['rows'], d['cols']))   # 1 image pixel = 1 voxel
+        # Lossless (a VP8L chunk, not lossy VP8): region boundaries stay exact when zoomed in.
+        self.assertEqual(data[12:16], b'VP8L')
         self.assertTrue(timing.startswith('app;dur='), timing)
         # Was 300-800 ms with matplotlib; ~60-150 ms now. Generous bound.
         self.assertLess(float(timing.split('=')[1]), 600)
+
+    def test_mesh_is_sent_compressed_and_unchanged(self):
+        import brotli
+        import gzip
+        def get(enc):
+            req = urllib.request.Request(f'{BASE}/meshes/997.glb', headers={'Accept-Encoding': enc})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.headers.get('Content-Encoding'), r.headers.get('Vary', ''), r.read()
+        try:
+            enc, vary, raw = get('identity')
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                self.skipTest('meshes still being downloaded')
+            raise
+        self.assertIsNone(enc)
+        self.assertGreater(len(raw), 100_000)
+        enc, vary, br = get('gzip, deflate, br')
+        self.assertEqual(enc, 'br')
+        self.assertIn('Accept-Encoding', vary)
+        self.assertLess(len(br), len(raw) * 0.7)
+        self.assertEqual(brotli.decompress(br), raw)
+        enc, _, gz = get('gzip')
+        self.assertEqual(enc, 'gzip')
+        self.assertEqual(gzip.decompress(gz), raw)
+        # An encoding the browser refuses (q=0) is never used.
+        enc, _, plain = get('br;q=0, gzip;q=0')
+        self.assertIsNone(enc)
+        self.assertEqual(plain, raw)
 
     def test_slice_rejects_unknown_view(self):
         self.assertEqual(call('/api/slice?view=diagonal')[0], 400)
@@ -167,10 +199,52 @@ class ErrorHandling(unittest.TestCase):
             status, _ = call('/api/region_center', {'parcellation_index': idx})
             self.assertIn(status, (200, 404), idx)
 
+    def test_out_of_range_highlight_indices_never_500(self):
+        for idx in (-1, 10**11):
+            status, _ = call('/api/highlight_indices',
+                             {'view': 'coronal', 'idx': 600, 'parcellation_indices': [idx]})
+            self.assertEqual(status, 400, idx)
+
+    def test_wrong_json_types_are_400_not_500(self):
+        # A number where a string belongs used to crash on .lower()/.strip().
+        cases = [
+            ('/api/lookup', {'view': 1, 'idx': 1, 'col': 1, 'row': 1}),
+            ('/api/highlight', {'view': ['coronal'], 'idx': 600, 'parcellation_index': 1}),
+            ('/api/highlight_indices', {'view': 1, 'idx': 600, 'parcellation_indices': [1]}),
+            ('/api/highlight_group', {'view': 'coronal', 'idx': 600, 'group_level': 'structure', 'group_name': 5}),
+            ('/api/group_by_term', {'name': 5}),
+            ('/api/find_group_level', {'name': 5}),
+            ('/api/region_center_group', {'group_level': 'structure', 'group_name': 5}),
+            ('/api/region_center_group', {'group_level': ['x'], 'group_name': 'Thalamus'}),
+            # a missing name would otherwise match every region without one
+            ('/api/highlight_group', {'view': 'coronal', 'idx': 600, 'group_level': 'substructure'}),
+            ('/api/chat', {'message': 5}),
+            # Not signup or login: their 5- and 10-a-minute limits are kept
+            # for the account tests (they read fields the same way, via _text).
+        ]
+        for path, body in cases:
+            self.assertEqual(call(path, body)[0], 400, path)
+
+    def test_oversized_body_is_413(self):
+        status, d = call('/api/log_warning', {'label': 'x' * (2 * 1024 * 1024)})
+        self.assertEqual(status, 413)
+        self.assertIn('error', d)
+
     def test_unknown_route_is_404_json(self):
         status, d = call('/api/does_not_exist')
         self.assertEqual(status, 404)
         self.assertEqual(d['error'], 'Not found')
+
+
+class SecurityHeaders(unittest.TestCase):
+    def test_pages_and_api_send_hardening_headers(self):
+        for path in ('/', '/app', '/api/auth/me'):
+            with urllib.request.urlopen(BASE + path, timeout=30) as r:
+                h = r.headers
+            self.assertIn("frame-ancestors 'none'", h.get('Content-Security-Policy', ''), path)
+            self.assertIn("script-src 'self'", h['Content-Security-Policy'], path)
+            self.assertEqual(h.get('X-Content-Type-Options'), 'nosniff', path)
+            self.assertEqual(h.get('X-Frame-Options'), 'DENY', path)
 
 
 class RateLimit(unittest.TestCase):
@@ -232,6 +306,12 @@ class Assistant(unittest.TestCase):
 
     def test_chat_requires_message(self):
         self.assertEqual(call('/api/chat', {'message': ''})[0], 400)
+
+    def test_chat_rejects_overlong_message(self):
+        # Checked before any model is called, so this never reaches OpenAI.
+        status, d = call('/api/chat', {'message': 'x' * 2001, 'ai_provider': 'openai'})
+        self.assertEqual(status, 400)
+        self.assertIn('too long', str(d))
 
     def test_enrich_explains_missing_ai(self):
         status, d = call('/api/enrich?name=Caudoputamen&acronym=CP')
