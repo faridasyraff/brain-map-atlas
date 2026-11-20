@@ -23,20 +23,32 @@ import { isHexColor, type Selection } from './selection';
 import { useAtlas } from '@/store/atlas';
 
 const color = (c: unknown) => (isHexColor(c) ? c : undefined);
+
+// Only the latest navigation counts, whatever started it (a click, search,
+// the tree, a saved item or a link): a slow answer to an earlier one is
+// dropped instead of replacing the newer selection when it finally lands.
+let navSeq = 0;
+function startNavigation() {
+  const seq = ++navSeq;
+  return () => seq === navSeq;
+}
 const fail = (what: string, err: unknown) =>
   toast.error(`Could not open ${what}`, { description: err instanceof Error ? err.message : String(err) });
 
 /** Open a search result (a single region or a group) and move all views to it. */
 export async function openSearchResult(r: SearchResult): Promise<boolean> {
+  if (!r.is_group && r.no_voxels) {
+    // Nothing to open, so a navigation already on its way still lands.
+    toast.warning(`${r.matched_label} isn't shown in the 2D atlas`, {
+      description: 'It exists in the Allen ontology but has no voxels in the annotation volume.',
+    });
+    return false;
+  }
+  const current = startNavigation();
   try {
     if (!r.is_group) {
-      if (r.no_voxels) {
-        toast.warning(`${r.matched_label} isn't shown in the 2D atlas`, {
-          description: 'It exists in the Allen ontology but has no voxels in the annotation volume.',
-        });
-        return false;
-      }
       const center = await regionCenter(r.parcellation_index);
+      if (!current()) return false;
       useAtlas.getState().select(
         {
           kind: 'region',
@@ -58,6 +70,7 @@ export async function openSearchResult(r: SearchResult): Promise<boolean> {
     if (r.group_level === 'term') {
       const g = await groupByTerm(name, acronym);
       const center = await centerOfIndices(g.parcellation_indices);
+      if (!current()) return false;
       useAtlas.getState().select(
         { ...base, memberCount: g.parcellation_indices.length, highlight: { type: 'indices', indices: g.parcellation_indices } },
         center,
@@ -65,6 +78,7 @@ export async function openSearchResult(r: SearchResult): Promise<boolean> {
     } else {
       const level = r.group_level ?? 'structure';
       const center = await groupCenterByLevel(level, name);
+      if (!current()) return false;
       useAtlas.getState().select(
         { ...base, memberCount: r.member_count, highlight: { type: 'level', level, name } },
         center,
@@ -72,7 +86,7 @@ export async function openSearchResult(r: SearchResult): Promise<boolean> {
     }
     return true;
   } catch (err) {
-    fail(r.group_name ?? r.matched_label, err);
+    if (current()) fail(r.group_name ?? r.matched_label, err);
     return false;
   }
 }
@@ -105,15 +119,12 @@ const notARegion = (d: { parcellation_index?: number; error?: string; matched_la
 const outsideBrain = () =>
   toast('No region there', { id: 'no-region', description: 'That point is outside the annotated brain.' });
 
-// Only the latest click counts: a slow answer to an earlier click is dropped.
-let clickSeq = 0;
-
 /** A click on a 2D slice: select the region under it and move the other two views to it. */
 export async function identifyAt(plane: Plane, idx: number, col: number, row: number): Promise<boolean> {
-  const seq = ++clickSeq;
+  const current = startNavigation();
   try {
     const d = await lookupPoint(plane, idx, col, row);
-    if (seq !== clickSeq) return false;
+    if (!current()) return false;
     if (notARegion(d)) {
       outsideBrain();
       return false;
@@ -121,7 +132,7 @@ export async function identifyAt(plane: Plane, idx: number, col: number, row: nu
     useAtlas.getState().select(regionSelection(d), d, plane);
     return true;
   } catch (err) {
-    if (seq === clickSeq) fail('that point', err);
+    if (current()) fail('that point', err);
     return false;
   }
 }
@@ -147,7 +158,7 @@ const ATLAS_MAX = { xi: 1139, yi: 799, zi: 1319 };
  */
 export async function identifyPick({ view, local, voxel }: PlanePick): Promise<boolean> {
   if (!voxel) return false;
-  const seq = ++clickSeq;
+  const current = startNavigation();
   const xi = Math.round(local.z / ATLAS_UM); // L–R
   const yi = Math.round(local.y / ATLAS_UM); // S–I
   const zi = Math.round(local.x / ATLAS_UM); // A–P
@@ -158,7 +169,7 @@ export async function identifyPick({ view, local, voxel }: PlanePick): Promise<b
       const [idx, col, row] =
         view === 'sagittal' ? [xi, zi, yi] : view === 'coronal' ? [zi, xi, yi] : [yi, zi, xi];
       const d = await lookupPoint(view, idx, col, row);
-      if (seq !== clickSeq) return false;
+      if (!current()) return false;
       if (notARegion(d)) {
         outsideBrain();
         return false;
@@ -174,31 +185,34 @@ export async function identifyPick({ view, local, voxel }: PlanePick): Promise<b
       yi: clamp(yi, ATLAS_MAX.yi),
       zi: clamp(zi, ATLAS_MAX.zi),
     }));
-    if (seq !== clickSeq) return false;
+    if (!current()) return false;
     useAtlas.getState().select(regionSelection(d), center, view);
     return true;
   } catch (err) {
-    if (seq === clickSeq) fail('that point', err);
+    if (current()) fail('that point', err);
     return false;
   }
 }
 
 /** Open a saved/history/linked reference. `keepSlices` highlights it without moving the views. */
 export async function openRegionRef(ref: { kind: 'region' | 'group'; ref: string }, opts: { keepSlices?: boolean } = {}) {
+  const current = startNavigation();
   try {
     if (ref.kind === 'region') {
       const pidx = Number(ref.ref);
       if (!Number.isInteger(pidx) || pidx <= 0) throw new Error('That region was not found in the atlas.');
       const selection = await selectionForRegion(pidx);
-      if (opts.keepSlices) useAtlas.getState().select(selection);
-      else useAtlas.getState().select(selection, await regionCenter(pidx));
+      const center = opts.keepSlices ? undefined : await regionCenter(pidx);
+      if (!current()) return false;
+      useAtlas.getState().select(selection, center);
       return true;
     }
     const r = await resolveRegionName(ref.ref);
+    if (!current()) return false;
     if (!r) throw new Error(`"${ref.ref}" was not found in the atlas.`);
     return openSearchResult(r);
   } catch (err) {
-    fail('that region', err);
+    if (current()) fail('that region', err);
     return false;
   }
 }
@@ -213,8 +227,10 @@ export async function openTreeNode(node: OntologyNode): Promise<boolean> {
   }
   if (!node.children.length) {
     // A leaf: find the matching atlas region.
+    const current = startNavigation();
     try {
       const results = await searchRegions(node.acronym || node.name, 20);
+      if (!current()) return false;
       const leaf = results.find(
         (x) =>
           !x.is_group &&
@@ -223,7 +239,7 @@ export async function openTreeNode(node: OntologyNode): Promise<boolean> {
       );
       if (leaf) return openSearchResult(leaf);
     } catch (err) {
-      fail(node.name, err);
+      if (current()) fail(node.name, err);
       return false;
     }
     toast.warning(`${node.name} isn't shown in the 2D atlas`, {
