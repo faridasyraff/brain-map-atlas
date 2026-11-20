@@ -12,6 +12,7 @@ import { PLANE_COLOR_CLASS, PLANES, type Plane } from '@/lib/planes';
 import type { Highlight } from '@/lib/selection';
 import { cn } from '@/lib/utils';
 import { ATLAS, fmtUm } from '@/lib/atlasFacts';
+import { useAtlas } from '@/store/atlas';
 import { ScaleBar } from './ScaleBar';
 import { isIdentity, ZOOM_MAX, ZOOM_MIN, type ViewTransform } from '@/lib/zoom';
 
@@ -64,7 +65,8 @@ export function ViewCell({ plane, idx, onIdxChange, expanded, onToggleExpand, hi
   const cfg = PLANES[plane];
   const color = PLANE_COLOR_CLASS[plane];
   // A hidden view (another one is expanded) loads nothing until shown again.
-  const slice = useSlice(plane, idx, !hidden);
+  const opening = useAtlas((s) => s.opening);
+  const slice = useSlice(plane, idx, !hidden && !opening);
   const mask = useHighlight(plane, idx, highlight, !hidden);
 
   const [draft, setDraft] = useSliderDraft(idx);

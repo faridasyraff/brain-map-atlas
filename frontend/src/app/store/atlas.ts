@@ -23,6 +23,9 @@ export const slicesFromCenter = (c: Center): Slices => ({
 interface AtlasState {
   slices: Slices;
   selection: Selection | null;
+  /** A shared link names a region but no slices, and its position is still being looked up:
+   *  the views wait instead of loading the default slices first. */
+  opening: boolean;
   setSlice: (plane: Plane, idx: number) => void;
   setSlices: (slices: Partial<Slices>) => void;
   /** Select a region/group. With `center`, the views move to show it (all but `keep`, if given). */
@@ -37,6 +40,7 @@ interface AtlasState {
 export const useAtlas = create<AtlasState>()((set) => ({
   slices: initialSlices(),
   selection: null,
+  opening: false,
   surfaces: [],
   toggleSurface: (id) => set((s) => ({ surfaces: s.surfaces.includes(id) ? s.surfaces.filter((x) => x !== id) : [...s.surfaces, id] })),
   clearSurfaces: () => set({ surfaces: [] }),
