@@ -4,15 +4,20 @@ import io
 import base64
 import json as _json
 import json
+import gzip
+import os
 import re
+import threading
 from functools import lru_cache
 from pathlib import Path
+
+import brotli
 import numpy as np
 from PIL import Image
 from flask import Blueprint, request, jsonify, send_from_directory, Response, abort
 from extensions import limiter
 from common import (_DEBUG_ERRORS, _check_rapid, _json_body, _rapid_group, _rapid_lookup, _safe_error_response, log)
-from atlas import (LEVEL_COLS, VIEW_CFG, _MAX_PIDX, _MESH_LUT, _acro_to_term_id, _id_to_label, _collect_leaf_indices, _hist_bbox, _hist_centroid_by_slice, _indices_with_voxels, _load_mesh_volume, _mesh_volume_missing_response, _name_to_term_id, _pidx_to_sid, _render_size_cache, _term_label_to_indices, _term_nodes, _x_hist, acronym_df, annotation_array, color_df, get_hex_for_index, get_slices, name_df, render_to_b64, term_df, world_coords)
+from atlas import (SLICE_MIME, LEVEL_COLS, VIEW_CFG, _MAX_PIDX, _MESH_LUT, _acro_to_term_id, _id_to_label, _collect_leaf_indices, _hist_bbox, _hist_centroid_by_slice, _indices_with_voxels, _load_mesh_volume, _mesh_volume_missing_response, _name_to_term_id, _pidx_to_sid, _render_size_cache, _term_label_to_indices, _term_nodes, _x_hist, acronym_df, annotation_array, color_df, get_hex_for_index, get_slices, name_df, render_to_b64, term_df, world_coords)
 from enrichment import (_get_functional_keywords, _get_region_summary, _get_related_regions)
 
 bp = Blueprint('atlas', __name__)
@@ -34,7 +39,92 @@ def serve_mesh(struct_id):
     # own copy for a day instead of asking again on every visit. Not marked
     # "keep forever" like the website's own files above, since a mesh could
     # in theory get regenerated under the same filename.
-    return send_from_directory(meshes_dir, fname, mimetype='model/gltf-binary', max_age=86400)
+    #
+    # Meshes halve when compressed (1.7 MB -> 0.9 MB), but Flask-Compress skips
+    # files sent straight from disk. So the first request for each mesh writes
+    # a compressed copy next to it (.glb.br, or .glb.gz for browsers without
+    # Brotli) and later ones send that copy as it is.
+    # A byte range of a compressed stream can't be decoded on its own: ranges get the plain file.
+    sent = None if request.range else _precompressed(meshes_dir / fname, request.headers.get('Accept-Encoding', ''))
+    if sent is not None:
+        path, encoding = sent
+        resp = send_from_directory(meshes_dir, path.name, mimetype='model/gltf-binary', max_age=86400)
+        resp.headers['Content-Encoding'] = encoding
+    else:
+        resp = send_from_directory(meshes_dir, fname, mimetype='model/gltf-binary', max_age=86400)
+    resp.headers['Vary'] = 'Accept-Encoding'
+    return resp
+
+
+_COMPRESSORS = {
+    # Brotli quality 9: ~90 ms for the largest mesh, nearly as small as the
+    # 2.5 s quality 11. gzip level 6 for browsers that don't offer Brotli.
+    'br': ('.br', lambda b: brotli.compress(b, quality=9)),
+    'gzip': ('.gz', lambda b: gzip.compress(b, compresslevel=6, mtime=0)),
+}
+
+
+# One lock per compressed file, so two requests never compress the same mesh at once.
+_COMPRESS_LOCKS: dict = {}
+_COMPRESS_LOCKS_GUARD = threading.Lock()
+
+
+def _accepted_encodings(header):
+    """The content codings an Accept-Encoding header allows (q > 0)."""
+    out = set()
+    for part in header.split(','):
+        name, _, params = part.partition(';')
+        q = 1.0
+        for p in params.split(';'):
+            k, _, v = p.strip().partition('=')
+            if k.lower() == 'q':
+                try:
+                    q = float(v)
+                except ValueError:
+                    q = 0.0
+        if name.strip() and q > 0:
+            out.add(name.strip().lower())
+    return out
+
+
+def _precompressed(src, accept_encoding):
+    """(path, encoding) of a compressed copy of `src` the browser accepts,
+    made on first use; None to send the file as it is (also while another
+    request is still making that copy)."""
+    offered = _accepted_encodings(accept_encoding)
+    for encoding in ('br', 'gzip'):
+        if encoding not in offered:
+            continue
+        suffix, compress = _COMPRESSORS[encoding]
+        st = src.stat()
+        # The source's size and mtime are in the name, so a replaced mesh never
+        # gets an old compressed copy, whatever its timestamps.
+        dst = src.with_name(f'{src.name}.{st.st_size:x}-{st.st_mtime_ns:x}{suffix}')
+        if dst.exists():
+            return dst, encoding
+        with _COMPRESS_LOCKS_GUARD:
+            lock = _COMPRESS_LOCKS.setdefault(dst.name, threading.Lock())
+        if not lock.acquire(blocking=False):
+            return None   # being made right now: don't wait, send the plain file
+        tmp = dst.with_name(f'{dst.name}.{os.getpid()}.{threading.get_ident()}.tmp')
+        try:
+            if not dst.exists():
+                # Write to a temporary name, then swap it in: no request ever
+                # sees a half-written file.
+                tmp.write_bytes(compress(src.read_bytes()))
+                os.replace(tmp, dst)
+                # Copies of an older version (and the unversioned name used at first).
+                for old in [*src.parent.glob(f'{src.name}.*{suffix}'), src.with_name(src.name + suffix)]:
+                    if old != dst:
+                        old.unlink(missing_ok=True)
+            return dst, encoding
+        except Exception as e:   # full or read-only disk, or the compressor failed: send it plain
+            log.warning(f'could not compress {src.name}: {e}')
+            return None
+        finally:
+            tmp.unlink(missing_ok=True)
+            lock.release()
+    return None
 
 
 @bp.route('/api/log_warning', methods=['POST'])
@@ -92,7 +182,7 @@ def get_slice():
         return _safe_error_response(e)
 
     return jsonify({
-        'image':    f'data:image/png;base64,{img_b64}',
+        'image':    f'data:{SLICE_MIME};base64,{img_b64}',
         'view':     view,
         'idx':      idx,
         'rows':     rows,

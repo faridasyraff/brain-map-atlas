@@ -76,16 +76,17 @@ class CoreViews(unittest.TestCase):
         self.assertTrue(r.getheader('Location').endswith('/app?region=150&sag=707&group=Hippocampal%20formation'))
         conn.close()
 
-    def test_slice_renders_png(self):
+    def test_slice_renders_webp(self):
         status, d = call('/api/slice?view=coronal&idx=660&colorize=structure')
         self.assertEqual(status, 200)
-        self.assertTrue(d['image'].startswith('data:image/png;base64,'))
+        self.assertTrue(d['image'].startswith('data:image/webp;base64,'))
         self.assertEqual((d['rows'], d['cols']), (800, 1140))   # rows = S-I, cols = L-R
 
-    def test_slice_png_is_native_resolution_and_fast(self):
+    def test_slice_image_is_native_resolution_lossless_and_fast(self):
         import base64
-        import struct
+        import io
         import time
+        from PIL import Image
         idx = 300 + int(time.time()) % 400            # avoid the server's slice cache
         # Warm the neighbouring slice first: the volumes are memory-mapped, so
         # right after a restart the first reads come from disk. This test is
@@ -95,12 +96,43 @@ class CoreViews(unittest.TestCase):
         with urllib.request.urlopen(req, timeout=30) as r:
             timing = r.headers.get('Server-Timing', '')
             d = json.loads(r.read())
-        png = base64.b64decode(d['image'].split(',', 1)[1])
-        w, h = struct.unpack('>II', png[16:24])
-        self.assertEqual((h, w), (d['rows'], d['cols']))   # 1 image pixel = 1 voxel
+        data = base64.b64decode(d['image'].split(',', 1)[1])
+        img = Image.open(io.BytesIO(data))
+        self.assertEqual(img.format, 'WEBP')
+        self.assertEqual((img.height, img.width), (d['rows'], d['cols']))   # 1 image pixel = 1 voxel
+        # Lossless (a VP8L chunk, not lossy VP8): region boundaries stay exact when zoomed in.
+        self.assertEqual(data[12:16], b'VP8L')
         self.assertTrue(timing.startswith('app;dur='), timing)
         # Was 300-800 ms with matplotlib; ~60-150 ms now. Generous bound.
         self.assertLess(float(timing.split('=')[1]), 600)
+
+    def test_mesh_is_sent_compressed_and_unchanged(self):
+        import brotli
+        import gzip
+        def get(enc):
+            req = urllib.request.Request(f'{BASE}/meshes/997.glb', headers={'Accept-Encoding': enc})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.headers.get('Content-Encoding'), r.headers.get('Vary', ''), r.read()
+        try:
+            enc, vary, raw = get('identity')
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                self.skipTest('meshes still being downloaded')
+            raise
+        self.assertIsNone(enc)
+        self.assertGreater(len(raw), 100_000)
+        enc, vary, br = get('gzip, deflate, br')
+        self.assertEqual(enc, 'br')
+        self.assertIn('Accept-Encoding', vary)
+        self.assertLess(len(br), len(raw) * 0.7)
+        self.assertEqual(brotli.decompress(br), raw)
+        enc, _, gz = get('gzip')
+        self.assertEqual(enc, 'gzip')
+        self.assertEqual(gzip.decompress(gz), raw)
+        # An encoding the browser refuses (q=0) is never used.
+        enc, _, plain = get('br;q=0, gzip;q=0')
+        self.assertIsNone(enc)
+        self.assertEqual(plain, raw)
 
     def test_slice_rejects_unknown_view(self):
         self.assertEqual(call('/api/slice?view=diagonal')[0], 400)
